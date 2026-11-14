@@ -8,6 +8,8 @@ import * as api from '../api/client.js'
  */
 export default function useSession() {
   const [sessionId, setSessionId] = useState(null)
+  /** 4-digit code that lets a phone continue this session over iMessage (live backend only) */
+  const [linkCode, setLinkCode] = useState(null)
   const [segments, setSegments] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   /** What is loading: { kind: 'start'|'choose'|'ask', perspective?: string } */
@@ -36,6 +38,7 @@ export default function useSession() {
         const data = await api.startSession(topic)
         sessionRef.current = data.session_id
         setSessionId(data.session_id)
+        setLinkCode(data.link_code ?? null)
         setSegments([data.segment])
         return data
       }),
@@ -67,12 +70,14 @@ export default function useSession() {
   const reset = useCallback(() => {
     sessionRef.current = null
     setSessionId(null)
+    setLinkCode(null)
     setSegments([])
     setError(null)
   }, [])
 
   return {
     sessionId,
+    linkCode,
     segments,
     currentSegment: segments[segments.length - 1] || null,
     startSession,

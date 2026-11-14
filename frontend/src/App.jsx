@@ -34,7 +34,7 @@ export default function App() {
       const data = await startSession(text)
       if (!data) return
       try {
-        setTopic(await getTopic())
+        setTopic(await getTopic(data.session_id))
       } catch {
         // keep the landing topic
       }

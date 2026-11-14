@@ -99,9 +99,10 @@ async function request(path, { method = 'GET', body, query, timeoutMs = 45000, i
 
 const isLocal = () => dataSource !== 'live'
 
-export async function getTopic() {
+/** @param {string} [sessionId] the session's topic; without it, the server's default */
+export async function getTopic(sessionId) {
   if (isLocal()) return (await server()).getTopic()
-  return request('/topic')
+  return request('/topic', sessionId ? { query: { session_id: sessionId } } : {})
 }
 
 /** @returns {Promise<{session_id: string, segment: object}>} */

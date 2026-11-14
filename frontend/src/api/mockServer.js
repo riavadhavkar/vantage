@@ -81,7 +81,9 @@ export function createMockServer({ bundles, isDemo = false, mediaBase = '' }) {
       const session = { session_id, bundle, visited: [], asks: 0 }
       sessions.set(session_id, session)
       const first = bundle.segments.find((s) => s.segment_id === bundle.start_segment_id) || bundle.segments[0]
-      return { session_id, segment: emit(session, first) }
+      // A phone can only join a session that lives on the server, so the cached demo has no code.
+      const link_code = isDemo ? null : String(1000 + (counter % 9000))
+      return { session_id, segment: emit(session, first), link_code }
     },
 
     async getNextSegment(sessionId, choiceId) {
