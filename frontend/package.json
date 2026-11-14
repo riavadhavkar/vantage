@@ -13,10 +13,8 @@
     "screenshots": "node scripts/screenshots.mjs"
   },
   "dependencies": {
-    "@fontsource-variable/hanken-grotesk": "^5.3.0",
-    "@fontsource-variable/source-serif-4": "^5.3.1",
-    "@fontsource/courier-prime": "^5.3.0",
-    "@fontsource/gloock": "^5.3.0",
+    "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource-variable/geist-mono": "^5.3.0",
     "@xyflow/react": "^12.12.1",
     "leaflet": "^1.9.4",
     "motion": "^14.14.0",

@@ -1,6 +1,7 @@
 // OWNER: Person B
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { EASE } from '../lib/motion.js'
 import Stage from './Stage.jsx'
 import NarrativeCard from './NarrativeCard.jsx'
 import ChoiceButtons from './ChoiceButtons.jsx'
@@ -17,7 +18,7 @@ import useNarration from '../hooks/useNarration.js'
 import usePerspectivePull from '../hooks/usePerspectivePull.js'
 import useMediaQuery from '../hooks/useMediaQuery.js'
 import { gradesForTopic, FALLBACK_GRADE } from '../constants/theme.js'
-import { getSources } from '../api/client.js'
+import { getSources, getGraph } from '../api/client.js'
 import { messageFor } from '../api/errors.js'
 import { deriveTopic } from '../api/normalize.js'
 
@@ -37,7 +38,13 @@ function graphFromSegments(segments) {
 function PendingNote({ pending }) {
   if (!pending) return null
   const msg = pending.kind === 'ask' ? 'Looking through the sources...' : 'Tracing connections...'
-  return <LoadingState message={msg} className="mt-6 min-h-11" />
+  return (
+    <LoadingState
+      message={msg}
+      slowMessage="Still writing the next part from the sources. This can take a few seconds."
+      className="mt-6 min-h-11"
+    />
+  )
 }
 
 function IconButton({ label, onClick, children, isPressed, badge }) {
@@ -46,11 +53,24 @@ function IconButton({ label, onClick, children, isPressed, badge }) {
       type="button"
       onClick={onClick}
       aria-pressed={isPressed}
-      className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-[2px] px-2 text-sm text-print hover:bg-prussian/60 sm:px-3"
+      className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-md px-2 text-sm text-print hover:bg-prussian/60 sm:px-3"
     >
       {children}
       <span className="max-[400px]:sr-only">{label}</span>
-      {badge != null && <span className="text-xs text-fog">{badge}</span>}
+      <AnimatePresence mode="popLayout" initial={false}>
+        {badge != null && (
+          <motion.span
+            key={badge}
+            className="inline-block text-xs text-fog"
+            initial={{ opacity: 0, y: -6, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.3, ease: EASE }}
+          >
+            {badge}
+          </motion.span>
+        )}
+      </AnimatePresence>
     </button>
   )
 }
@@ -152,7 +172,39 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
     return m
   }, [segments])
 
-  const graph = useMemo(() => graphFromSegments(segments), [segments])
+  // Knowledge graph from GET /api/graph, fetched while the graph is open. If the call
+  // fails, the graph is built from the segments this browser has already seen.
+  const [graphData, setGraphData] = useState(null)
+  const [graphState, setGraphState] = useState('idle')
+  useEffect(() => {
+    if (!sessionId || panel !== 'graph') return
+    let isLive = true
+    setGraphState('loading')
+    getGraph(sessionId)
+      .then((d) => isLive && (setGraphData(d), setGraphState('ready')))
+      .catch(() => isLive && setGraphState('error'))
+    return () => {
+      isLive = false
+    }
+  }, [sessionId, panel, segments.length])
+
+  const graph = useMemo(() => {
+    const local = graphFromSegments(segments)
+    if (!graphData?.nodes?.length) return { ...local, currentId: currentSegment?.segment_id }
+    const byId = Object.fromEntries(segments.map((s) => [s.segment_id, s]))
+    const nodes = graphData.nodes.map((n) => ({
+      ...(byId[n.id] || {}),
+      segment_id: n.id,
+      title: n.label ?? byId[n.id]?.title ?? '',
+      perspective: n.perspective ?? byId[n.id]?.perspective ?? null,
+    }))
+    const ids = new Set(nodes.map((n) => n.segment_id))
+    const edges = (graphData.edges || [])
+      .filter((e) => ids.has(e.source) && ids.has(e.target))
+      .map((e) => ({ source: e.source, target: e.target, edge_type: e.edge_type || 'happened_next' }))
+    const currentId = graphData.nodes.find((n) => n.is_current)?.id || currentSegment?.segment_id
+    return { nodes, edges, currentId }
+  }, [segments, graphData, currentSegment])
 
   const [question, setQuestion] = useState('')
   const submitQuestion = (e) => {
@@ -173,25 +225,30 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
     <div className="flex min-h-dvh flex-col">
       <header className="mx-auto flex h-14 w-full max-w-[1600px] items-center justify-between gap-3 px-4 sm:px-8">
         <div className="flex min-w-0 items-baseline gap-4">
-          <button type="button" onClick={onExit} className="font-display text-[28px] leading-none text-print" aria-label="Vantage. Start a new topic">
+          <button type="button" onClick={onExit} className="text-[20px] font-semibold leading-none tracking-[-0.03em] text-print" aria-label="Vantage. Start a new topic">
             Vantage
           </button>
           <p className="hidden truncate text-sm text-fog sm:block">{topic?.title}</p>
         </div>
         <div className="flex items-center gap-2">
           <DataSourceNote source={dataSource} className="hidden md:flex" />
-          <button type="button" onClick={onExit} className="min-h-11 rounded-[2px] px-2 text-sm text-print hover:bg-developer">
+          <button type="button" onClick={onExit} className="min-h-11 rounded-md px-2 text-sm text-print hover:bg-developer">
             New topic
           </button>
         </div>
       </header>
 
       <div className="mx-auto w-full max-w-[1600px] flex-1 lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="hidden px-8 pt-4 lg:block">
+        <motion.aside
+          className="hidden px-8 pt-4 lg:block"
+          initial={{ opacity: 0, x: -16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+        >
           <div className="sticky top-6">
             <LensRail perspectives={perspectives} current={shown?.perspective} grades={grades} heardCounts={heardCounts} onSelect={selectLens} isBusy={isLoading} />
           </div>
-        </aside>
+        </motion.aside>
 
         <main className="pb-44 sm:px-8 lg:pr-12 lg:pl-4 lg:pb-32">
           <div className="stage-wrap">
@@ -244,16 +301,16 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
                 <PendingNote pending={pending} />
               ) : shown?.is_final && showChoices ? (
                 <div className="border-t border-print/12 pt-5">
-                  <p className="font-serif text-[18px] leading-[30px] text-print">This thread ends here.</p>
+                  <p className="text-[17px] leading-[27px] text-print">This thread ends here.</p>
                   <p className="mt-1 text-sm text-fog">Hear the same story from another side, or trace how it connects.</p>
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <button type="button" onClick={recover} className="min-h-11 rounded-[2px] border border-print/30 px-4 text-sm text-print hover:bg-developer">
+                    <button type="button" onClick={recover} className="min-h-11 rounded-md border border-print/30 px-4 text-sm text-print hover:bg-developer">
                       Try another point of view
                     </button>
-                    <button type="button" onClick={() => setPanel('graph')} className="min-h-11 rounded-[2px] border border-print/30 px-4 text-sm text-print hover:bg-developer">
+                    <button type="button" onClick={() => setPanel('graph')} className="min-h-11 rounded-md border border-print/30 px-4 text-sm text-print hover:bg-developer">
                       See how it connects
                     </button>
-                    <button type="button" onClick={onExit} className="min-h-11 rounded-[2px] px-4 text-sm text-print underline underline-offset-4">
+                    <button type="button" onClick={onExit} className="min-h-11 rounded-md px-4 text-sm text-print underline underline-offset-4">
                       Start a new topic
                     </button>
                   </div>
@@ -274,7 +331,12 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
       </div>
 
       {/* control strip: graph, map, sources, ask, voice; narration and sound always reachable */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-print/10 bg-developer/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm">
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-print/10 bg-developer/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm"
+      >
         <div className="mx-auto flex max-w-[1600px] flex-col gap-1 px-2 py-2 sm:px-6 lg:flex-row lg:items-center lg:gap-4">
           <form onSubmit={submitQuestion} className="order-1 flex flex-1 items-center gap-1 lg:order-2">
             <label htmlFor="ask-input" className="sr-only">
@@ -286,10 +348,10 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Ask about this moment"
               autoComplete="off"
-              className="min-h-11 min-w-0 flex-1 rounded-[2px] border border-print/15 bg-prussian px-3 text-sm text-print placeholder:text-fog focus:border-print/50 focus:outline-none"
+              className="min-h-11 min-w-0 flex-1 rounded-md border border-print/15 bg-prussian px-3 text-sm text-print placeholder:text-fog focus:border-print/50 focus:outline-none"
             />
             <VoiceInputButton onTranscript={(t) => setQuestion(t)} isDisabled={isLoading} />
-            <button type="submit" disabled={!question.trim() || isLoading} className="min-h-11 rounded-[2px] px-3 text-sm font-medium text-print hover:bg-prussian/60 disabled:opacity-50">
+            <button type="submit" disabled={!question.trim() || isLoading} className="min-h-11 rounded-md px-3 text-sm font-medium text-print hover:bg-prussian/60 disabled:opacity-50">
               Ask
             </button>
           </form>
@@ -315,7 +377,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
             </div>
             <div className="flex items-center lg:hidden">
               <NarrationControls narration={narration} hasVoice={hasVoice} />
-              <SoundToggle isOn={isSoundOn} onToggle={onToggleSound} className="[&>svg~*]:sr-only" />
+              <SoundToggle isOn={isSoundOn} onToggle={onToggleSound} isCompact />
             </div>
           </div>
 
@@ -325,7 +387,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
             <AmbientPlayer mood={shown?.mood} isOn={isAmbientOn} onToggle={() => setIsAmbientOn((v) => !v)} />
           </div>
         </div>
-      </div>
+      </motion.div>
 
       <SourcePanel
         sources={sources}
@@ -340,9 +402,19 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
       />
 
       <Sheet title="How the story connects" isOpen={panel === 'graph'} onClose={closePanel}>
-        <Suspense fallback={<LoadingState message="Tracing connections..." className="p-6" />}>
-          <KnowledgeGraph nodes={graph.nodes} edges={graph.edges} currentSegmentId={currentSegment?.segment_id} grades={grades} perspectives={perspectives} />
-        </Suspense>
+        {graphState === 'loading' && !graphData ? (
+          <LoadingState message="Tracing connections..." slowMessage="Still tracing connections. This can take a few seconds." className="p-6" />
+        ) : (
+          <Suspense fallback={<LoadingState message="Tracing connections..." className="p-6" />}>
+            <KnowledgeGraph nodes={graph.nodes} edges={graph.edges} currentSegmentId={graph.currentId} grades={grades} perspectives={perspectives} />
+            {graphState === 'loading' && (
+              <p className="absolute top-3 left-4 text-xs text-fog sm:left-8" role="status">Updating connections...</p>
+            )}
+            {graphState === 'error' && (
+              <p className="absolute top-3 left-4 text-xs text-fog sm:left-8" role="status">Showing the scenes seen so far. The full graph could not load.</p>
+            )}
+          </Suspense>
+        )}
       </Sheet>
 
       <Sheet title={shown?.location?.label || 'Where this happened'} isOpen={panel === 'map'} onClose={closePanel}>

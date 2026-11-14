@@ -21,11 +21,11 @@ const PrintNode = memo(function PrintNode({ data }) {
   return (
     <div className="graph-node-grow w-[188px]">
       <Handle type="target" position={Position.Left} className="!h-1.5 !w-1.5 !border-0 !bg-fog" />
-      <div className={`relative h-[66px] w-full overflow-hidden rounded-[2px] ${isCurrent ? 'pulse-twice ring-2 ring-print' : 'ring-1 ring-print/15'}`}>
+      <div className={`relative h-[66px] w-full overflow-hidden rounded-md ${isCurrent ? 'pulse-twice ring-2 ring-print' : 'ring-1 ring-print/15'}`}>
         <img src={thumb} alt="" className="print-gray absolute inset-0 h-full w-full object-cover" />
         <GradeLayers grade={grade} />
       </div>
-      <p className="mt-1.5 font-display text-[15px] leading-[18px] text-print">{segment.title}</p>
+      <p className="mt-1.5 text-[14px] font-medium leading-[18px] text-print">{segment.title}</p>
       <p className="text-[12px] leading-[16px]" style={{ color: grade.text }}>
         {grade.label}
         {isCurrent ? ' · now' : ''}
@@ -95,7 +95,7 @@ export default function KnowledgeGraph({ nodes, edges, currentSegmentId, grades 
         <Background color="rgba(238,240,234,0.06)" gap={24} size={1} />
         <Controls showInteractive={false} position="top-right" />
       </ReactFlow>
-      <ul aria-label="Legend" className="pointer-events-none absolute bottom-3 left-3 flex flex-col gap-1 rounded-[2px] bg-prussian/85 p-3 text-xs text-fog">
+      <ul aria-label="Legend" className="pointer-events-none absolute bottom-3 left-3 flex flex-col gap-1 rounded-md bg-prussian/85 p-3 text-xs text-fog">
         {Object.entries(EDGE_STYLE).map(([key, st]) => (
           <li key={key} className="flex items-center gap-2">
             <svg aria-hidden="true" width="28" height="6">

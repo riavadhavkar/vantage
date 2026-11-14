@@ -1,5 +1,5 @@
 // OWNER: Person B
-// The cinematic frame: graded illustration (or a drawn scene), grain, vignette,
+// The cinematic frame: graded illustration (or a drawn scene), soft vignette,
 // title, and paper source pins. The perspective pull closes the iris over it.
 import { useMemo } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
@@ -8,6 +8,7 @@ import { DEVELOP_MS, EASE_FOCUS } from '../constants/theme.js'
 import GradedImage from './GradedImage.jsx'
 import GradeLayers from './GradeLayers.jsx'
 import Iris from './Iris.jsx'
+import { EASE, pop, staggerParent } from '../lib/motion.js'
 import SourceTag from './SourceTag.jsx'
 
 const PIN_SLOTS = [
@@ -54,7 +55,7 @@ export default function Stage({ segment, grade, imageUrl, imageStatus, pull, pul
   const showPins = segment?.is_grounded && pull === 'idle'
 
   return (
-    <div className="stage relative w-full overflow-hidden bg-prussian sm:rounded-[2px]">
+    <div className="stage relative w-full overflow-hidden bg-prussian sm:rounded-xl">
       <AnimatePresence initial={false}>
         {segment && (
           <motion.div
@@ -93,34 +94,51 @@ export default function Stage({ segment, grade, imageUrl, imageStatus, pull, pul
       </AnimatePresence>
 
       <div className="vignette pointer-events-none absolute inset-0" />
-      <div className="grain pointer-events-none absolute inset-0" />
 
       {/* title scrim */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-prussian/90 via-prussian/40 to-transparent" />
       {segment && (
-        <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-4 px-4 pb-4 sm:px-8 sm:pb-7">
-          <h2 className="font-display text-[28px] leading-[32px] text-balance text-print sm:text-[40px] sm:leading-[44px] lg:text-[48px] lg:leading-[52px]">
+        <motion.div
+          key={`title-${segment.segment_id}`}
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.15, ease: EASE }}
+          className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-4 px-4 pb-4 sm:px-8 sm:pb-7"
+        >
+          <h2 className="text-[26px] font-semibold leading-[30px] tracking-[-0.025em] text-balance text-print sm:text-[34px] sm:leading-[40px] lg:text-[40px] lg:leading-[46px]">
             {segment.title}
           </h2>
           {segment.date_label && <p className="mb-1 shrink-0 text-right text-xs text-print/85 sm:text-sm">{segment.date_label}</p>}
-        </div>
+        </motion.div>
       )}
 
       {/* media status, quiet */}
       {segment?.is_grounded && imageStatus === 'loading' && (
-        <p className="absolute top-3 right-3 z-10 rounded-[2px] bg-prussian/70 px-2 py-1 text-xs text-fog">Developing the illustration...</p>
+        <p className="absolute top-3 right-3 z-10 rounded-md bg-prussian/70 px-2 py-1 text-xs text-fog">Developing the illustration...</p>
       )}
 
       {showPins && (
-        <ul className="absolute inset-0 z-10" aria-label="Evidence in this scene">
+        <motion.ul
+          key={`pins-${segment.segment_id}`}
+          className="absolute inset-0 z-10"
+          aria-label="Evidence in this scene"
+          variants={staggerParent(0.12, 0.5)}
+          initial="hidden"
+          animate="show"
+        >
           {pins.map(({ claim, source, pos }) => (
-            <li key={claim.claim_id} className="absolute flex flex-col items-center" style={{ left: `${pos[0]}%`, top: `${pos[1]}%` }}>
+            <motion.li
+              key={claim.claim_id}
+              variants={pop}
+              className="absolute flex flex-col items-center"
+              style={{ left: `${pos[0]}%`, top: `${pos[1]}%`, transformOrigin: '50% 100%' }}
+            >
               <SourceTag source={source} onOpen={() => onOpenSource(claim.source_id, claim.text ? claim : null)} className="shadow-[0_1px_0_rgb(10_30_48/0.4)]" />
               <span aria-hidden="true" className="h-3 w-px bg-fiber/80" />
               <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-fiber" />
-            </li>
+            </motion.li>
           ))}
-        </ul>
+        </motion.ul>
       )}
 
       {pull !== 'idle' && !reduce && (
