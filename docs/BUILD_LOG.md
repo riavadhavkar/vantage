@@ -51,3 +51,20 @@ Append only. Newest entries at the bottom.
 - Integration checkpoint against the real backend once `/start`, `/next-segment`, `/sources` and `/topic` respond.
 - Real cached media from Person C for demo mode; voice ids from Person B's ElevenLabs service.
 - Ambient tracks in `frontend/public/ambient/<mood>.mp3` (the control says "No ambient track" until they exist).
+
+## 2026-11-13 23:05, Person B (frontend), integration checkpoint
+
+**What changed**
+
+- Merged main with Person A's mock `/api/start`, `/api/next-segment` and `/api/ask`. Ran the backend locally (only fastapi, uvicorn, pydantic, python-dotenv, in a throwaway venv) and drove the frontend in live mode against it.
+
+**Result**
+
+- Live mode works end to end: start, choose, and the contradiction on the second segment all render. No offline fallback is triggered while `/api/health` answers.
+- With no `/api/topic`, the lens rail derives perspectives from the data (`narrator`, `british_raj`, `refugee`). This confirms gap 1 from the previous entry: the backend mocks are still Partition content, while the demo topics are Titanic and Princeton.
+- `/api/sources`, `/api/tts`, `/api/image` return 404 (`{"detail": "Not Found"}`, not `{error_code, message}`). The UI shows the sources error state, captions only, and drawn scenes, as designed.
+
+**Next**
+
+- Person A: `/api/topic`, `/api/sources`, and `error_code` on 404s; perspective enum for Titanic and Princeton.
+- Person B (me): `/api/tts` and `/api/image` in `backend/routers/media.py` with ElevenLabs.
