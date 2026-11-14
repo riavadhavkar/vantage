@@ -13,10 +13,14 @@
     "screenshots": "node scripts/screenshots.mjs"
   },
   "dependencies": {
+    "@fontsource-variable/archivo": "^5.3.0",
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "@fontsource-variable/geist": "^5.3.0",
     "@fontsource-variable/geist-mono": "^5.3.0",
+    "@fontsource-variable/newsreader": "^5.3.0",
     "@xyflow/react": "^12.12.1",
     "leaflet": "^1.9.4",
+    "lucide-react": "^1.73.0",
     "motion": "^14.14.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

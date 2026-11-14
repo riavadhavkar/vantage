@@ -124,22 +124,29 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
     if (!segment) return
     speech.current?.cancel()
     setHasFinished(false)
-    speech.current = speak(segment.narrative_text, {
-      voice: voiceForIndex(voiceIndex),
-      onStart: () => {
-        setSpeechState('speaking')
-        setIsPlaying(true)
-      },
-      onEnd: () => {
-        setSpeechState('done')
-        setIsPlaying(false)
-        setHasFinished(true)
-      },
-      onError: () => {
-        setSpeechState('done')
-        setIsPlaying(false)
-      },
-    })
+    // A device that rejects the voice must not take the player down: captions carry on without sound.
+    try {
+      speech.current = speak(segment.narrative_text, {
+        voice: voiceForIndex(voiceIndex),
+        onStart: () => {
+          setSpeechState('speaking')
+          setIsPlaying(true)
+        },
+        onEnd: () => {
+          setSpeechState('done')
+          setIsPlaying(false)
+          setHasFinished(true)
+        },
+        onError: () => {
+          setSpeechState('done')
+          setIsPlaying(false)
+        },
+      })
+    } catch {
+      speech.current = null
+      setSpeechState('done')
+      setIsPlaying(false)
+    }
   }, [segment, voiceIndex])
 
   useEffect(() => {
