@@ -45,7 +45,7 @@ export default function SettingsPopover({ language, onRestart, mood, isAmbientOn
 
   return (
     <div ref={root} className="relative">
-      <IconButton ref={trigger} label="subtitles and languages" onClick={() => setIsOpen((v) => !v)} isPressed={isOpen} aria-expanded={isOpen} aria-controls={isOpen ? panelId : undefined} className="!w-7 sm:!w-8">
+      <IconButton tipAlign="end" ref={trigger} label="subtitles and languages" onClick={() => setIsOpen((v) => !v)} isPressed={isOpen} aria-expanded={isOpen} aria-controls={isOpen ? panelId : undefined} className="!w-7 sm:!w-8">
         <ChevronDown aria-hidden="true" size={16} strokeWidth={1.75} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </IconButton>
       <AnimatePresence>

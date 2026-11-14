@@ -235,7 +235,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
 
       {/* top HUD: wordmark and date | ask pill and title | icons and ai badge */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-4 pt-3 sm:px-8 sm:pt-5">
-        <div className="grid grid-cols-[1fr_auto] items-start gap-x-3 gap-y-3 md:grid-cols-[1fr_minmax(0,36rem)_1fr]">
+        <div className="grid grid-cols-[1fr_auto] items-start gap-x-3 gap-y-3 lg:grid-cols-[1fr_minmax(0,36rem)_1fr]">
           <div className="pointer-events-auto min-w-0">
             <button type="button" onClick={onExit} aria-label="vantage. start a new topic" className="chrome -ml-1 flex min-h-11 items-center rounded-md px-1 text-[22px] font-semibold leading-none tracking-[-0.03em] text-white">
               vantage
@@ -256,25 +256,25 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
                 )}
               </AnimatePresence>
             </div>
-            <DataSourceNote source={dataSource} className="mt-1 max-md:hidden" />
+            <DataSourceNote source={dataSource} className="mt-1 max-lg:hidden" />
           </div>
 
-          <div className="pointer-events-auto col-span-2 row-start-2 min-w-0 md:col-span-1 md:col-start-2 md:row-start-1">
+          <div className="pointer-events-auto col-span-2 row-start-2 min-w-0 lg:col-span-1 lg:col-start-2 lg:row-start-1">
             <AskPill perspectives={perspectives} onSubmit={doAsk} isLoading={isLoading} />
             {shown?.title && (
               <h2 key={shown.segment_id} className="mt-3 text-center text-[22px] font-semibold leading-[28px] tracking-[-0.02em] text-balance text-white [text-shadow:0_1px_4px_rgb(0_0_0/0.85)] sm:text-[28px] sm:leading-[34px]">
                 {shown.title}
               </h2>
             )}
-            <DataSourceNote source={dataSource} className="mt-2 justify-center md:hidden" />
+            <DataSourceNote source={dataSource} className="mt-2 justify-center lg:hidden" />
             {aiKind && (
-              <div className="mt-2 flex justify-center md:hidden">
+              <div className="mt-2 flex justify-center lg:hidden">
                 <AiBadge kind={aiKind} />
               </div>
             )}
           </div>
 
-          <div className="pointer-events-auto col-start-2 row-start-1 flex flex-col items-end gap-2 md:col-start-3">
+          <div className="pointer-events-auto col-start-2 row-start-1 flex flex-col items-end gap-2 lg:col-start-3">
             <div className="flex items-center gap-1 sm:gap-2" role="toolbar" aria-label="story tools">
               <IconButton label="share" onClick={onShare}>
                 <Share2 aria-hidden="true" size={19} strokeWidth={1.75} />
@@ -289,14 +289,14 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
                 <FileText aria-hidden="true" size={19} strokeWidth={1.75} />
               </IconButton>
               <div className="flex items-center">
-                <IconButton label={isSoundOn ? 'sound on' : 'sound off'} onClick={onToggleSound}>
+                <IconButton tipAlign="end" label={isSoundOn ? 'sound on' : 'sound off'} onClick={onToggleSound}>
                   {isSoundOn ? <Volume2 aria-hidden="true" size={19} strokeWidth={1.75} /> : <VolumeX aria-hidden="true" size={19} strokeWidth={1.75} />}
                 </IconButton>
                 <SettingsPopover language={language} onRestart={onRestart} mood={shown?.mood} isAmbientOn={isAmbientOn} onToggleAmbient={() => setIsAmbientOn((v) => !v)} linkCode={linkCode} />
               </div>
             </div>
             {aiKind && (
-              <div className="hidden max-w-[20rem] justify-end md:flex">
+              <div className="hidden max-w-[20rem] justify-end lg:flex">
                 <AiBadge kind={aiKind} />
               </div>
             )}

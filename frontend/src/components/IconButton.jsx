@@ -2,7 +2,7 @@
 // shows on hover and on keyboard focus. 44px touch target.
 import { forwardRef } from 'react'
 
-const IconButton = forwardRef(function IconButton({ label, onClick, isPressed, badge, children, className = '', tipSide = 'bottom', ...rest }, ref) {
+const IconButton = forwardRef(function IconButton({ label, onClick, isPressed, badge, children, className = '', tipSide = 'bottom', tipAlign = 'center', ...rest }, ref) {
   return (
     <span className="group/tip relative inline-flex">
       <button
@@ -23,7 +23,7 @@ const IconButton = forwardRef(function IconButton({ label, onClick, isPressed, b
       </button>
       <span
         role="presentation"
-        className={`chrome pointer-events-none absolute left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-md bg-prussian px-2 py-1 text-xs text-print opacity-0 shadow-lg ring-1 ring-print/20 transition-opacity group-focus-within/tip:opacity-100 group-hover/tip:opacity-100 max-md:hidden ${
+        className={`chrome pointer-events-none absolute z-50 whitespace-nowrap rounded-md bg-prussian px-2 py-1 text-xs text-print opacity-0 shadow-lg ring-1 ring-print/20 transition-opacity group-focus-within/tip:opacity-100 group-hover/tip:opacity-100 max-lg:hidden ${tipAlign === 'end' ? 'right-0' : 'left-1/2 -translate-x-1/2'} ${
           tipSide === 'bottom' ? 'top-full mt-2' : 'bottom-full mb-2'
         }`}
       >
