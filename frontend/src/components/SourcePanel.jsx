@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { SOURCE_TYPE_LABEL } from '../constants/labels.js'
 import LoadingState from './LoadingState.jsx'
 import { EASE_FOCUS, FALLBACK_GRADE } from '../constants/theme.js'
+import { staggerParent, staggerChild } from '../lib/motion.js'
 
 function SourceSheet({ source, grade, informed, isFocused, highlightClaim }) {
   const ref = useRef(null)
@@ -13,7 +14,7 @@ function SourceSheet({ source, grade, informed, isFocused, highlightClaim }) {
     if (isFocused) ref.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
   }, [isFocused])
   return (
-    <li ref={ref} className={`scroll-mt-4 border-t border-prussian/15 py-6 first:border-t-0 first:pt-2 ${isFocused ? '' : ''}`}>
+    <motion.li variants={staggerChild(10)} ref={ref} className={`scroll-mt-4 border-t border-prussian/15 py-6 first:border-t-0 first:pt-2 ${isFocused ? '' : ''}`}>
       <p className="font-mono text-[12px] leading-[18px] text-prussian/80">
         {SOURCE_TYPE_LABEL[source.source_type] || 'Source'}
         {grade?.label ? ` · ${grade.label}` : ''}
@@ -59,7 +60,7 @@ function SourceSheet({ source, grade, informed, isFocused, highlightClaim }) {
           Open the original
         </a>
       )}
-    </li>
+    </motion.li>
   )
 }
 
@@ -141,7 +142,7 @@ export default function SourcePanel({ sources = [], isOpen, onToggle, focus, seg
               ) : (
                 <>
                   {isLoading && <LoadingState tone="paper" message="Checking for new sources..." className="pt-4" />}
-                  <ul>
+                  <motion.ul variants={staggerParent(0.07, 0.2)} initial="hidden" animate="show">
                     {visible.map((s) => (
                       <SourceSheet
                         key={s.source_id}
@@ -152,17 +153,17 @@ export default function SourcePanel({ sources = [], isOpen, onToggle, focus, seg
                         highlightClaim={s.source_id === focus?.sourceId ? focus?.claim : null}
                       />
                     ))}
-                  </ul>
+                  </motion.ul>
                   {rest.length > 0 && (
                     <details className="mt-4 border-t border-prussian/15 pt-4">
                       <summary className="min-h-11 cursor-pointer text-sm font-medium">
                         {rest.length} more {rest.length === 1 ? 'source' : 'sources'} in this topic, not cited yet
                       </summary>
-                      <ul>
+                      <motion.ul variants={staggerParent(0.05)} initial="hidden" animate="show">
                         {rest.map((s) => (
                           <SourceSheet key={s.source_id} source={s} grade={grades[s.perspective] || FALLBACK_GRADE} informed={[]} />
                         ))}
-                      </ul>
+                      </motion.ul>
                     </details>
                   )}
                 </>

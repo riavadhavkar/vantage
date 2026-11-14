@@ -1,14 +1,17 @@
 // OWNER: Person B
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import HeroTriptych from './HeroTriptych.jsx'
 import LoadingState from './LoadingState.jsx'
 import DataSourceNote from './DataSourceNote.jsx'
 import SoundToggle from './SoundToggle.jsx'
+import { staggerParent, staggerChild, tap } from '../lib/motion.js'
 import { NEUTRAL_GRADE_COLORS, gradeFor, EASE_FOCUS } from '../constants/theme.js'
 import { sceneKindFor } from '../lib/scene.js'
 import { unlockAudio } from '../lib/audio.js'
 import { messageFor } from '../api/errors.js'
+
+const HEADLINE = 'See what happened from every side, and check every claim against its source.'
 
 const EXAMPLE_TOPICS = (import.meta.env.VITE_VANTAGE_EXAMPLE_TOPICS || '')
   .split(',')
@@ -24,6 +27,12 @@ export default function LandingScreen({ onStart, topic, isStarting, error, isSou
   const reduce = useReducedMotion()
   const [value, setValue] = useState('')
   const [isIntroDone, setIsIntroDone] = useState(false)
+  // Text arrives while the hero is still teaching the focus pull, not after it.
+  const [isTextReady, setIsTextReady] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setIsTextReady(true), 1100)
+    return () => clearTimeout(t)
+  }, [])
 
   const grades = useMemo(() => {
     const colors = topic?.perspectives?.length >= 3 ? topic.perspectives.slice(0, 3).map((p) => p.color) : NEUTRAL_GRADE_COLORS
@@ -51,7 +60,7 @@ export default function LandingScreen({ onStart, topic, isStarting, error, isSou
   const fadeIn = (delay) =>
     reduce
       ? {}
-      : { initial: { opacity: 0 }, animate: { opacity: isIntroDone ? 1 : 0 }, transition: { duration: 0.5, delay, ease: EASE_FOCUS } }
+      : { initial: { opacity: 0 }, animate: { opacity: isTextReady ? 1 : 0 }, transition: { duration: 0.5, delay, ease: EASE_FOCUS } }
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-[1600px] flex-col px-4 pb-8 sm:px-8">
@@ -72,7 +81,19 @@ export default function LandingScreen({ onStart, topic, isStarting, error, isSou
         <motion.div className="md:col-span-6" {...fadeIn(0)}>
           <h1 className="text-[30px] font-semibold leading-[36px] tracking-[-0.025em] text-balance text-print sm:text-[40px] sm:leading-[46px] lg:text-[48px] lg:leading-[54px]">
             <span className="sr-only">Vantage. </span>
-            See what happened from every side, and check every claim against its source.
+            <motion.span
+              aria-hidden="true"
+              variants={staggerParent(0.045)}
+              initial="hidden"
+              animate={isTextReady || reduce ? 'show' : 'hidden'}
+            >
+              {HEADLINE.split(' ').map((w, i) => (
+                <motion.span key={i} variants={staggerChild(18)} className="inline-block">
+                  {w}&nbsp;
+                </motion.span>
+              ))}
+            </motion.span>
+            <span className="sr-only">{HEADLINE}</span>
           </h1>
         </motion.div>
 
@@ -97,13 +118,14 @@ export default function LandingScreen({ onStart, topic, isStarting, error, isSou
               className="min-h-12 flex-1 rounded-md border border-print/20 bg-developer px-4 text-base text-print placeholder:text-fog focus:border-print/60 focus:outline-none"
               aria-describedby={error ? 'start-error' : undefined}
             />
-            <button
+            <motion.button
+              {...tap}
               type="submit"
               disabled={isStarting}
               className="min-h-12 rounded-full bg-print px-7 text-base font-semibold text-prussian hover:bg-white disabled:cursor-not-allowed disabled:opacity-55"
             >
               Begin
-            </button>
+            </motion.button>
           </form>
 
           <div className="mt-4 min-h-11">
@@ -132,19 +154,25 @@ export default function LandingScreen({ onStart, topic, isStarting, error, isSou
                 )}
               </div>
             ) : examples.length > 0 ? (
-              <p className="flex flex-wrap items-center gap-x-4 text-sm text-fog">
-                <span>Try</span>
+              <motion.p
+                className="flex flex-wrap items-center gap-x-4 text-sm text-fog"
+                variants={staggerParent(0.08, 0.35)}
+                initial="hidden"
+                animate={isTextReady || reduce ? 'show' : 'hidden'}
+              >
+                <motion.span variants={staggerChild(8)}>Try</motion.span>
                 {examples.map((ex) => (
-                  <button
+                  <motion.button
+                    variants={staggerChild(8)}
                     key={ex}
                     type="button"
                     onClick={() => { setValue(ex); begin(ex) }}
                     className="min-h-11 text-print underline decoration-print/30 underline-offset-4 hover:decoration-print"
                   >
                     {ex}
-                  </button>
+                  </motion.button>
                 ))}
-              </p>
+              </motion.p>
             ) : null}
           </div>
         </motion.div>

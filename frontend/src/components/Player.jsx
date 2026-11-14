@@ -1,6 +1,7 @@
 // OWNER: Person B
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { EASE } from '../lib/motion.js'
 import Stage from './Stage.jsx'
 import NarrativeCard from './NarrativeCard.jsx'
 import ChoiceButtons from './ChoiceButtons.jsx'
@@ -56,7 +57,20 @@ function IconButton({ label, onClick, children, isPressed, badge }) {
     >
       {children}
       <span className="max-[400px]:sr-only">{label}</span>
-      {badge != null && <span className="text-xs text-fog">{badge}</span>}
+      <AnimatePresence mode="popLayout" initial={false}>
+        {badge != null && (
+          <motion.span
+            key={badge}
+            className="inline-block text-xs text-fog"
+            initial={{ opacity: 0, y: -6, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.3, ease: EASE }}
+          >
+            {badge}
+          </motion.span>
+        )}
+      </AnimatePresence>
     </button>
   )
 }
@@ -225,11 +239,16 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
       </header>
 
       <div className="mx-auto w-full max-w-[1600px] flex-1 lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="hidden px-8 pt-4 lg:block">
+        <motion.aside
+          className="hidden px-8 pt-4 lg:block"
+          initial={{ opacity: 0, x: -16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+        >
           <div className="sticky top-6">
             <LensRail perspectives={perspectives} current={shown?.perspective} grades={grades} heardCounts={heardCounts} onSelect={selectLens} isBusy={isLoading} />
           </div>
-        </aside>
+        </motion.aside>
 
         <main className="pb-44 sm:px-8 lg:pr-12 lg:pl-4 lg:pb-32">
           <div className="stage-wrap">
@@ -312,7 +331,12 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
       </div>
 
       {/* control strip: graph, map, sources, ask, voice; narration and sound always reachable */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-print/10 bg-developer/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm">
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-print/10 bg-developer/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm"
+      >
         <div className="mx-auto flex max-w-[1600px] flex-col gap-1 px-2 py-2 sm:px-6 lg:flex-row lg:items-center lg:gap-4">
           <form onSubmit={submitQuestion} className="order-1 flex flex-1 items-center gap-1 lg:order-2">
             <label htmlFor="ask-input" className="sr-only">
@@ -363,7 +387,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
             <AmbientPlayer mood={shown?.mood} isOn={isAmbientOn} onToggle={() => setIsAmbientOn((v) => !v)} />
           </div>
         </div>
-      </div>
+      </motion.div>
 
       <SourcePanel
         sources={sources}
