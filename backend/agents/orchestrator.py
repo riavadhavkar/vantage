@@ -1,68 +1,51 @@
 """run_pipeline(session_id, choice_id, question, mode) -> Segment. Owner: A.
-Right now this returns MOCK segments so the frontend can build. Gemini comes next.
+Uses the Gemini narrator. If Gemini fails, falls back to mock segments so the demo never breaks.
 """
 from typing import Optional
 
 from enums import Mode
-from schemas import Segment, Choice, Location, Contradiction, ContradictionSide
+from schemas import Segment, Choice, Location
 from state import session_store
 from config import VOICE_BY_PERSPECTIVE
+from agents.narrator_agent import NarratorAgent
+from agents.mock_segments import MOCK_SEGMENTS
 
-MOCK_SEGMENTS = [
-    dict(
-        segment_id="seg_mountbatten_plan",
-        title="A deadline moved forward",
-        narrative_text=(
-            "In June 1947, Lord Mountbatten announced that British rule in India would end "
-            "within weeks, not months. Two new nations would be created, and millions of people "
-            "suddenly had to wonder which side of a line their homes would fall on."
-        ),
-        perspective="narrator",
-        mood="tense",
-        scene_prompt="A crowded radio room in Delhi, people leaning in to listen to an announcement",
-        location=Location(lat=28.61, lng=77.21, label="Delhi"),
-        date_label="June 1947",
-        source_ids=["src_mountbatten_plan"],
-        choices=[
-            Choice(choice_id="ch_radcliffe_line", label="See how the border was drawn",
-                   perspective="british_raj", choice_type="what_next"),
-            Choice(choice_id="ch_refugee_trains", label="Follow the families who had to leave",
-                   perspective="refugee", choice_type="perspective_shift"),
-        ],
-    ),
-    dict(
-        segment_id="seg_radcliffe_line_drawn",
-        title="A line drawn in five weeks",
-        narrative_text=(
-            "Cyril Radcliffe had never been to India. He was given about five weeks and outdated "
-            "maps to divide Punjab and Bengal. The final border was kept secret until after "
-            "independence day."
-        ),
-        perspective="british_raj",
-        mood="somber",
-        scene_prompt="A colonial office at night, maps spread across a heavy wooden desk",
-        location=Location(lat=31.52, lng=74.36, label="Lahore"),
-        travel_from=Location(lat=28.61, lng=77.21, label="Delhi"),
-        date_label="August 1947",
-        source_ids=["src_radcliffe_report"],
-        connected_to=["seg_mountbatten_plan"],
-        edge_type="happened_next",
-        choices=[
-            Choice(choice_id="ch_refugee_trains", label="Follow the families who had to leave",
-                   perspective="refugee", choice_type="perspective_shift"),
-            Choice(choice_id="ch_death_toll", label="How many people died?",
-                   perspective="historian", choice_type="go_deeper"),
-        ],
-        contradiction=Contradiction(
-            contradiction_id="con_death_toll",
-            claim="Number of people killed during Partition",
-            side_a=ContradictionSide(text="About 200,000", source_id="src_british_estimate"),
-            side_b=ContradictionSide(text="Up to 2 million", source_id="src_later_historians"),
-            explanation="Early official estimates counted only reported deaths; later historians "
-                        "used migration and census data.",
-        ),
-    ),
-]
+_narrator = NarratorAgent()
+
+EDGE_BY_CHOICE_TYPE = {
+    "perspective_shift": "opposing_view",
+    "go_deeper": "deeper_context",
+    "what_next": "happened_next",
+    "primary_source": "deeper_context",
+}
+
+
+def _describe_action(state: dict, choice_id: Optional[str], question: Optional[str]) -> tuple:
+    """Returns (action text for the prompt, edge_type)."""
+    if question:
+        return f'The viewer asked: "{question}". Answer it as the next segment.', "deeper_context"
+    if choice_id:
+        choice = state.get("offered_choices", {}).get(choice_id)
+        if choice:
+            return (f'The viewer chose: "{choice["label"]}" '
+                    f'(perspective: {choice["perspective"]}, type: {choice["choice_type"]}).',
+                    EDGE_BY_CHOICE_TYPE.get(choice["choice_type"], "happened_next"))
+        return "The viewer chose to continue.", "happened_next"
+    return "The viewer just started. Open the documentary with a strong hook.", None
+
+
+def _unique_id(state: dict, slug: str) -> str:
+    base = "seg_" + slug
+    seg_id, n = base, 2
+    while seg_id in state["seen_segment_ids"]:
+        seg_id, n = f"{base}_{n}", n + 1
+    return seg_id
+
+
+def _mock(state: dict) -> dict:
+    data = dict(MOCK_SEGMENTS[len(state["seen_segment_ids"]) % len(MOCK_SEGMENTS)])
+    data["segment_id"] = _unique_id(state, data.pop("segment_id").removeprefix("seg_"))
+    return data
 
 
 def run_pipeline(session_id: str, choice_id: Optional[str] = None,
@@ -71,16 +54,46 @@ def run_pipeline(session_id: str, choice_id: Optional[str] = None,
     if state is None:
         return None
 
-    index = len(state["seen_segment_ids"]) % len(MOCK_SEGMENTS)
-    data = dict(MOCK_SEGMENTS[index])
+    action, edge_type = _describe_action(state, choice_id, question)
+    history = state.get("history", [])
+    previous_id = state["current_segment_id"]
+    previous_location = state.get("last_location")
+
+    try:
+        out = _narrator.run(state["topic"].replace("_", " "), history, action)
+        data = {
+            "segment_id": _unique_id(state, out["slug"]),
+            "title": out["title"],
+            "narrative_text": out["narrative_text"],
+            "perspective": out["perspective"],
+            "mood": out["mood"],
+            "scene_prompt": out["scene_prompt"],
+            "location": Location(**out["location"]) if out["location"] else None,
+            "date_label": out["date_label"],
+            "choices": [Choice(**c) for c in out["choices"]],
+        }
+    except Exception as e:
+        print(f"[orchestrator] narrator failed, using mock: {str(e)[:200]}")
+        data = _mock(state)
+
     data["session_id"] = session_id
-    data["voice_id"] = VOICE_BY_PERSPECTIVE.get(data["perspective"]) or None
-    if question:
-        data["title"] = "You asked: " + question
+    data["voice_id"] = VOICE_BY_PERSPECTIVE.get(str(data["perspective"])) or None
+    if previous_id:
+        data["connected_to"] = [previous_id]
+        data["edge_type"] = edge_type
+    loc = data.get("location")
+    if previous_location and loc and previous_location["label"] != loc.label:
+        data["travel_from"] = Location(**previous_location)
+
     segment = Segment(**data)
 
     state["seen_segment_ids"].append(segment.segment_id)
     state["current_segment_id"] = segment.segment_id
     state["current_perspective"] = segment.perspective.value
+    state.setdefault("history", []).append(
+        f"{segment.title} ({segment.perspective.value}): {segment.narrative_text[:160]}")
+    state["offered_choices"] = {c.choice_id: c.model_dump(mode="json") for c in segment.choices}
+    if segment.location:
+        state["last_location"] = segment.location.model_dump()
     session_store.save_viewer_state(state)
     return segment
