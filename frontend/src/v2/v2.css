@@ -28,7 +28,7 @@
   --color-fiber: #efede6;
   --color-safelight: #ff6a4d;
   --color-safelight-text: #ff8f78;
-  --font-sans: 'Archivo Variable', 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Archivo Variable', 'Geist Variable', 'Noto Sans Devanagari', ui-sans-serif, system-ui, sans-serif;
   --font-quote: 'Newsreader Variable', 'Iowan Old Style', Georgia, serif;
 
   min-height: 100dvh;
