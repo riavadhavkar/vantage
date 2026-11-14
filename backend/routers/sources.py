@@ -1,3 +1,4 @@
-"""OWNER: Person A
-TODO: implement sources.
-"""
+"""/api/sources, /api/graph. Owner: A."""
+from fastapi import APIRouter
+
+router = APIRouter()

@@ -1,3 +1,4 @@
-"""OWNER: Person A
-TODO: implement segments.
-"""
+"""/api/start, /api/next-segment, /api/ask. Owner: A."""
+from fastapi import APIRouter
+
+router = APIRouter()
