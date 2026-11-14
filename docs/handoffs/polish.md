@@ -1,6 +1,6 @@
 # Handoff: landing redo and 13 player fixes
 
-**Branch:** `b/ui-polish`, worktree `../vantage-polish`, from `main` at `04986bb`. 18 commits, not pushed.
+**Branch:** `b/ui-polish`, worktree `../vantage-polish`, from `main` at `04986bb`. 21 commits, not pushed.
 **Tested with:** the in-browser mock server and the cached demo. The real backend was not running (`curl localhost:8000/api/health` refused both times I checked), so nothing here was tried against live `/api/translate`, `/api/tts` or `/api/image`.
 
 ## How to review

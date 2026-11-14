@@ -273,7 +273,7 @@ Handoff is written. Waiting for review. No cutover without approval.
 
 ## 2026-11-14 16:45 EST. UI polish: landing redo and 13 player fixes (Person B)
 
-**Branch:** `b/ui-polish` in `../vantage-polish`, from `main` at `04986bb`. 18 commits, not pushed. Details in `docs/handoffs/polish.md`.
+**Branch:** `b/ui-polish` in `../vantage-polish`, from `main` at `04986bb`. 21 commits, not pushed. Details in `docs/handoffs/polish.md`.
 
 **Housekeeping:** deleted merged local branches `b/v2-only`, `b/graph-ui`, `b/media`, `b/ui-sketch` and the `../vantage-sketch` worktree; deleted merged remote `b/graph-ui`, `b/ui-sketch`, `b/v2-only`. Skipped `b/ui-redesign` (live worktree with a dev server, 2 unpushed commits). Removed unused classic CSS, an unused font package, and dead pin code.
 
