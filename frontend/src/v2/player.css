@@ -84,3 +84,63 @@ html[data-lite] .v2-pan { animation: none; }
   .v2-titlecard { display: none; }
 }
 html[data-motion='off'] .v2-titlecard { display: none; }
+
+/* ---------- lens ring (rows 12, 23, 24) ---------- */
+.v2-ringwrap { position: relative; z-index: 2; }
+.v2-ring { position: relative; height: var(--ring-h); overflow: hidden; border-top: 1px solid var(--line); background: var(--glass); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); padding-bottom: env(safe-area-inset-bottom); box-sizing: content-box; }
+.v2-ring-ticks { position: absolute; top: 0; left: 50%; width: 6000px; margin-left: -3000px; height: 14px; background: repeating-linear-gradient(90deg, rgb(255 255 255 / 0.5) 0 1px, transparent 1px 29.5px), repeating-linear-gradient(90deg, rgb(255 255 255 / 0.28) 0 1px, transparent 1px 5.9px); background-size: auto 14px, auto 6px; background-repeat: repeat-x; transition: transform var(--duration-signature) var(--ease-move); will-change: transform; }
+.v2-ring-index { position: absolute; top: 0; left: 50%; z-index: 1; width: 2px; height: 22px; margin-left: -1px; background: var(--signal); }
+.v2-ring-marks { position: absolute; top: 22px; left: 50%; transition: transform var(--duration-signature) var(--ease-move); will-change: transform; }
+.v2-mark { position: absolute; top: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 64px; padding: 0 12px; text-align: center; color: var(--dim); transition: color var(--duration-micro) linear, opacity var(--duration-panel) linear; }
+.v2-mark-name { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; line-height: 18px; font-weight: 420; font-variation-settings: 'wdth' 84; transition: font-variation-settings var(--duration-panel) var(--ease-move), font-weight var(--duration-panel) var(--ease-move), transform var(--duration-micro) var(--ease-enter); text-align: left; }
+.v2-mark-sub { font-family: var(--font-mono); font-size: 12px; line-height: 16px; color: var(--dim); }
+/* each point of view shows once: copies outside the current turn of the ring stay hidden */
+.v2-mark.is-ghost { opacity: 0; pointer-events: none; }
+.v2-mark:hover:not(:disabled):not(.is-on) { color: var(--text); }
+.v2-mark:active:not(:disabled) .v2-mark-name { transform: scale(0.97); }
+.v2-mark:disabled:not(.is-ghost) { opacity: 0.5; }
+.v2-mark.is-on { color: var(--accent); }
+.v2-mark.is-on .v2-mark-name { font-weight: 640; font-variation-settings: 'wdth' 112; }
+/* row 24: a point of view not heard yet pulses once, then rests */
+.v2-mark.is-unheard:not(.is-on) .v2-mark-name { animation: v2-once var(--duration-scene) var(--ease-move) 1 both; animation-delay: calc(var(--duration-slow) + var(--stagger) * 2 * var(--n)); }
+@keyframes v2-once { 0% { opacity: 1; } 40% { opacity: 0.35; } 100% { opacity: 1; } }
+/* row 23: the coverage ring draws itself when a view is first heard */
+.v2-cov { flex: none; width: 14px; height: 14px; transform: rotate(-90deg); }
+.v2-cov circle { fill: none; stroke-width: 2; }
+.v2-cov-track { stroke: currentColor; opacity: 0.3; }
+.v2-cov-fill { stroke: var(--accent); stroke-dasharray: 1; transition: stroke-dashoffset var(--duration-scene) var(--ease-move); }
+
+/* ---------- choices (rows 20 to 22) ---------- */
+.v2-choices { display: flex; flex-direction: column; gap: 8px; }
+.v2-choice { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 12px; width: 100%; min-height: 64px; padding: 12px 16px; overflow: hidden; transition: background-color var(--duration-micro) linear, border-color var(--duration-micro) linear, transform var(--duration-micro) var(--ease-enter), opacity var(--duration-quick) linear; }
+.v2-choice::before { content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 2px; background: var(--accent); transform: scaleY(0); transition: transform var(--duration-micro) var(--ease-enter); }
+.v2-choice:hover:not(:disabled), .v2-choice:focus-visible { background: rgb(28 32 38 / 0.88); border-color: rgb(255 255 255 / 0.3); }
+.v2-choice:hover:not(:disabled)::before, .v2-choice:focus-visible::before, .v2-choice.is-pending::before { transform: scaleY(1); }
+.v2-choice:active:not(:disabled) { transform: scale(0.985); }
+.v2-choice:disabled { opacity: 0.45; }
+.v2-choice.is-pending { opacity: 1; border-color: var(--accent); }
+.v2-choice-dot { grid-row: span 2; width: 12px; height: 12px; border-radius: 999px; background: var(--accent); }
+.v2-choice-label { font-size: 17px; line-height: 22px; font-weight: 560; }
+.v2-choice-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; line-height: 16px; color: var(--dim); }
+.v2-choice.is-pending .v2-choice-meta { color: var(--accent); }
+/* row 21: the chosen row's dot grows into a wash that starts the scene change */
+.v2-wash { position: fixed; z-index: 4; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 999px; pointer-events: none; }
+.v2-end { padding: 16px; }
+.v2-end p { font-size: 17px; line-height: 24px; }
+.v2-end p + p { margin-top: 4px; font-size: 13px; line-height: 19px; color: var(--dim); }
+.v2-end-actions { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------- ask ---------- */
+.v2-ask { display: flex; align-items: center; gap: 4px; padding: 4px 4px 4px 16px; border-radius: 999px; }
+.v2-ask:focus-within { border-color: rgb(255 255 255 / 0.45); }
+.v2-ask input { flex: 1; min-width: 0; height: 44px; border: 0; background: none; color: var(--text); font: 15px/22px var(--font-sans); font-variation-settings: 'wdth' 100; }
+.v2-ask input::placeholder { color: var(--dim); opacity: 0.8; }
+.v2 .v2-ask input:focus-visible { outline: none; }
+
+@media (max-width: 899px) {
+  .v2-player .v2-ringwrap { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; }
+  .v2-mark-name { font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .v2-mark.is-unheard:not(.is-on) .v2-mark-name { animation: none; }
+}

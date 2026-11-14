@@ -115,11 +115,15 @@ export default function usePlayer({ session, topic, isSoundOn }) {
     lastAction.current?.()
   }, [clearError])
 
+  // Counts what has actually been shown: a scene that has arrived but is still behind the
+  // focus pull does not count as heard yet.
   const heard = useMemo(() => {
     const m = {}
-    for (const s of segments) if (s.is_grounded) m[s.perspective] = (m[s.perspective] || 0) + 1
+    const shownIndex = segments.findIndex((s) => s.segment_id === shown?.segment_id)
+    const list = shownIndex >= 0 ? segments.slice(0, shownIndex + 1) : segments
+    for (const s of list) if (s.is_grounded) m[s.perspective] = (m[s.perspective] || 0) + 1
     return m
-  }, [segments])
+  }, [segments, shown])
 
   // Graph from GET /api/graph while it is open; falls back to the scenes this browser has seen.
   const [isGraphOpen, setIsGraphOpen] = useState(false)

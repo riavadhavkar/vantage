@@ -1,26 +1,66 @@
-// The new player: a full-bleed stage with the story on glass over it.
-import { useState } from 'react'
-import { useTransform } from 'motion/react'
+// The new player: a full-bleed stage with the story on glass over it, and a lens ring that
+// decides who is telling it. Data and actions come from usePlayer (same calls as classic).
+import { useCallback, useEffect, useState } from 'react'
+import { AnimatePresence, motion, useTransform } from 'motion/react'
 import { Aperture, Volume2, VolumeX } from 'lucide-react'
 import usePlayer from './usePlayer.js'
 import Frame from './Frame.jsx'
 import Captions from './Captions.jsx'
-import { DataBadge, IconBtn } from './ui.jsx'
+import LensRing from './LensRing.jsx'
+import Choices from './Choices.jsx'
+import VoiceInputButton from '../components/VoiceInputButton.jsx'
+import ContinueOnPhone from '../components/ContinueOnPhone.jsx'
+import { DURATION, EASING } from '../constants/theme.js'
+import { sec } from '../lib/motionMode.js'
+import { Btn, DataBadge, IconBtn, Waiting } from './ui.jsx'
 import './player.css'
 
 export default function Player({ session, topic, isSoundOn, onToggleSound, onExit, dataSource, shouldReveal = false }) {
   const P = usePlayer({ session, topic, isSoundOn })
-  const { shown, pull, look, isCalm } = P
-  const [, setIsTyped] = useState(false)
+  const { shown, pull, look, lookOf, isCalm, isLoading, pending } = P
+  const [isTyped, setIsTyped] = useState(false)
+  useEffect(() => setIsTyped(false), [shown?.segment_id])
   const isPulling = pull.phase !== 'idle'
   const textOpacity = useTransform(pull.soft, (s) => 1 - 0.65 * s)
+
+  // Row 21: the chosen row's dot grows into a wash over the frame.
+  const [wash, setWash] = useState(null)
+  const choose = useCallback(
+    (choice, dot) => {
+      const r = dot?.getBoundingClientRect()
+      if (r && !isCalm) setWash({ id: choice.choice_id, x: r.left + r.width / 2, y: r.top + r.height / 2, color: lookOf(choice.perspective).accent })
+      P.doChoose(choice)
+    },
+    [P, isCalm, lookOf],
+  )
+
+  const [question, setQuestion] = useState('')
+  const submitQuestion = (e) => {
+    e.preventDefault()
+    const q = question.trim()
+    if (!q || isLoading) return
+    setQuestion('')
+    P.doAsk(q)
+  }
+
   if (!shown) return null
+  const showNext = isTyped && P.isCurrentShown && !isPulling
+  const waitingView = pending?.perspective && isPulling ? lookOf(pending.perspective).label : null
+  // The ring turns as soon as a view is asked for and keeps its target until the frame has caught up,
+  // so it travels once: from the request to the moment the new scene is sharp.
+  const known = (id) => (id && P.perspectives.some((p) => p.perspective_id === id) ? id : null)
+  const ringTarget = known(pending?.perspective) || known(session.currentSegment?.perspective) || shown.perspective
 
   return (
     <main className={`v2-player ${shouldReveal && !isCalm ? 'v2-reveal' : ''}`} style={{ '--accent': look.accent }}>
       <Frame segment={shown} look={look} imageUrl={P.narration.imageUrl} imageStatus={P.narration.imageStatus} soft={pull.soft} isPulling={isPulling} isCalm={isCalm} isUngrounded={!shown.is_grounded}>
         {shown.date_label && shown.is_grounded && !isPulling && (
           <p key={shown.segment_id} className="v2-titlecard" aria-hidden="true"><span>{shown.date_label}</span></p>
+        )}
+        {waitingView && (
+          <div className="v2-stage-status">
+            <Waiting message={`Finding ${waitingView.replace(/^The /, 'the ')}`} slowMessage="Still writing this view from the sources. It can take a few seconds." />
+          </div>
         )}
       </Frame>
 
@@ -43,14 +83,65 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
           isCalm={isCalm}
           narration={P.narration}
           sourcesById={P.sourcesById}
-          lookOf={P.lookOf}
+          lookOf={lookOf}
           textOpacity={textOpacity}
           onTyped={setIsTyped}
           onOpenEvidence={() => {}}
           onRecover={P.recover}
         />
-        <div className="v2-side" />
+
+        <motion.div className="v2-side" style={{ opacity: textOpacity }}>
+          {showNext &&
+            (shown.is_final ? (
+              <div className="v2-glass v2-end">
+                <p>This thread ends here.</p>
+                <p>Hear the same story from another side, or start again.</p>
+                <div className="v2-end-actions">
+                  <Btn variant="quiet" onClick={P.recover} disabled={isLoading}>Try another point of view</Btn>
+                  <Btn variant="ghost" onClick={onExit}>Start a new topic</Btn>
+                </div>
+              </div>
+            ) : (
+              <Choices key={shown.segment_id} choices={shown.is_grounded ? shown.choices : []} lookOf={lookOf} onChoose={choose} isBusy={isLoading} pendingChoiceId={pending?.choiceId} isCalm={isCalm} />
+            ))}
+          {showNext && (
+            <form className="v2-glass v2-ask" onSubmit={submitQuestion}>
+              <label htmlFor="v2-ask" className="v2-sr">Ask a question about this moment</label>
+              <input id="v2-ask" value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Ask about this moment" autoComplete="off" />
+              <VoiceInputButton onTranscript={setQuestion} isDisabled={isLoading} />
+              <Btn type="submit" variant="ghost" disabled={!question.trim() || isLoading} isLoading={pending?.kind === 'ask' && !pending?.perspective}>Ask</Btn>
+            </form>
+          )}
+          <ContinueOnPhone linkCode={session.linkCode} />
+        </motion.div>
       </div>
+
+      <div className="v2-ringwrap">
+        <LensRing
+          perspectives={P.perspectives}
+          activeId={ringTarget}
+          waitingId={pending?.perspective || null}
+          heard={P.heard}
+          lookOf={lookOf}
+          onSelect={P.selectPerspective}
+          isBusy={isLoading || isPulling}
+        />
+      </div>
+
+      <AnimatePresence>
+        {wash && (
+          <motion.i
+            key={wash.id}
+            aria-hidden="true"
+            className="v2-wash"
+            style={{ left: wash.x, top: wash.y, backgroundColor: wash.color }}
+            initial={{ scale: 0.5, opacity: 0.5 }}
+            animate={{ scale: 90, opacity: 0 }}
+            transition={{ duration: sec(DURATION.scene), ease: EASING.enter }}
+            onAnimationComplete={() => setWash(null)}
+          />
+        )}
+      </AnimatePresence>
     </main>
   )
 }
