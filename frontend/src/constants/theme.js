@@ -9,6 +9,10 @@ export const COLORS = Object.freeze({
   fiber: '#D9D8CC',
   safelight: '#D2402F',
   safelightText: '#F0715F',
+  // Light paper surface for the landing page (evidence side of the product)
+  paper: '#F4F3EE',
+  inkMuted: '#5B6B78',
+  safelightInk: '#B8321F',
 })
 
 export const FADE_MS = 700

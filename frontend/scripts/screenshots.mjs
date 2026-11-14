@@ -37,6 +37,7 @@ for (const vp of WIDTHS) {
   await page.goto(BASE + QUERY)
   await settle(page, 4200)
   await shot(page, `landing-${vp.name}`)
+  await page.screenshot({ path: `${out}/${PREFIX}landing-full-${vp.name}.png`, fullPage: true })
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
   if (overflow > 0) console.log(`[${vp.name}] horizontal overflow: ${overflow}px`)
 

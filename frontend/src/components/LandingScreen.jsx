@@ -1,17 +1,21 @@
 // OWNER: Person B
+// The landing page is paper (light, evidence) and the story is a screen (dark).
+// Hero: two sources that disagree, split by a seam the viewer can drag.
 import { useEffect, useMemo, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import HeroTriptych from './HeroTriptych.jsx'
+import SeamHero from './SeamHero.jsx'
+import { examplesFrom } from '../lib/seamExamples.js'
 import LoadingState from './LoadingState.jsx'
 import DataSourceNote from './DataSourceNote.jsx'
 import SoundToggle from './SoundToggle.jsx'
-import { staggerParent, staggerChild, tap } from '../lib/motion.js'
-import { NEUTRAL_GRADE_COLORS, gradeFor, EASE_FOCUS } from '../constants/theme.js'
-import { sceneKindFor } from '../lib/scene.js'
+import ApertureGlyph from './ApertureGlyph.jsx'
+import { SAMPLE_BUNDLES } from '../mocks/index.js'
 import { unlockAudio } from '../lib/audio.js'
 import { messageFor } from '../api/errors.js'
+import { EASE, staggerParent, staggerChild, tap } from '../lib/motion.js'
 
-const HEADLINE = 'See what happened from every side, and check every claim against its source.'
+const HEADLINE = 'Hear every side of the story.'
+const SUBHEAD = 'One event, told from every point of view, with every claim tied to its source and every disagreement in plain sight.'
 
 const EXAMPLE_TOPICS = (import.meta.env.VITE_VANTAGE_EXAMPLE_TOPICS || '')
   .split(',')
@@ -26,24 +30,27 @@ const EXAMPLE_TOPICS = (import.meta.env.VITE_VANTAGE_EXAMPLE_TOPICS || '')
 export default function LandingScreen({ onStart, topic, isStarting, error, isSoundOn, onToggleSound, dataSource }) {
   const reduce = useReducedMotion()
   const [value, setValue] = useState('')
-  const [isIntroDone, setIsIntroDone] = useState(false)
-  // Text arrives while the hero is still teaching the focus pull, not after it.
-  const [isTextReady, setIsTextReady] = useState(false)
+
+  // Paper surface while the landing page is up.
   useEffect(() => {
-    const t = setTimeout(() => setIsTextReady(true), 1100)
-    return () => clearTimeout(t)
+    const html = document.documentElement
+    html.dataset.surface = 'paper'
+    const meta = document.querySelector('meta[name=theme-color]')
+    meta?.setAttribute('content', '#F4F3EE')
+    return () => {
+      delete html.dataset.surface
+      meta?.setAttribute('content', '#0A1E30')
+    }
   }, [])
 
-  const grades = useMemo(() => {
-    const colors = topic?.perspectives?.length >= 3 ? topic.perspectives.slice(0, 3).map((p) => p.color) : NEUTRAL_GRADE_COLORS
-    return colors.map(gradeFor)
-  }, [topic])
-
-  // From GET /api/topic when it exists; otherwise from VITE_VANTAGE_EXAMPLE_TOPICS (config, not code).
   const examples = useMemo(() => {
+    // Cached demo and mocks: offer each topic the demo can play.
+    if (dataSource !== 'live') return SAMPLE_BUNDLES.map((b) => b.topic.title)
     if (topic) return [...new Set([topic.title, ...(topic.aliases || [])])].slice(0, 3)
     return EXAMPLE_TOPICS
-  }, [topic])
+  }, [topic, dataSource])
+
+  const seamExamples = useMemo(() => examplesFrom(SAMPLE_BUNDLES), [])
 
   const begin = (text) => {
     const t = (text ?? value).trim()
@@ -57,136 +64,126 @@ export default function LandingScreen({ onStart, topic, isStarting, error, isSou
   }
 
   const suggestions = error?.code === 'topic_not_supported' ? error.suggestions : []
-  const fadeIn = (delay) =>
-    reduce
-      ? {}
-      : { initial: { opacity: 0 }, animate: { opacity: isTextReady ? 1 : 0 }, transition: { duration: 0.5, delay, ease: EASE_FOCUS } }
+  const enter = (delay) => (reduce ? {} : { initial: { opacity: 0, y: 14 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.6, delay, ease: EASE } })
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-[1600px] flex-col px-4 pb-8 sm:px-8">
-      <header className="flex h-14 items-center justify-between">
-        <span className="text-sm text-fog">{topic ? 'An interactive documentary' : ''}</span>
-        <SoundToggle isOn={isSoundOn} onToggle={onToggleSound} />
+    <main className="mx-auto flex min-h-dvh max-w-[1200px] flex-col px-4 pb-8 text-prussian sm:px-8">
+      <header className="grid h-16 grid-cols-[1fr_auto_1fr] items-center">
+        <span />
+        <motion.p className="flex items-center gap-2 text-[17px] font-semibold tracking-[-0.02em]" {...enter(0)}>
+          vantage
+          <ApertureGlyph color="currentColor" isOpen size={18} />
+        </motion.p>
+        <div className="flex justify-end">
+          <SoundToggle isOn={isSoundOn} onToggle={onToggleSound} className="text-prussian hover:bg-prussian/5 sm:hidden" isCompact />
+          <SoundToggle isOn={isSoundOn} onToggle={onToggleSound} className="hidden text-prussian hover:bg-prussian/5 sm:inline-flex" />
+        </div>
       </header>
 
-      <HeroTriptych
-        grades={grades}
-        sceneSeed={topic?.topic_id || 'vantage'}
-        sceneKind={sceneKindFor(`${topic?.one_line || ''} ${topic?.title || ''}`)}
-        isIntroDone={isIntroDone}
-        onIntroDone={() => setIsIntroDone(true)}
-      />
+      <section className="mx-auto mt-10 max-w-[760px] text-center sm:mt-16">
+        <h1 className="text-[38px] font-semibold leading-[42px] tracking-[-0.035em] text-balance sm:text-[60px] sm:leading-[62px] lg:text-[72px] lg:leading-[74px]">
+          <span className="sr-only">Vantage. {HEADLINE}</span>
+          <motion.span aria-hidden="true" variants={staggerParent(0.06, 0.1)} initial={reduce ? false : 'hidden'} animate="show">
+            {HEADLINE.split(' ').map((w, i) => (
+              <motion.span key={i} variants={staggerChild(20)} className="inline-block">
+                {w}&nbsp;
+              </motion.span>
+            ))}
+          </motion.span>
+        </h1>
+        <motion.p className="mx-auto mt-5 max-w-[56ch] text-[17px] leading-[27px] text-ink-muted text-pretty sm:text-[19px] sm:leading-[30px]" {...enter(0.5)}>
+          {SUBHEAD}
+        </motion.p>
+      </section>
 
-      <div className="mt-8 grid gap-8 md:mt-10 md:grid-cols-12 md:gap-6">
-        <motion.div className="md:col-span-6" {...fadeIn(0)}>
-          <h1 className="text-[30px] font-semibold leading-[36px] tracking-[-0.025em] text-balance text-print sm:text-[40px] sm:leading-[46px] lg:text-[48px] lg:leading-[54px]">
-            <span className="sr-only">Vantage. </span>
-            <motion.span
-              aria-hidden="true"
-              variants={staggerParent(0.045)}
-              initial="hidden"
-              animate={isTextReady || reduce ? 'show' : 'hidden'}
-            >
-              {HEADLINE.split(' ').map((w, i) => (
-                <motion.span key={i} variants={staggerChild(18)} className="inline-block">
-                  {w}&nbsp;
-                </motion.span>
-              ))}
-            </motion.span>
-            <span className="sr-only">{HEADLINE}</span>
-          </h1>
-        </motion.div>
+      <motion.div className="mt-10 sm:mt-14" {...enter(0.7)}>
+        <SeamHero examples={seamExamples} />
+      </motion.div>
 
-        <motion.div className="md:col-span-6 md:col-start-7 lg:col-span-5 lg:col-start-8" {...fadeIn(0.12)}>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              begin()
-            }}
-            className="flex flex-col gap-3 sm:flex-row"
+      <motion.section className="mx-auto mt-12 w-full max-w-[640px] sm:mt-16" {...enter(0.9)} aria-label="Start a story">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            begin()
+          }}
+          className="flex flex-col gap-3 sm:flex-row"
+        >
+          <label htmlFor="topic-input" className="sr-only">
+            Topic
+          </label>
+          <input
+            id="topic-input"
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder="Type a topic"
+            autoComplete="off"
+            className="min-h-12 flex-1 rounded-full border border-prussian/20 bg-white/70 px-5 text-base text-prussian placeholder:text-ink-muted focus:border-prussian/60 focus:outline-none"
+            aria-describedby={error ? 'start-error' : undefined}
+          />
+          <motion.button
+            {...tap}
+            type="submit"
+            disabled={isStarting}
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-prussian px-7 text-base font-medium text-paper hover:bg-developer disabled:cursor-wait disabled:opacity-70"
           >
-            <label htmlFor="topic-input" className="sr-only">
-              Topic
-            </label>
-            <input
-              id="topic-input"
-              type="text"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder="Type a topic"
-              autoComplete="off"
-              className="min-h-12 flex-1 rounded-md border border-print/20 bg-developer px-4 text-base text-print placeholder:text-fog focus:border-print/60 focus:outline-none"
-              aria-describedby={error ? 'start-error' : undefined}
+            Begin
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+              <path d="M4 10L10 4M5 4h5v5" />
+            </svg>
+          </motion.button>
+        </form>
+
+        <div className="mt-4 min-h-11 text-center">
+          {isStarting ? (
+            <LoadingState
+              tone="paper"
+              message="Opening the archive..."
+              slowMessage="Still reading the sources. The first scene can take a few seconds."
+              className="min-h-11 justify-center"
             />
-            <motion.button
-              {...tap}
-              type="submit"
-              disabled={isStarting}
-              className="min-h-12 rounded-full bg-print px-7 text-base font-semibold text-prussian hover:bg-white disabled:cursor-not-allowed disabled:opacity-55"
-            >
-              Begin
-            </motion.button>
-          </form>
-
-          <div className="mt-4 min-h-11">
-            {isStarting ? (
-              <LoadingState
-                message="Opening the archive..."
-                slowMessage="Still reading the sources. The first scene can take a few seconds."
-                className="min-h-11"
-              />
-            ) : error ? (
-              <div id="start-error" role="alert">
-                <p className="flex items-start gap-2 text-sm text-print">
-                  <span aria-hidden="true" className="mt-2.5 block h-px w-4 shrink-0 bg-safelight" />
-                  {messageFor(error)}
-                </p>
-                {suggestions.length > 0 && (
-                  <ul className="mt-2 flex flex-wrap gap-x-4">
-                    {suggestions.map((s) => (
-                      <li key={s}>
-                        <button type="button" onClick={() => { setValue(s); begin(s) }} className="min-h-11 text-sm text-print underline decoration-print/40 underline-offset-4 hover:decoration-print">
-                          {s}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ) : examples.length > 0 ? (
-              <motion.p
-                className="flex flex-wrap items-center gap-x-4 text-sm text-fog"
-                variants={staggerParent(0.08, 0.35)}
-                initial="hidden"
-                animate={isTextReady || reduce ? 'show' : 'hidden'}
-              >
-                <motion.span variants={staggerChild(8)}>Try</motion.span>
-                {examples.map((ex) => (
-                  <motion.button
-                    variants={staggerChild(8)}
-                    key={ex}
-                    type="button"
-                    onClick={() => { setValue(ex); begin(ex) }}
-                    className="min-h-11 text-print underline decoration-print/30 underline-offset-4 hover:decoration-print"
-                  >
-                    {ex}
-                  </motion.button>
-                ))}
-              </motion.p>
-            ) : null}
-          </div>
-        </motion.div>
-      </div>
-
-      <motion.footer className="mt-auto flex flex-col gap-3 pt-12 sm:flex-row sm:items-end sm:justify-between" {...fadeIn(0.24)}>
-        <p className="max-w-[46ch] text-sm text-fog">
-          Every documentary is one cut. This is the whole story, and it shows its sources.
-        </p>
-        <div className="flex flex-col gap-1 sm:items-end">
-          <DataSourceNote source={dataSource} />
-          <p className="text-xs text-fog">AI-generated images and voices are always labeled.</p>
+          ) : error ? (
+            <div id="start-error" role="alert">
+              <p className="inline-flex items-start gap-2 text-sm text-prussian">
+                <span aria-hidden="true" className="mt-2.5 block h-px w-4 shrink-0 bg-safelight-ink" />
+                {messageFor(error)}
+              </p>
+              {suggestions.length > 0 && (
+                <ul className="mt-1 flex flex-wrap justify-center gap-x-4">
+                  {suggestions.map((s) => (
+                    <li key={s}>
+                      <button type="button" onClick={() => { setValue(s); begin(s) }} className="min-h-11 text-sm text-prussian underline decoration-prussian/30 underline-offset-4 hover:decoration-prussian">
+                        {s}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : examples.length > 0 ? (
+            <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-ink-muted">
+              <span className="mr-1">Try</span>
+              {examples.map((ex) => (
+                <motion.button
+                  {...tap}
+                  key={ex}
+                  type="button"
+                  onClick={() => { setValue(ex); begin(ex) }}
+                  className="min-h-11 rounded-full border border-prussian/15 px-4 text-prussian hover:border-prussian/40"
+                >
+                  {ex}
+                </motion.button>
+              ))}
+            </p>
+          ) : null}
         </div>
-      </motion.footer>
+      </motion.section>
+
+      <footer className="mt-auto flex flex-col items-center gap-2 pt-16 text-center">
+        <p className="max-w-[52ch] text-sm text-ink-muted">Every documentary is one cut. This is the whole story, and it shows its sources.</p>
+        <p className="text-xs text-ink-muted">AI-generated images and voices are always labeled.</p>
+        <DataSourceNote source={dataSource} className="!text-ink-muted" />
+      </footer>
     </main>
   )
 }
