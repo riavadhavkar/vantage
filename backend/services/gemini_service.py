@@ -8,7 +8,7 @@ from google.genai import types
 from config import (GEMINI_API_KEY, GEMINI_TEXT_MODEL, GEMINI_FALLBACK_TEXT_MODEL,
                     GEMINI_IMAGE_MODEL, GEMINI_EMBED_MODEL, IMAGE_STYLE_PREFIX)
 
-_client = genai.Client(api_key=GEMINI_API_KEY)
+_client = genai.Client(api_key=GEMINI_API_KEY, http_options=types.HttpOptions(timeout=20000))
 
 
 def _generate(prompt: str, system: Optional[str], as_json: bool) -> str:

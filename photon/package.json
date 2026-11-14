@@ -1,0 +1,12 @@
+{
+  "name": "vantage-photon",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node bot.mjs",
+    "terminal": "node bot.mjs --terminal"
+  },
+  "dependencies": {
+    "spectrum-ts": "^12.16.0"
+  }
+}

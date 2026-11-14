@@ -46,3 +46,4 @@ XAI_TEXT_MODEL = os.getenv("XAI_TEXT_MODEL", "")
 
 # "fast" = single grounded narrator call, "deep" = deepagents Director + sub-agents
 AGENT_MODE = os.getenv("VANTAGE_AGENT_MODE", "fast").lower()
+PHOTON_PROJECT_ID = os.getenv("PHOTON_PROJECT_ID", "")
