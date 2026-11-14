@@ -1,9 +1,9 @@
-// Screenshots of the sketch layout on the v2 interface (?ui=v2). Mock dev server on 5175.
+// Screenshots of the sketch layout. Mock dev server on 5175.
 import { chromium } from 'playwright'
 import { mkdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-const BASE = 'http://localhost:5175/?ui=v2'
+const BASE = 'http://localhost:5175/'
 const out = resolve(dirname(fileURLToPath(import.meta.url)), '../screenshots')
 mkdirSync(out, { recursive: true })
 const browser = await chromium.launch()

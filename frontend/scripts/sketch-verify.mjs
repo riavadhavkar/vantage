@@ -5,9 +5,7 @@ import { mkdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-// UI=v2 runs every check against the v2 interface (?ui=v2)
-const Q = process.env.UI === 'v2' ? 'ui=v2' : ''
-const MOCK = `http://localhost:5175/?${Q}`
+const MOCK = 'http://localhost:5175/'
 const PLAIN = 'http://localhost:5176'
 const out = resolve(dirname(fileURLToPath(import.meta.url)), '../screenshots')
 mkdirSync(out, { recursive: true })
@@ -61,19 +59,19 @@ for (const vp of [{ w: 1440, h: 900 }, { w: 390, h: 844 }]) {
   await page.getByRole('button', { name: 'open full transcript' }).waitFor({ timeout: 15000 })
   await page.getByRole('navigation', { name: 'where to go next' }).waitFor({ timeout: 60000 })
   log(`[${vp.w}] choices appeared after narration:`, await page.getByRole('navigation', { name: 'where to go next' }).getByRole('button').count())
-  await page.screenshot({ path: `${out}/sketch-${Q ? 'v2-' : ''}choices-${vp.w}.png` })
+  await page.screenshot({ path: `${out}/sketch-v2-choices-${vp.w}.png` })
   const input = page.getByLabel('ask a question about this moment')
   await input.fill('Did she break in two?')
   await input.press('Enter')
   await page.getByRole('region', { name: 'Sources disagree' }).waitFor({ timeout: 90000 })
   await page.waitForTimeout(1600)
   log(`[${vp.w}] contradiction view visible with text label:`, await page.getByText('Sources disagree').first().isVisible())
-  await page.screenshot({ path: `${out}/sketch-${Q ? 'v2-' : ''}contradiction-${vp.w}.png` })
+  await page.screenshot({ path: `${out}/sketch-v2-contradiction-${vp.w}.png` })
   await input.fill('zzzz qqqq nothing')
   await input.press('Enter')
   await page.getByText('not grounded').waitFor({ timeout: 30000 })
   log(`[${vp.w}] ungrounded notice shown, subtitle button count:`, await page.getByRole('button', { name: 'open full transcript' }).count())
-  await page.screenshot({ path: `${out}/sketch-${Q ? 'v2-' : ''}ungrounded-${vp.w}.png` })
+  await page.screenshot({ path: `${out}/sketch-v2-ungrounded-${vp.w}.png` })
   await ctx.close()
 }
 
@@ -113,7 +111,7 @@ for (const vp of [{ w: 1440, h: 900 }, { w: 390, h: 844 }]) {
 }
 
 // 5. demo and offline: no requests beyond the dev server, none to the API
-for (const [name, url] of [['demo', `${PLAIN}/?demo=1&${Q}`], ['offline', `${PLAIN}/?${Q}`]]) {
+for (const [name, url] of [['demo', `${PLAIN}/?demo=1`], ['offline', PLAIN]]) {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
   const page = await ctx.newPage()
   watch(page, name)
@@ -130,7 +128,7 @@ for (const [name, url] of [['demo', `${PLAIN}/?demo=1&${Q}`], ['offline', `${PLA
   await page.waitForTimeout(1500)
   await page.getByRole('button', { name: 'subtitles and languages' }).click()
   log(`[${name}] narration select disabled:`, await page.getByLabel('narration', { exact: true }).isDisabled(), '| hint:', await page.getByText('offline demo').count())
-  await page.screenshot({ path: `${out}/sketch-${Q ? 'v2-' : ''}${name}-1440.png` })
+  await page.screenshot({ path: `${out}/sketch-v2-${name}-1440.png` })
   log(`[${name}] origins contacted:`, JSON.stringify([...hosts]), '| failed api calls:', failedApi.length)
   await ctx.close()
 }

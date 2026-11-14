@@ -29,7 +29,7 @@ const title = (p, t) => p.waitForFunction((x) => document.querySelector('#v2-tit
   }
   const steps = []
   try {
-    await p.goto(`${BASE}/?demo=1&ui=v2`)
+    await p.goto(`${BASE}/?demo=1`)
     await p.waitForTimeout(2600)
     if (!(await tabTo(/^Begin/))) throw new Error('could not reach Begin with Tab')
     await p.keyboard.press('Enter')
@@ -102,7 +102,7 @@ const title = (p, t) => p.waitForFunction((x) => document.querySelector('#v2-tit
     })
     found.forEach((f) => small.push(`${where}: ${f}`))
   }
-  await p.goto(`${BASE}/?demo=1&ui=v2&motion=off`)
+  await p.goto(`${BASE}/?demo=1&motion=off`)
   await p.waitForTimeout(1200)
   await scan('landing')
   await p.getByRole('button', { name: 'Begin' }).click()
@@ -124,7 +124,7 @@ const title = (p, t) => p.waitForFunction((x) => document.querySelector('#v2-tit
   const errs = []
   p.on('pageerror', (e) => errs.push(e.message))
   try {
-    await p.goto(`${BASE}/?demo=1&ui=v2`)
+    await p.goto(`${BASE}/?demo=1`)
     await p.waitForTimeout(800)
     const landing = await p.evaluate(() => ({ soft: !!document.querySelector('.v2-wordmark-soft') && getComputedStyle(document.querySelector('.v2-wordmark-soft')).display, frameAnim: getComputedStyle(document.querySelector('.v2-lframe')).animationName }))
     await p.getByRole('button', { name: 'Begin' }).click()
@@ -147,7 +147,7 @@ const title = (p, t) => p.waitForFunction((x) => document.querySelector('#v2-tit
 // 4. Loops stop when the tab is hidden or a sheet is open.
 {
   const p = await b.newPage({ viewport: { width: 1440, height: 900 } })
-  await p.goto(`${BASE}/?demo=1&ui=v2`)
+  await p.goto(`${BASE}/?demo=1`)
   await p.waitForTimeout(2600)
   await p.getByRole('button', { name: 'Begin' }).click()
   await p.waitForSelector('#v2-title')
@@ -167,7 +167,7 @@ const title = (p, t) => p.waitForFunction((x) => document.querySelector('#v2-tit
 
 // 5. Load: largest paint and layout shift on the production build.
 if (PROD) {
-  for (const [name, url, act] of [['landing', `${PROD}/?demo=1&ui=v2`, null], ['player', `${PROD}/?demo=1&ui=v2`, 'begin']]) {
+  for (const [name, url, act] of [['landing', `${PROD}/?demo=1`, null], ['player', `${PROD}/?demo=1`, 'begin']]) {
     const p = await b.newPage({ viewport: { width: 1440, height: 900 } })
     await p.addInitScript(() => {
       window.__lcp = 0

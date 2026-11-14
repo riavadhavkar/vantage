@@ -10,7 +10,7 @@ process.argv.slice(2).forEach((a, i, all) => a.startsWith('--') && (args[a.slice
 const rate = Number(args.rate || 4)
 const width = Number(args.width || 1440)
 const BASE = args.base || 'http://localhost:5174'
-const V2 = `${BASE}/?demo=1&ui=v2`
+const V2 = `${BASE}/?demo=1`
 const isPhone = width < 600
 
 const RECORDER = () => {

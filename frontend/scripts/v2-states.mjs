@@ -40,7 +40,7 @@ const begin = async (p) => {
 }
 const title = (p, t) => p.waitForFunction((x) => document.querySelector('#v2-title')?.textContent === x, t, { timeout: 15000 })
 
-await scenario('ungrounded', BASE, '?demo=1&ui=v2&motion=off', async (p, say) => {
+await scenario('ungrounded', BASE, '?demo=1&motion=off', async (p, say) => {
   await begin(p)
   await p.getByLabel('Ask a question about this moment').fill('zzzq xyzzy plugh')
   await p.getByRole('button', { name: 'Ask', exact: true }).click()
@@ -53,7 +53,7 @@ await scenario('ungrounded', BASE, '?demo=1&ui=v2&motion=off', async (p, say) =>
   say.push('note shown, no captions, no voice control', `recover button: ${await p.getByRole('button', { name: 'Try another point of view' }).count()}`)
 })
 
-await scenario('error', BASE, '?demo=1&ui=v2&motion=off', async (p, say) => {
+await scenario('error', BASE, '?demo=1&motion=off', async (p, say) => {
   await begin(p)
   await p.getByRole('button', { name: /What happened at 11:40 pm/ }).click()
   await p.getByRole('alert').waitFor({ timeout: 8000 })
@@ -69,7 +69,7 @@ await scenario('error', BASE, '?demo=1&ui=v2&motion=off', async (p, say) => {
   }),
 })
 
-await scenario('error-switch', BASE, '?demo=1&ui=v2', async (p, say) => {
+await scenario('error-switch', BASE, '?demo=1', async (p, say) => {
   await begin(p)
   await p.getByRole('radio', { name: /Cabin passengers/ }).click()
   await p.getByRole('alert').waitFor({ timeout: 8000 })
@@ -85,13 +85,13 @@ await scenario('error-switch', BASE, '?demo=1&ui=v2', async (p, say) => {
   }),
 })
 
-await scenario('offline', BASE, '?ui=v2&motion=off', async (p, say) => {
+await scenario('offline', BASE, '?motion=off', async (p, say) => {
   await p.waitForTimeout(4200)
   say.push('badge: "' + (await p.locator('.v2-databadge').first().innerText()) + '"')
   await begin(p)
 }, { allowNetwork: true })
 
-await scenario('unknown-topic', BASE, '?demo=1&ui=v2&motion=off', async (p, say) => {
+await scenario('unknown-topic', BASE, '?demo=1&motion=off', async (p, say) => {
   await p.waitForTimeout(1200)
   await p.getByLabel('Choose a story').fill('The moon landing')
   await p.getByRole('button', { name: 'Begin' }).click()
@@ -99,7 +99,7 @@ await scenario('unknown-topic', BASE, '?demo=1&ui=v2&motion=off', async (p, say)
   say.push('alert: "' + (await p.getByRole('alert').innerText()).replace(/\n/g, ' / ') + '"')
 })
 
-await scenario('image-failed', MOCK, '?ui=v2&motion=off', async (p, say) => {
+await scenario('image-failed', MOCK, '?motion=off', async (p, say) => {
   await begin(p)
   await p.getByRole('button', { name: /Hear it from the cabin passengers/ }).click()
   await title(p, 'A slight jolt')
@@ -108,14 +108,14 @@ await scenario('image-failed', MOCK, '?ui=v2&motion=off', async (p, say) => {
   if (await p.locator('.v2-stage-badge').filter({ hasText: 'AI-generated illustration' }).count()) throw new Error('badge on a drawn scene')
 })
 
-await scenario('image-ready', MOCK, '?ui=v2&motion=off', async (p, say) => {
+await scenario('image-ready', MOCK, '?motion=off', async (p, say) => {
   await begin(p)
   await p.waitForTimeout(2500)
   say.push(`AI image badge shown: ${await p.locator('.v2-stage-badge').filter({ hasText: 'AI-generated illustration' }).count()} (expected 1)`, `voice: ${await p.getByText('AI narration').count() ? 'AI narration badge shown' : 'no badge'}`)
   if (!(await p.locator('.v2-stage-badge').filter({ hasText: 'AI-generated illustration' }).count())) throw new Error('no badge on a generated image')
 })
 
-await scenario('graph', BASE, '?demo=1&ui=v2', async (p) => {
+await scenario('graph', BASE, '?demo=1', async (p) => {
   await begin(p)
   await p.getByRole('button', { name: /Hear it from the cabin passengers/ }).click()
   await title(p, 'A slight jolt')
@@ -125,7 +125,7 @@ await scenario('graph', BASE, '?demo=1&ui=v2', async (p) => {
   await p.waitForTimeout(1500)
 })
 
-await scenario('look-back', BASE, '?demo=1&ui=v2', async (p, say) => {
+await scenario('look-back', BASE, '?demo=1', async (p, say) => {
   await begin(p)
   await p.getByRole('button', { name: /What happened at 11:40 pm/ }).click()
   await title(p, 'Iceberg right ahead')
@@ -142,7 +142,7 @@ await scenario('look-back', BASE, '?demo=1&ui=v2', async (p, say) => {
   if (!note || choicesWhileBack) throw new Error('looking back did not behave')
 })
 
-await scenario('map', BASE, '?demo=1&ui=v2', async (p) => {
+await scenario('map', BASE, '?demo=1', async (p) => {
   await begin(p)
   await p.getByRole('button', { name: 'Where this happened' }).click()
   await p.waitForSelector('[role=dialog] svg[role=img]', { timeout: 10000 })
@@ -150,7 +150,7 @@ await scenario('map', BASE, '?demo=1&ui=v2', async (p) => {
 })
 
 // the one scene in the sample story where the story travels: the marker makes the journey
-for (const [name, base, query, wait] of [['map-travel-chart', BASE, '?demo=1&ui=v2', '[role=dialog] svg[role=img]'], ['map-travel-tiles', MOCK, '?ui=v2', '.leaflet-tile-loaded']]) {
+for (const [name, base, query, wait] of [['map-travel-chart', BASE, '?demo=1', '[role=dialog] svg[role=img]'], ['map-travel-tiles', MOCK, '', '.leaflet-tile-loaded']]) {
   await scenario(name, base, query, async (p, say) => {
     await begin(p)
     for (const [choice, next] of [[/What happened at 11:40 pm/, 'Iceberg right ahead'], [/Did she break in two/, 'Did she break in two?'], [/What the wreck showed/, 'Found in two halves']]) {
