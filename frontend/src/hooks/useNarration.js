@@ -13,6 +13,7 @@ import { canSpeak, speak, voiceForIndex } from '../lib/speech.js'
  */
 export default function useNarration(segment, { isSoundOn = true, shouldAutoplay = true, voiceIndex = 0 } = {}) {
   const [imageUrl, setImageUrl] = useState(null)
+  const [imageUrls, setImageUrls] = useState([])
   const [imageStatus, setImageStatus] = useState('idle') // idle | loading | ready | failed
   const [audioUrl, setAudioUrl] = useState(null)
   const [audioStatus, setAudioStatus] = useState('idle') // idle | loading | ready | failed
@@ -43,8 +44,10 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
       return
     }
 
+    setImageUrls([])
     if (segment.image_url) {
       setImageUrl(api.absolute(segment.image_url))
+      setImageUrls([api.absolute(segment.image_url)])
       setImageStatus('ready')
     } else if (segment.scene_prompt) {
       setImageStatus('loading')
@@ -53,9 +56,20 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
         .then((d) => {
           if (currentId.current !== id) return
           setImageUrl(d.image_url)
+          setImageUrls((prev) => { const next = [...prev]; next[0] = d.image_url; return next })
           setImageStatus(d.image_url ? 'ready' : 'failed')
         })
         .catch(() => currentId.current === id && setImageStatus('failed'))
+      const extras = (segment.scene_prompts || []).filter((p) => p && p !== segment.scene_prompt).slice(0, 4)
+      extras.forEach((p, i) => {
+        api
+          .generateImage({ segment_id: `${id}_shot${i + 2}`, scene_prompt: p })
+          .then((d) => {
+            if (currentId.current !== id || !d.image_url) return
+            setImageUrls((prev) => { const next = [...prev]; next[i + 1] = d.image_url; return next })
+          })
+          .catch(() => {})
+      })
     } else {
       setImageStatus('failed')
     }
@@ -197,5 +211,5 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
   }, [isDeviceVoice])
 
   const voiceSource = audioStatus === 'ready' ? 'remote' : isDeviceVoice ? 'device' : audioStatus === 'loading' ? 'loading' : null
-  return { audioUrl, imageUrl, imageStatus, audioStatus, voiceSource, isPlaying, play, pause, hasFinished }
+  return { audioUrl, imageUrl, imageUrls, imageStatus, audioStatus, voiceSource, isPlaying, play, pause, hasFinished }
 }

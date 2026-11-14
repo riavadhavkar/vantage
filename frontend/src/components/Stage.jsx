@@ -1,7 +1,7 @@
 // OWNER: Person B
 // The cinematic frame: graded illustration (or a drawn scene), soft vignette,
 // title, and paper source pins. The perspective pull closes the iris over it.
-import { useMemo } from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { sceneDataUrl, sceneKindFor, hashString } from '../lib/scene.js'
 import { DEVELOP_MS, EASE_FOCUS } from '../constants/theme.js'
@@ -42,8 +42,22 @@ function pinsFor(segment, sourcesById) {
   })
 }
 
-export default function Stage({ segment, grade, imageUrl, imageStatus, pull, pullMessage, sourcesById, onOpenSource }) {
+const SHOT_MS = 4000
+
+export default function Stage({ segment, grade, imageUrl, imageUrls, imageStatus, pull, pullMessage, sourcesById, onOpenSource }) {
   const reduce = useReducedMotion()
+  const shots = useMemo(() => {
+    const list = (imageUrls || []).filter(Boolean)
+    return list.length ? list : imageUrl ? [imageUrl] : []
+  }, [imageUrls, imageUrl])
+  const [shotIdx, setShotIdx] = useState(0)
+  useEffect(() => { setShotIdx(0) }, [segment?.segment_id])
+  useEffect(() => {
+    if (reduce || shots.length < 2) return undefined
+    const t = setInterval(() => setShotIdx((i) => (i + 1) % shots.length), SHOT_MS)
+    return () => clearInterval(t)
+  }, [shots.length, reduce])
+  const currentShot = shots[shotIdx % (shots.length || 1)] || imageUrl
   const sceneUrl = useMemo(
     () =>
       segment
@@ -80,13 +94,24 @@ export default function Stage({ segment, grade, imageUrl, imageStatus, pull, pul
                 animate={{ opacity: 1 }}
                 transition={{ duration: reduce ? 0.2 : DEVELOP_MS / 1000, ease: EASE_FOCUS }}
               >
-                <GradedImage
-                  src={imageUrl}
+                <AnimatePresence initial={false}>
+                  <motion.div
+                    key={currentShot}
+                    className="absolute inset-0"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: reduce ? 0.2 : 1.4, ease: EASE_FOCUS }}
+                  >
+                    <GradedImage
+                      src={currentShot}
                   grade={grade}
                   alt={segment.scene_prompt ? `Illustration: ${segment.title}` : ''}
                   shouldPan={!reduce}
                   badgeClassName="right-3 top-3"
                 />
+                  </motion.div>
+                </AnimatePresence>
               </motion.div>
             )}
           </motion.div>

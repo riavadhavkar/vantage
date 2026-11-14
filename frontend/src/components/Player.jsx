@@ -277,6 +277,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
               segment={shown}
               grade={grade}
               imageUrl={narration.imageUrl}
+              imageUrls={narration.imageUrls}
               imageStatus={narration.imageStatus}
               pull={pull}
               pullMessage={pullMessage}
