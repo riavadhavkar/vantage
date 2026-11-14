@@ -91,6 +91,19 @@ def _linked_reply(chat: dict, text: str) -> Optional[PhotonChatResponse]:
                               session_id=state["session_id"])
 
 
+LANG_WORDS = {"english": "en", "hindi": "hi", "spanish": "es", "espanol": "es", "español": "es",
+              "french": "fr", "francais": "fr", "français": "fr"}
+LANG_NAMES_EN = {"en": "English", "hi": "Hindi", "es": "Spanish", "fr": "French"}
+
+
+def _lang_request(low: str):
+    """Returns a language code if the text asks to switch language, else None."""
+    for word, code in LANG_WORDS.items():
+        if word in low and (len(low.split()) <= 5 or any(k in low for k in ("write", "speak", "reply", "switch", "talk", " in "))):
+            return code
+    return None
+
+
 @router.post("/photon/chat", response_model=PhotonChatResponse)
 def photon_chat(body: PhotonChatRequest):
     chat = _CHATS.setdefault(body.sender_id, {"topic": None, "history": [], "session_id": None})
@@ -126,6 +139,12 @@ def photon_chat(body: PhotonChatRequest):
 
     # 2. Linked to a web session: continue that exact documentary
     if chat["session_id"]:
+        code = _lang_request(low)
+        linked_state = session_store.get_viewer_state(chat["session_id"])
+        if code and linked_state is not None:
+            linked_state["language"] = code
+            return PhotonChatResponse(reply=f"Switched to {LANG_NAMES_EN[code]}. Ask me anything, or text NEXT to keep going.",
+                                      topic=chat["topic"], session_id=chat["session_id"])
         linked = _linked_reply(chat, text)
         if linked:
             return linked
