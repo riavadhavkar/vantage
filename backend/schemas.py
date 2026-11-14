@@ -66,6 +66,7 @@ class Segment(BaseModel):
 # ---------- requests ----------
 class StartRequest(BaseModel):
     topic: str
+    language: Optional[str] = "en"
 
 
 class NextSegmentRequest(BaseModel):
