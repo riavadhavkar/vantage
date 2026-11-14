@@ -1,0 +1,2 @@
+# OWNER: Person C
+# TODO: write the fact_checker prompt.
