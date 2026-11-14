@@ -37,6 +37,7 @@ Rules:
   - Titanic: "A crowded third-class corridor below decks, families with bundles and children climbing a narrow stairway, water pooling on the steel floor."
   - Titanic: "A half-empty lifeboat on a glassy sea at dawn, survivors wrapped in blankets, a rescue ship's lights and drifting icebergs on the horizon."
   Weak scene_prompts (do not write these): "The Battle of Princeton." "A sad scene on the Titanic." "George Washington on his horse."
+- scene_prompts: exactly 3 shots, in story order, that a camera would cut between while this segment is narrated (for example: the warning, the reaction, the consequence). Same rules as scene_prompt. The first one may repeat scene_prompt.
 - location: the main place in this segment with real latitude and longitude, or null.
 - source_ids: the ids of the SOURCES you actually used, for example ["D03", "D08"].
 - choices: 2 or 3 options for what the viewer can explore next. Each label is under 8 words. Each choice perspective must be one of: {{PERSPECTIVES}}. Each choice_type must be exactly one of: {{CHOICE_TYPES}}. Include at least one perspective_shift. Make each label a concrete thing the viewer wants to know, written as an action or a question, for example "See the orchard through British eyes", "Read Washington's letter to Congress", "What happened below decks?". Avoid vague labels like "Learn more" or "Continue".
@@ -49,6 +50,7 @@ Return ONLY a JSON object with exactly these keys:
   "perspective": "...",
   "mood": "...",
   "scene_prompt": "...",
+  "scene_prompts": ["...", "...", "..."],
   "location": {"lat": 0.0, "lng": 0.0, "label": "Place"},
   "date_label": "Month Year",
   "source_ids": ["..."],

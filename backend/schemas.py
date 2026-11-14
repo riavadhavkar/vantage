@@ -49,6 +49,7 @@ class Segment(BaseModel):
     mood: Mood
     voice_id: Optional[str] = None
     scene_prompt: str = ""
+    scene_prompts: List[str] = Field(default_factory=list)
     image_url: Optional[str] = None
     audio_url: Optional[str] = None
     location: Optional[Location] = None
