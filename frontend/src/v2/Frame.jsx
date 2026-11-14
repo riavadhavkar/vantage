@@ -2,7 +2,7 @@
 // when the AI illustration arrives it develops in over it, in color with a faint perspective
 // tint and its "AI-generated illustration" badge. Focus pulls crossfade to a copy that was
 // blurred once; the blur itself is never animated.
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from 'motion/react'
 import { sceneDataUrl, sceneKindFor } from '../lib/scene.js'
 import { DURATION, EASING, SIGNATURE } from '../constants/theme.js'
@@ -28,23 +28,56 @@ function Grade({ look, splitLook, kind }) {
 }
 
 // Three bands of the same drawn scene (sky, middle, foreground) that move at different rates.
+const NO_SHOTS = []
+
 const BANDS = [
   { cls: 'v2-band-sky', depth: 4 },
   { cls: 'v2-band-mid', depth: 9 },
   { cls: 'v2-band-fore', depth: 16 },
 ]
 
-function Plate({ segment, look, splitLook, imageUrl, canShowImage, soft, pointer, isCalm, isPaused, crossfade, onImage }) {
+// Storyboard: a scene can have several shots (useNarration fills imageUrls as they arrive).
+// The frame cuts between them at the same pace as the classic stage.
+const SHOT_MS = 4000
+
+/** Only shots that have actually loaded are ever shown, so a failed image can never blank the frame. */
+function useLoadedShots(urls) {
+  const [loaded, setLoaded] = useState([])
+  const tried = useRef(new Set())
+  useEffect(() => {
+    let isLive = true
+    for (const url of urls) {
+      if (tried.current.has(url)) continue
+      tried.current.add(url)
+      const img = new Image()
+      img.onload = () => isLive && setLoaded((list) => (list.includes(url) ? list : [...list, url]))
+      img.src = url
+    }
+    return () => {
+      isLive = false
+    }
+  }, [urls])
+  // keep story order, drop anything that is no longer offered
+  return useMemo(() => urls.filter((u) => loaded.includes(u)), [urls, loaded])
+}
+
+function Plate({ segment, look, splitLook, shotUrls, canShowImage, soft, pointer, isCalm, isPaused, crossfade, onImage }) {
   const sceneUrl = useMemo(
     () => sceneDataUrl({ seed: segment.segment_id, kind: sceneKindFor(`${segment.scene_prompt || ''} ${segment.title}`), width: 1600, height: 900 }),
     [segment],
   )
-  const [isLoaded, setIsLoaded] = useState(false)
-  const [hasFailed, setHasFailed] = useState(false)
+  const shots = useLoadedShots(canShowImage ? shotUrls : NO_SHOTS)
+  const [shotIndex, setShotIndex] = useState(0)
   const [isDeveloped, setIsDeveloped] = useState(false)
-  const showImage = canShowImage && !!imageUrl && !hasFailed
+  const showImage = shots.length > 0
+  const shot = shots[shotIndex % (shots.length || 1)]
   const zoom = useTransform(soft, (s) => 1 + 0.03 * s)
-  useEffect(() => onImage?.(showImage && isLoaded), [showImage, isLoaded, onImage])
+  useEffect(() => onImage?.(showImage), [showImage, onImage])
+  useEffect(() => {
+    if (isCalm || isPaused || shots.length < 2) return
+    const t = setInterval(() => setShotIndex((i) => (i + 1) % shots.length), SHOT_MS)
+    return () => clearInterval(t)
+  }, [shots.length, isCalm, isPaused])
 
   return (
     <motion.div className="v2-plate" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: sec(crossfade), ease: EASING.move }}>
@@ -65,15 +98,19 @@ function Plate({ segment, look, splitLook, imageUrl, canShowImage, soft, pointer
             <motion.div
               className="v2-ai"
               initial={{ opacity: 0 }}
-              animate={{ opacity: isLoaded ? 1 : 0 }}
+              animate={{ opacity: 1 }}
               transition={{ duration: sec(isCalm ? DURATION.quick : DURATION.slow), ease: EASING.enter }}
-              onAnimationComplete={() => isLoaded && setIsDeveloped(true)}
+              onAnimationComplete={() => setIsDeveloped(true)}
             >
-              <img src={imageUrl} alt={`Illustration: ${segment.title}`} className="print-color v2-fill" decoding="async" onLoad={() => setIsLoaded(true)} onError={() => setHasFailed(true)} />
-              <motion.img src={imageUrl} alt="" aria-hidden="true" className="v2-fill v2-softimg v2-softimg-color" style={{ opacity: soft }} />
+              <AnimatePresence initial={false}>
+                <motion.div key={shot} className="v2-shot" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: sec(isCalm ? DURATION.quick : DURATION.slow), ease: EASING.move }}>
+                  <img src={shot} alt={`Illustration: ${segment.title}`} className="print-color v2-fill" decoding="async" />
+                  <motion.img src={shot} alt="" aria-hidden="true" className="v2-fill v2-softimg v2-softimg-color" style={{ opacity: soft }} />
+                </motion.div>
+              </AnimatePresence>
               <Grade look={look} splitLook={splitLook} kind="tint" />
-              {/* the print develops: a dark wash lifts as the image comes up */}
-              {!isCalm && <motion.i aria-hidden="true" className="v2-develop" initial={{ opacity: 0.55 }} animate={{ opacity: isLoaded ? 0 : 0.55 }} transition={{ duration: sec(DURATION.slow * 1.3), ease: EASING.enter }} />}
+              {/* the print develops: a dark wash lifts as the first image comes up */}
+              {!isCalm && <motion.i aria-hidden="true" className="v2-develop" initial={{ opacity: 0.55 }} animate={{ opacity: 0 }} transition={{ duration: sec(DURATION.slow * 1.3), ease: EASING.enter }} />}
             </motion.div>
           )}
         </div>
@@ -93,9 +130,13 @@ function Band({ src, cls, depth, pointer }) {
  *   soft: import('motion/react').MotionValue<number>, isPulling: boolean, isCalm: boolean, isPaused?: boolean,
  *   isUngrounded?: boolean, status?: string|null }} props
  */
-export default function Frame({ segment, look, splitLook = null, imageUrl, imageStatus, soft, isPulling, isCalm, isPaused = false, isUngrounded = false, children }) {
+export default function Frame({ segment, look, splitLook = null, imageUrl, imageUrls, imageStatus, soft, isPulling, isCalm, isPaused = false, isUngrounded = false, children }) {
   const [hasImage, setHasImage] = useState(false)
   useEffect(() => setHasImage(false), [segment?.segment_id])
+  const shotUrls = useMemo(() => {
+    const list = (imageUrls || []).filter(Boolean)
+    return list.length ? list : imageUrl ? [imageUrl] : NO_SHOTS
+  }, [imageUrls, imageUrl])
 
   // Pointer depth, fine pointers only. One spring per axis; the bands read from it.
   const rawX = useMotionValue(0)
@@ -132,8 +173,8 @@ export default function Frame({ segment, look, splitLook = null, imageUrl, image
             segment={segment}
             look={look}
             splitLook={splitLook}
-            imageUrl={imageUrl}
-            canShowImage={segment.is_grounded && imageStatus === 'ready'}
+            shotUrls={shotUrls}
+            canShowImage={segment.is_grounded && (imageStatus === 'ready' || shotUrls.length > 0)}
             soft={softness}
             pointer={pointer}
             isCalm={isCalm}

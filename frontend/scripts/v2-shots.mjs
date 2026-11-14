@@ -45,7 +45,7 @@ for (const vp of WIDTHS) {
     if (overflow > 0) (problems++, console.log(`${tag(name)} horizontal overflow: ${overflow}px`))
   }
   const skip = async () => {
-    await page.locator('.v2-captions').click({ timeout: 2000 }).catch(() => {})
+    if (await page.locator('.v2-word:not(.is-in)').count()) await page.locator('.v2-captions').click({ timeout: 2000 }).catch(() => {})
     await page.waitForTimeout(900)
   }
   const title = (t) => page.waitForFunction((x) => document.querySelector('#v2-title')?.textContent === x, t, { timeout: 15000 })

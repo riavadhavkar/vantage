@@ -1,8 +1,8 @@
 // The new player: a full-bleed stage with the story on glass over it, and a lens ring that
 // decides who is telling it. Data and actions come from usePlayer (same calls as classic).
-import { useCallback, useEffect, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useTransform } from 'motion/react'
-import { Aperture, FileText, Volume2, VolumeX } from 'lucide-react'
+import { Aperture, FileText, Map as MapIcon, Maximize2, Minimize2, Volume2, VolumeX, Waypoints } from 'lucide-react'
 import usePlayer from './usePlayer.js'
 import Frame from './Frame.jsx'
 import Captions from './Captions.jsx'
@@ -12,16 +12,26 @@ import Evidence from './Evidence.jsx'
 import Disagreement from './Disagreement.jsx'
 import VoiceInputButton from '../components/VoiceInputButton.jsx'
 import ContinueOnPhone from '../components/ContinueOnPhone.jsx'
+import AmbientPlayer from '../components/AmbientPlayer.jsx'
+import { messageFor } from '../api/errors.js'
 import { DURATION, EASING, SPRING } from '../constants/theme.js'
 import { sec, spring } from '../lib/motionMode.js'
-import { Btn, DataBadge, IconBtn, Waiting } from './ui.jsx'
+import { Btn, DataBadge, IconBtn, Sheet, Skeleton, Waiting } from './ui.jsx'
 import './player.css'
+
+// The graph and the map are the existing components, loaded on demand, in the new sheet.
+const KnowledgeGraph = lazy(() => import('../components/KnowledgeGraph.jsx'))
+const StoryMap = lazy(() => import('../components/StoryMap.jsx'))
 
 export default function Player({ session, topic, isSoundOn, onToggleSound, onExit, dataSource, shouldReveal = false }) {
   const P = usePlayer({ session, topic, isSoundOn })
   const { shown, pull, look, lookOf, isCalm, isLoading, pending } = P
-  const [isTyped, setIsTyped] = useState(false)
-  useEffect(() => setIsTyped(false), [shown?.segment_id])
+  // Which scene has finished narrating. Keyed by scene, so an instant typewriter (reduced motion)
+  // cannot be reset by a later effect, and a new scene never inherits "finished" from the last one.
+  const [typedId, setTypedId] = useState(null)
+  const shownId = shown?.segment_id
+  const setIsTyped = useCallback((done) => setTypedId((id) => (done ? shownId : id === shownId ? null : id)), [shownId])
+  const isTyped = typedId != null && typedId === shownId
   const isPulling = pull.phase !== 'idle'
   const textOpacity = useTransform(pull.soft, (s) => 1 - 0.65 * s)
 
@@ -54,6 +64,15 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
   const closeEvidence = useCallback(() => (setEvidence(null), setGhost(null)), [])
   useEffect(() => closeEvidence(), [shown?.segment_id, closeEvidence])
 
+  // Graph and map sheets
+  const [panel, setPanel] = useState(null) // 'graph' | 'map' | null
+  const [isFull, setIsFull] = useState(false)
+  const { setIsGraphOpen } = P
+  useEffect(() => setIsGraphOpen(panel === 'graph'), [panel, setIsGraphOpen])
+  const closePanel = useCallback(() => (setPanel(null), setIsFull(false)), [])
+  const classicGrades = useMemo(() => Object.fromEntries(Object.entries(P.looks).map(([id, l]) => [id, l.classic])), [P.looks])
+  const [isAmbientOn, setIsAmbientOn] = useState(false)
+
   const [question, setQuestion] = useState('')
   const submitQuestion = (e) => {
     e.preventDefault()
@@ -76,7 +95,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
 
   return (
     <main className={`v2-player ${shouldReveal && !isCalm ? 'v2-reveal' : ''}`} style={{ '--accent': look.accent }}>
-      <Frame segment={shown} look={dis ? sideLook(dis.side_a) : look} splitLook={dis ? sideLook(dis.side_b) : null} imageUrl={P.narration.imageUrl} imageStatus={P.narration.imageStatus} soft={pull.soft} isPulling={isPulling} isCalm={isCalm} isPaused={!!evidence} isUngrounded={!shown.is_grounded}>
+      <Frame segment={shown} look={dis ? sideLook(dis.side_a) : look} splitLook={dis ? sideLook(dis.side_b) : null} imageUrl={P.narration.imageUrl} imageUrls={P.narration.imageUrls} imageStatus={P.narration.imageStatus} soft={pull.soft} isPulling={isPulling} isCalm={isCalm} isPaused={!!evidence || !!panel} isUngrounded={!shown.is_grounded}>
         {shown.date_label && shown.is_grounded && !isPulling && (
           <p key={shown.segment_id} className="v2-titlecard" aria-hidden="true"><span>{shown.date_label}</span></p>
         )}
@@ -95,7 +114,10 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
         <p className="v2-bar-topic">{P.topic?.title}</p>
         <span className="v2-bar-gap" />
         <DataBadge source={dataSource} />
+        <IconBtn label="How the story connects" icon={Waypoints} isPressed={panel === 'graph'} onClick={() => setPanel('graph')} />
+        <IconBtn label="Where this happened" icon={MapIcon} isPressed={panel === 'map'} onClick={() => setPanel('map')} />
         <IconBtn label="Sources" icon={FileText} badge={P.citedCount || null} isPressed={!!evidence} onClick={() => openEvidence()} />
+        <span className="v2-ambient"><AmbientPlayer mood={shown.mood} isOn={isAmbientOn} onToggle={() => setIsAmbientOn((v) => !v)} /></span>
         <IconBtn label={isSoundOn ? 'Sound on' : 'Sound off'} icon={isSoundOn ? Volume2 : VolumeX} isPressed={isSoundOn} onClick={onToggleSound} tip="left" />
       </header>
 
@@ -115,6 +137,17 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
         />
 
         <motion.div className="v2-side" style={{ opacity: textOpacity }}>
+          {P.error && (
+            <div role="alert" className="v2-glass v2-note v2-error">
+              <p>{messageFor(P.error)}</p>
+              {P.error.code === 'session_not_found' ? <Btn variant="quiet" onClick={onExit}>Start again</Btn> : <Btn variant="quiet" onClick={P.retry}>Try again</Btn>}
+            </div>
+          )}
+          {pending?.kind === 'ask' && !pending.perspective && (
+            <div className="v2-glass v2-asking">
+              <Waiting message="Looking through the sources" slowMessage="Still looking. Answers are written from the sources, which can take a few seconds." />
+            </div>
+          )}
           {dis && <Disagreement key={dis.contradiction_id || shown.segment_id} contradiction={dis} sourcesById={P.sourcesById} lookOf={lookOf} onOpenEvidence={(id) => openEvidence(id, shown.claims.find((c) => c.source_id === id))} isCalm={isCalm} />}
           {showNext &&
             (shown.is_final ? (
@@ -152,6 +185,39 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
           isBusy={isLoading || isPulling}
         />
       </div>
+
+      <Sheet
+        tone="dark"
+        isOpen={panel === 'graph'}
+        onClose={closePanel}
+        title="How the story connects"
+        className={isFull ? 'is-full' : ''}
+        headerExtra={<Btn variant="ghost" icon={isFull ? Minimize2 : Maximize2} aria-pressed={isFull} onClick={() => setIsFull((v) => !v)}>{isFull ? 'Exit full view' : 'Full view'}</Btn>}
+      >
+        {P.graphState === 'loading' && !P.hasGraphData ? (
+          <div className="v2-sheet-wait">
+            <Waiting message="Tracing connections" slowMessage="Still tracing connections. This can take a few seconds." />
+            <Skeleton lines={3} />
+          </div>
+        ) : (
+          <Suspense fallback={<div className="v2-sheet-wait"><Waiting message="Tracing connections" /></div>}>
+            <KnowledgeGraph nodes={P.graph.nodes} edges={P.graph.edges} currentSegmentId={P.graph.currentId} grades={classicGrades} perspectives={P.perspectives} />
+            {P.graphState === 'error' && <p className="v2-sheet-note" role="status">Showing the scenes seen so far. The full graph could not load.</p>}
+          </Suspense>
+        )}
+      </Sheet>
+      <Sheet
+        tone="dark"
+        isOpen={panel === 'map'}
+        onClose={closePanel}
+        title={shown.location?.label || 'Where this happened'}
+        className={isFull ? 'is-full' : ''}
+        headerExtra={<Btn variant="ghost" icon={isFull ? Minimize2 : Maximize2} aria-pressed={isFull} onClick={() => setIsFull((v) => !v)}>{isFull ? 'Exit full view' : 'Full view'}</Btn>}
+      >
+        <Suspense fallback={<div className="v2-sheet-wait"><Waiting message="Unrolling the map" /></div>}>
+          <StoryMap location={shown.location} travelFrom={shown.travel_from} isOffline={dataSource !== 'live' && dataSource !== 'mock'} />
+        </Suspense>
+      </Sheet>
 
       <Evidence
         focus={evidence}

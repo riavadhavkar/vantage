@@ -21,7 +21,7 @@ for (const width of widths) {
     p.on('request', (r) => !r.url().startsWith(BASE) && !/^(data|blob):/.test(r.url()) && errs.push('network: ' + r.url()))
     const title = (t) => p.waitForFunction((x) => document.querySelector('#v2-title')?.textContent === x, t, { timeout: 20000 })
     const skip = async () => {
-      await p.locator('.v2-captions').click({ timeout: 3000 }).catch(() => {})
+      if (await p.locator('.v2-word:not(.is-in)').count()) await p.locator('.v2-captions').click({ timeout: 3000 }).catch(() => {})
       await p.waitForTimeout(700 * SLOW)
     }
     const steps = []

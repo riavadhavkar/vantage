@@ -65,11 +65,12 @@ export default function Captions({ segment, isActive, isCalm, narration, sources
             {sentences.map((s, i) => {
               const claim = cited.get(i)
               const isSaid = isDone || count >= s.end
-              const open = claim && isSaid ? (e) => (e.stopPropagation(), onOpenEvidence(claim.source_id, claim, e.currentTarget)) : undefined
+              // While the text is still arriving, a tap anywhere finishes it; a sentence opens its source only after that.
+              const open = claim && isDone ? (e) => (e.stopPropagation(), onOpenEvidence(claim.source_id, claim, e.currentTarget)) : undefined
               return (
                 <span
                   key={i}
-                  className={`v2-sent ${claim ? 'is-cited' : ''} ${isSaid ? 'is-said' : ''}`}
+                  className={`v2-sent ${claim ? 'is-cited' : ''} ${isSaid ? 'is-said' : ''} ${open ? 'is-open' : ''}`}
                   style={claim ? { '--mark': lookOf(sourcesById[claim.source_id]?.perspective).accent } : undefined}
                   onClick={open}
                   title={open ? `Source: ${sourcesById[claim.source_id]?.title || 'open the evidence'}` : undefined}

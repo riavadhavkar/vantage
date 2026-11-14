@@ -9,7 +9,7 @@ html[data-ui='v2']::view-transition-old(root), html[data-ui='v2']::view-transiti
 
 /* ---------- stage ---------- */
 .v2-stage { position: fixed; inset: 0; overflow: hidden; background: #000; view-transition-name: v2-frame; }
-.v2-plate, .v2-plate-zoom, .v2-pan, .v2-drawn, .v2-ai { position: absolute; inset: 0; }
+.v2-plate, .v2-plate-zoom, .v2-pan, .v2-drawn, .v2-ai, .v2-shot { position: absolute; inset: 0; }
 .v2-fill { position: absolute; inset: -3%; width: 106%; height: 106%; max-width: none; object-fit: cover; }
 .v2-pan.is-paused { animation-play-state: paused; }
 /* row 8: three depth bands of the drawn scene. Each higher band covers everything below its edge. */
@@ -56,8 +56,9 @@ html[data-lite] .v2-pan { animation: none; }
 .v2-word.is-in { opacity: 1; transform: none; }
 /* row 18: a sentence with a source gets an underline in that source's perspective color */
 .v2-sent.is-cited { padding-bottom: 1px; background: linear-gradient(var(--mark), var(--mark)) 0 100% / 0% 2px no-repeat; -webkit-box-decoration-break: clone; box-decoration-break: clone; transition: background-size var(--duration-panel) var(--ease-enter); }
-.v2-sent.is-cited.is-said { background-size: 100% 2px; cursor: pointer; }
-.v2-sent.is-cited.is-said:hover { background-size: 100% 3px; }
+.v2-sent.is-cited.is-said { background-size: 100% 2px; }
+.v2-sent.is-cited.is-open { cursor: pointer; }
+.v2-sent.is-cited.is-open:hover { background-size: 100% 3px; }
 .v2-card-row { margin-top: 16px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; min-height: 44px; }
 .v2-card-row .v2-icon { border: 1px solid var(--line); padding: 0; width: 44px; }
 .v2-row-gap { flex: 1; }
@@ -169,3 +170,14 @@ html[data-motion='off'] .v2-titlecard { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .v2-dis-icon { animation: none; } }
 html[data-motion='off'] .v2-dis-icon { animation: none; }
+
+/* ---------- states: errors are calm (no shake), waiting says what it is doing ---------- */
+.v2-error { border-left-width: 2px; border-color: var(--line); border-left-color: var(--signal); border-radius: 0 14px 14px 0; }
+.v2-asking { padding: 4px 16px; }
+.v2-sheet-wait { display: flex; flex-direction: column; gap: 24px; max-width: 420px; padding: 24px; }
+.v2-sheet-note { position: absolute; left: 24px; top: 12px; font-size: 12px; line-height: 16px; color: var(--dim); }
+.v2-ambient { display: none; }
+.v2-ambient button { border-radius: 999px; padding: 0 12px; font-size: 13px; }
+.v2-ambient button:hover { background: rgb(255 255 255 / 0.12); }
+@media (min-width: 1100px) { .v2-ambient { display: inline-flex; } }
+@media (max-width: 899px) { .v2-sheet-dark .v2-btn-ghost span { display: none; } }
