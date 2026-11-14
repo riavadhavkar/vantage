@@ -1,6 +1,7 @@
 // OWNER: Person B
 // Records a spoken question and sends it to /transcribe. Nothing is stored.
 import { useRef, useState } from 'react'
+import { Mic } from 'lucide-react'
 import { transcribeAudio } from '../api/client.js'
 
 const canRecord = () => typeof window !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined'
@@ -41,7 +42,7 @@ export default function VoiceInputButton({ onTranscript, isDisabled }) {
 
   const stop = () => rec.current?.state === 'recording' && rec.current.stop()
   const isRecording = state === 'recording'
-  const label = isRecording ? 'Stop recording' : state === 'transcribing' ? 'Transcribing your question' : state === 'error' ? 'Could not hear that. Try again' : 'Ask by voice'
+  const label = isRecording ? 'stop recording' : state === 'transcribing' ? 'transcribing your question' : state === 'error' ? 'could not hear that. try again' : 'ask by voice'
 
   return (
     <button
@@ -57,13 +58,10 @@ export default function VoiceInputButton({ onTranscript, isDisabled }) {
       {isRecording ? (
         <span className="recording-dot block h-3 w-3 rounded-md bg-safelight" />
       ) : (
-        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4">
-          <rect x="6.5" y="2" width="5" height="9" rx="2.5" />
-          <path d="M3.5 8.5a5.5 5.5 0 0011 0M9 14v2.5" />
-        </svg>
+        <Mic aria-hidden="true" size={18} strokeWidth={1.75} />
       )}
       <span className="sr-only" aria-live="polite">
-        {state === 'recording' ? 'Recording' : state === 'transcribing' ? 'Transcribing' : state === 'error' ? 'Could not hear that' : ''}
+        {state === 'recording' ? 'recording' : state === 'transcribing' ? 'transcribing' : state === 'error' ? 'could not hear that' : ''}
       </span>
     </button>
   )

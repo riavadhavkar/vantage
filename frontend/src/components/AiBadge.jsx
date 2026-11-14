@@ -1,18 +1,21 @@
 // OWNER: Person B
-// The one label for anything AI-generated. Used inside GradedImage and next to narration controls.
+// The one label for anything AI-generated. The player shows it whenever an AI illustration
+// or AI narration is on screen. Solid enough to stay legible over any image (AA).
+import { Sparkles } from 'lucide-react'
+
 const COPY = {
-  image: 'AI-generated illustration',
-  voice: 'AI narration',
+  both: 'ai generated illustration and narration',
+  image: 'ai generated illustration',
+  voice: 'ai narration',
 }
 
+/** @param {{ kind?: 'both'|'image'|'voice', className?: string }} props */
 export default function AiBadge({ kind = 'image', className = '' }) {
   return (
     <span
-      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md bg-prussian/85 px-2 py-1 text-xs text-print ${className}`}
+      className={`chrome inline-flex max-w-full items-center gap-1.5 rounded-full border border-print/25 bg-prussian/95 px-3 py-1 text-xs leading-[18px] text-print ${className}`}
     >
-      <svg aria-hidden="true" width="10" height="10" viewBox="0 0 10 10">
-        <path d="M5 0l1.2 3.8L10 5 6.2 6.2 5 10 3.8 6.2 0 5l3.8-1.2z" fill="currentColor" />
-      </svg>
+      <Sparkles aria-hidden="true" size={12} strokeWidth={1.75} className="shrink-0" />
       {COPY[kind]}
     </span>
   )

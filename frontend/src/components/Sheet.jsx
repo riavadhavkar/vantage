@@ -33,12 +33,12 @@ export default function Sheet({ title, isOpen, onClose, children, canExpand = tr
             <h2 className="text-base font-medium text-print">{title}</h2>
             <div className="flex items-center gap-1">
               {canExpand && (
-                <button type="button" onClick={() => setIsFull((v) => !v)} aria-pressed={isFull} className="min-h-11 rounded-md px-3 text-sm text-print hover:bg-developer">
-                  {isFull ? 'Exit full view' : 'Full view'}
+                <button type="button" onClick={() => setIsFull((v) => !v)} aria-pressed={isFull} className="chrome min-h-11 rounded-md px-3 text-sm text-print hover:bg-developer">
+                  {isFull ? 'exit full view' : 'full view'}
                 </button>
               )}
-              <button ref={closeRef} type="button" onClick={onClose} className="min-h-11 rounded-md px-3 text-sm text-print hover:bg-developer">
-                Close
+              <button ref={closeRef} type="button" onClick={onClose} className="chrome min-h-11 rounded-md px-3 text-sm text-print hover:bg-developer">
+                close
               </button>
             </div>
           </header>

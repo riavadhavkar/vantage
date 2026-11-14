@@ -1,6 +1,7 @@
 // OWNER: Person B
-// The cinematic frame: graded illustration (or a drawn scene), soft vignette,
-// title, and paper source pins. The perspective pull closes the iris over it.
+// The full-bleed stage: illustration (or a drawn scene), soft vignette, top and bottom scrims
+// for the HUD, and paper source pins. Title, date, icons and subtitles are drawn by the Player
+// over it. The perspective pull closes the iris over it.
 import { useMemo } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { sceneDataUrl, sceneKindFor, hashString } from '../lib/scene.js'
@@ -8,16 +9,17 @@ import { DEVELOP_MS, EASE_FOCUS } from '../constants/theme.js'
 import GradedImage from './GradedImage.jsx'
 import GradeLayers from './GradeLayers.jsx'
 import Iris from './Iris.jsx'
-import { EASE, pop, staggerParent } from '../lib/motion.js'
+import { pop, staggerParent } from '../lib/motion.js'
 import SourceTag from './SourceTag.jsx'
 
+// kept in the middle band so pins never sit under the top HUD or the subtitles
 const PIN_SLOTS = [
-  [14, 20],
-  [40, 13],
-  [64, 24],
-  [24, 42],
-  [52, 40],
-  [76, 12],
+  [14, 42],
+  [40, 38],
+  [64, 46],
+  [24, 54],
+  [52, 50],
+  [76, 40],
 ]
 
 function pinsFor(segment, sourcesById) {
@@ -55,7 +57,7 @@ export default function Stage({ segment, grade, imageUrl, imageStatus, pull, pul
   const showPins = segment?.is_grounded && pull === 'idle'
 
   return (
-    <div className="stage relative w-full overflow-hidden bg-prussian sm:rounded-xl">
+    <div className="absolute inset-0 overflow-hidden bg-prussian">
       <AnimatePresence initial={false}>
         {segment && (
           <motion.div
@@ -85,7 +87,6 @@ export default function Stage({ segment, grade, imageUrl, imageStatus, pull, pul
                   grade={grade}
                   alt={segment.scene_prompt ? `Illustration: ${segment.title}` : ''}
                   shouldPan={!reduce}
-                  badgeClassName="right-3 top-3"
                 />
               </motion.div>
             )}
@@ -95,27 +96,9 @@ export default function Stage({ segment, grade, imageUrl, imageStatus, pull, pul
 
       <div className="vignette pointer-events-none absolute inset-0" />
 
-      {/* title scrim */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-prussian/90 via-prussian/40 to-transparent" />
-      {segment && (
-        <motion.div
-          key={`title-${segment.segment_id}`}
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.15, ease: EASE }}
-          className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-4 px-4 pb-4 sm:px-8 sm:pb-7"
-        >
-          <h2 className="text-[26px] font-semibold leading-[30px] tracking-[-0.025em] text-balance text-print sm:text-[34px] sm:leading-[40px] lg:text-[40px] lg:leading-[46px]">
-            {segment.title}
-          </h2>
-          {segment.date_label && <p className="mb-1 shrink-0 text-right text-xs text-print/85 sm:text-sm">{segment.date_label}</p>}
-        </motion.div>
-      )}
-
-      {/* media status, quiet */}
-      {segment?.is_grounded && imageStatus === 'loading' && (
-        <p className="absolute top-3 right-3 z-10 rounded-md bg-prussian/70 px-2 py-1 text-xs text-fog">Developing the illustration...</p>
-      )}
+      {/* scrims: legible HUD at the top, legible subtitles at the bottom */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-prussian/85 via-prussian/40 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-prussian/95 via-prussian/65 to-transparent" />
 
       {showPins && (
         <motion.ul
