@@ -33,6 +33,19 @@ for (const width of widths) {
       await p.waitForTimeout(1300 * SLOW)
       await skip()
       steps.push('scene 1')
+      // evidence: a pin opens the paper, Escape closes it and focus goes back to the pin
+      await p.waitForSelector('.v2-pin', { timeout: 6000 })
+      await p.waitForTimeout(600 * SLOW)
+      await p.locator('.v2-pin').first().click()
+      await p.waitForSelector('[role=dialog] .v2-quote')
+      await p.waitForTimeout(1200 * SLOW)
+      if (await p.locator('.v2-ghost').count()) throw new Error('the travelling chip never landed')
+      if ((await p.locator('[data-ghost-target]').first().evaluate((el) => getComputedStyle(el).opacity)) !== '1') throw new Error('target chip stayed hidden')
+      await p.keyboard.press('Escape')
+      await p.waitForTimeout(600 * SLOW)
+      if (await p.locator('[role=dialog]').count()) throw new Error('evidence did not close on Escape')
+      if (!(await p.evaluate(() => document.activeElement?.classList.contains('v2-pin')))) throw new Error('focus did not return to the pin')
+      steps.push('evidence')
       // perspective switch through the ring, with a frame sequence
       await p.getByRole('radio', { name: /Cabin passengers/ }).click()
       // Frames are named by the time they were actually taken, in nominal milliseconds since the click

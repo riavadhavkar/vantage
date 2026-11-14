@@ -8,6 +8,7 @@ import { DURATION, EASING } from '../constants/theme.js'
 import { sec } from '../lib/motionMode.js'
 import { layoutText, matchClaims } from './claims.js'
 import { AiBadge, Btn, IconBtn, Speaking } from './ui.jsx'
+import { sourceLabel } from './labels.js'
 
 function Ungrounded({ segment, onRecover }) {
   return (
@@ -99,6 +100,21 @@ export default function Captions({ segment, isActive, isCalm, narration, sources
               Grounded in {sourceIds.length} {sourceIds.length === 1 ? 'source' : 'sources'}
             </Btn>
           </div>
+
+          {isDone && isActive && sourceIds.length > 0 && (
+            <ul className="v2-pins" aria-label="Evidence in this scene">
+              {sourceIds.slice(0, 4).map((id, n) => {
+                const source = sourcesById[id]
+                return (
+                  <li key={id}>
+                    <button type="button" className="v2-chip v2-pin" style={{ '--n': n }} title={source?.title} onClick={(e) => onOpenEvidence(id, segment.claims.find((c) => c.source_id === id), e.currentTarget)}>
+                      <span>{sourceLabel(source)}{source?.attribution ? ` · ${source.attribution}` : ''}</span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
         </>
       )}
     </article>

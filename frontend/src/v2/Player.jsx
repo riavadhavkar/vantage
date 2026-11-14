@@ -2,16 +2,17 @@
 // decides who is telling it. Data and actions come from usePlayer (same calls as classic).
 import { useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, motion, useTransform } from 'motion/react'
-import { Aperture, Volume2, VolumeX } from 'lucide-react'
+import { Aperture, FileText, Volume2, VolumeX } from 'lucide-react'
 import usePlayer from './usePlayer.js'
 import Frame from './Frame.jsx'
 import Captions from './Captions.jsx'
 import LensRing from './LensRing.jsx'
 import Choices from './Choices.jsx'
+import Evidence from './Evidence.jsx'
 import VoiceInputButton from '../components/VoiceInputButton.jsx'
 import ContinueOnPhone from '../components/ContinueOnPhone.jsx'
-import { DURATION, EASING } from '../constants/theme.js'
-import { sec } from '../lib/motionMode.js'
+import { DURATION, EASING, SPRING } from '../constants/theme.js'
+import { sec, spring } from '../lib/motionMode.js'
 import { Btn, DataBadge, IconBtn, Waiting } from './ui.jsx'
 import './player.css'
 
@@ -34,6 +35,24 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
     [P, isCalm, lookOf],
   )
 
+  // Evidence: which source to open, and (row 26) the chip that travels from the card to the paper.
+  const [evidence, setEvidence] = useState(null)
+  const [ghost, setGhost] = useState(null)
+  const openEvidence = useCallback(
+    (sourceId, claim, el) => {
+      const fromChip = !!el?.classList?.contains('v2-pin') && !isCalm
+      if (fromChip) {
+        const r = el.getBoundingClientRect()
+        setGhost({ label: el.textContent, from: { x: r.left, y: r.top }, to: null })
+      }
+      setEvidence({ sourceId: sourceId || null, claim: claim || null, fromChip })
+    },
+    [isCalm],
+  )
+  const landGhost = useCallback((to) => setGhost((g) => (g && to ? { ...g, to } : null)), [])
+  const closeEvidence = useCallback(() => (setEvidence(null), setGhost(null)), [])
+  useEffect(() => closeEvidence(), [shown?.segment_id, closeEvidence])
+
   const [question, setQuestion] = useState('')
   const submitQuestion = (e) => {
     e.preventDefault()
@@ -53,7 +72,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
 
   return (
     <main className={`v2-player ${shouldReveal && !isCalm ? 'v2-reveal' : ''}`} style={{ '--accent': look.accent }}>
-      <Frame segment={shown} look={look} imageUrl={P.narration.imageUrl} imageStatus={P.narration.imageStatus} soft={pull.soft} isPulling={isPulling} isCalm={isCalm} isUngrounded={!shown.is_grounded}>
+      <Frame segment={shown} look={look} imageUrl={P.narration.imageUrl} imageStatus={P.narration.imageStatus} soft={pull.soft} isPulling={isPulling} isCalm={isCalm} isPaused={!!evidence} isUngrounded={!shown.is_grounded}>
         {shown.date_label && shown.is_grounded && !isPulling && (
           <p key={shown.segment_id} className="v2-titlecard" aria-hidden="true"><span>{shown.date_label}</span></p>
         )}
@@ -72,6 +91,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
         <p className="v2-bar-topic">{P.topic?.title}</p>
         <span className="v2-bar-gap" />
         <DataBadge source={dataSource} />
+        <IconBtn label="Sources" icon={FileText} badge={P.citedCount || null} isPressed={!!evidence} onClick={() => openEvidence()} />
         <IconBtn label={isSoundOn ? 'Sound on' : 'Sound off'} icon={isSoundOn ? Volume2 : VolumeX} isPressed={isSoundOn} onClick={onToggleSound} tip="left" />
       </header>
 
@@ -86,7 +106,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
           lookOf={lookOf}
           textOpacity={textOpacity}
           onTyped={setIsTyped}
-          onOpenEvidence={() => {}}
+          onOpenEvidence={openEvidence}
           onRecover={P.recover}
         />
 
@@ -127,6 +147,32 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
           isBusy={isLoading || isPulling}
         />
       </div>
+
+      <Evidence
+        focus={evidence}
+        onClose={closeEvidence}
+        segment={shown}
+        segments={P.segments}
+        sources={P.sources}
+        sourcesById={P.sourcesById}
+        sourcesState={P.sourcesState}
+        onRetry={P.loadSources}
+        lookOf={lookOf}
+        onGhost={landGhost}
+        isGhosting={!!ghost}
+      />
+      {ghost?.to && (
+        <motion.span
+          aria-hidden="true"
+          className="v2-chip v2-ghost"
+          initial={{ x: ghost.from.x, y: ghost.from.y }}
+          animate={{ x: ghost.to.x, y: ghost.to.y }}
+          transition={spring(SPRING)}
+          onAnimationComplete={() => setGhost(null)}
+        >
+          {ghost.label}
+        </motion.span>
+      )}
 
       <AnimatePresence>
         {wash && (
