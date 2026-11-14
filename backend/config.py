@@ -33,8 +33,9 @@ GEMINI_FALLBACK_TEXT_MODEL = os.getenv("GEMINI_FALLBACK_TEXT_MODEL", "gemini-3.8
 GEMINI_IMAGE_MODEL = os.getenv("GEMINI_IMAGE_MODEL", "gemini-3.1-flash-image")
 GEMINI_EMBED_MODEL = os.getenv("GEMINI_EMBED_MODEL", "gemini-embedding-2")
 IMAGE_STYLE_PREFIX = (
-    "Loose charcoal sketch, rough expressive strokes, warm muted sepia tones, "
-    "editorial illustration, no text, no lettering: "
+    "Cinematic painted illustration in rich, vivid color, dramatic lighting with warm golden "
+    "highlights and deep blues, detailed historical setting, like film concept art, "
+    "no text, no lettering: "
 )
 
 XAI_API_KEY = os.getenv("XAI_API_KEY", "")
