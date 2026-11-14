@@ -27,7 +27,7 @@ export default function V2App({ isPlayer, session, topic, onStart, onExit, isSou
   return (
     <div className="v2">
       {view === 'player' && session.currentSegment ? (
-        <Player session={session} topic={topic} isSoundOn={isSoundOn} onToggleSound={onToggleSound} onExit={onExit} dataSource={dataSource} />
+        <Player session={session} topic={topic} isSoundOn={isSoundOn} onToggleSound={onToggleSound} onExit={onExit} dataSource={dataSource} shouldReveal={!document.startViewTransition} />
       ) : (
         <Landing onStart={onStart} isStarting={session.isLoading} error={session.error} isSoundOn={isSoundOn} onToggleSound={onToggleSound} dataSource={dataSource} />
       )}
