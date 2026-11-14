@@ -6,7 +6,7 @@ import httpx
 
 from config import XAI_API_KEY, IMAGE_STYLE_PREFIX
 
-XAI_IMAGE_MODEL_DEFAULT = "grok-imagine-image-2.0"
+XAI_IMAGE_MODEL_DEFAULT = "grok-imagine-image"
 
 
 def generate_image(scene_prompt: str, model: Optional[str] = None) -> Optional[bytes]:
