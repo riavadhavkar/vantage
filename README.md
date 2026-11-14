@@ -15,4 +15,8 @@ TODO: project description, setup, demo link.
     # frontend
     cd frontend && npm install && cp .env.example .env && npm run dev
 
+## How it works
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the system overview: the agents, the knowledge layer, the API, and the iMessage handoff.
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) before committing.

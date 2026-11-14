@@ -45,3 +45,17 @@ T08,T09,same-event,Two passenger memoirs written within a year
 T01,T19,happened-next,"The sinking, then the 1985 discovery"
 T20,T04,happened-next,"Senate report first, then the British report"
 T18,T01,happened-next,"Boarding at three ports, then the voyage and collision"
+D35,D03,same-event,Hour-by-hour timeline of the same battle
+D36,D25,same-event,Peale's own account of firing and falling back
+D36,D09,same-event,Quaker families nursing both armies
+D37,D17,same-event,Black soldiers at Princeton
+D38,D08,same-event,"How Mercer's death was painted, by a participant and by a later artist"
+D39,D16,same-event,Prime's story
+T22,T04,opposing-view,Lord's defenders vs the 1912 British finding against the Californian
+T22,T16,caused-by,The wrong distress position is central to Lord's defense
+T23,T17,same-event,Survival by class
+V01,D03,same-event,Video explainer of the battle
+V02,D03,same-event,Animated film of the campaign
+V03,D35,same-event,Animated retelling alongside the timeline
+V04,D17,same-event,Black soldiers at Princeton
+V05,T19,same-event,Animation of the breakup the wreck later confirmed

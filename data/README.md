@@ -12,8 +12,8 @@ not committed (many pages are copyrighted); `fetch_sources.py` rebuilds it.
 
 ## Topics
 
-- **princeton**: Battle of Princeton, 3 Jan 1777. Docs `D01` to `D34`.
-- **titanic**: Sinking of the Titanic, 14-15 Apr 1912. Docs `T01` to `T21`.
+- **princeton**: Battle of Princeton, 3 Jan 1777. Docs `D01` to `D39`.
+- **titanic**: Sinking of the Titanic, 14-15 Apr 1912. Docs `T01` to `T23`.
 
 Perspectives drive narrator voices: `american`, `british`, `townspeople`, `historian` (Princeton)
 and `crew`, `first_class`, `steerage`, `historian` (Titanic).
@@ -37,3 +37,9 @@ Some sites block scripts; the fetch script lists those so they can be copied by 
 `sources/<doc_id>.txt`. Run `rebuild_manifest.py` afterwards.
 
 Every chunk loaded into ChromaDB carries its document's metadata. Retrieval filters on `topic`.
+
+## Video sources
+
+Rows with `source_type = video_link` (`V01` to `V05`) are reputable videos the app links to in the
+source panel. Their text files hold a short summary written by the team, never a transcript.
+`fetch_sources.py` skips them.
