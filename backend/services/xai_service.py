@@ -34,7 +34,7 @@ def generate_image(scene_prompt: str, model: Optional[str] = None) -> Optional[b
     return None
 
 
-XAI_TEXT_MODEL_DEFAULT = "grok-4.20-0309-non-reasoning"
+XAI_TEXT_MODEL_DEFAULT = "grok-4.3"
 
 
 def generate_text(prompt: str, system: Optional[str] = None, as_json: bool = False) -> str:
