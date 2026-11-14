@@ -35,6 +35,17 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
   const isPulling = pull.phase !== 'idle'
   const textOpacity = useTransform(pull.soft, (s) => 1 - 0.65 * s)
 
+  // While the frame itself is changing, glass panels stop blurring what is behind them. Backdrop
+  // blur over a moving full-screen layer is the most expensive thing on this page, and behind a
+  // frame that is already soft or crossfading it is not visible anyway.
+  const [isSettling, setIsSettling] = useState(false)
+  useEffect(() => {
+    setIsSettling(true)
+    const t = setTimeout(() => setIsSettling(false), 900)
+    return () => clearTimeout(t)
+  }, [shownId])
+  const isMoving = isPulling || isLoading || isSettling
+
   // Row 21: the chosen row's dot grows into a wash over the frame.
   const [wash, setWash] = useState(null)
   const choose = useCallback(
@@ -94,7 +105,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
   const ringTarget = known(pending?.perspective) || known(session.currentSegment?.perspective) || shown.perspective
 
   return (
-    <main className={`v2-player ${shouldReveal && !isCalm ? 'v2-reveal' : ''}`} style={{ '--accent': look.accent }}>
+    <main className={`v2-player ${shouldReveal && !isCalm ? 'v2-reveal' : ''} ${isMoving ? 'is-moving' : ''}`} style={{ '--accent': look.accent }}>
       <Frame segment={shown} look={dis ? sideLook(dis.side_a) : look} splitLook={dis ? sideLook(dis.side_b) : null} imageUrl={P.narration.imageUrl} imageUrls={P.narration.imageUrls} imageStatus={P.narration.imageStatus} soft={pull.soft} isPulling={isPulling} isCalm={isCalm} isPaused={!!evidence || !!panel} isUngrounded={!shown.is_grounded}>
         {shown.date_label && shown.is_grounded && !isPulling && (
           <p key={shown.segment_id} className="v2-titlecard" aria-hidden="true"><span>{shown.date_label}</span></p>

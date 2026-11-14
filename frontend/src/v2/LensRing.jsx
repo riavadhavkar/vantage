@@ -41,8 +41,10 @@ export default function LensRing({ perspectives, activeId, waitingId = null, hea
         if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') (e.preventDefault(), go(-1))
       }}
     >
-      <div aria-hidden="true" className="v2-ring-ticks" style={{ transform: `translate3d(${x}px,0,0)` }} />
       <span aria-hidden="true" className="v2-ring-index" />
+      {/* the marks fade at the edges; the ring's own background stays solid */}
+      <div className="v2-ring-window">
+      <div aria-hidden="true" className="v2-ring-ticks" style={{ transform: `translate3d(${x}px,0,0)` }} />
       <div className="v2-ring-marks" style={{ transform: `translate3d(${x}px,0,0)` }}>
         {marks.map((k) => {
           const p = perspectives[mod(k, n)]
@@ -76,6 +78,7 @@ export default function LensRing({ perspectives, activeId, waitingId = null, hea
             </button>
           )
         })}
+      </div>
       </div>
     </div>
   )

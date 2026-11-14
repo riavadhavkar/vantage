@@ -7,6 +7,8 @@ import usePull from './usePull.js'
 import { getSources, getGraph } from '../api/client.js'
 import { deriveTopic } from '../api/normalize.js'
 import { looksForTopic, NEUTRAL_LOOK } from './looks.js'
+import { gradedSceneUrl, sceneOptsFor } from './gradedScene.js'
+import { prepareSoft } from './softImage.js'
 import { useCalmMotion } from '../lib/motionMode.js'
 
 const GRAPH_POLL_MS = 5000
@@ -30,7 +32,10 @@ const tick = () => {
 export default function usePlayer({ session, topic, isSoundOn }) {
   const isCalm = useCalmMotion()
   const { currentSegment, segments, sessionId, choose, ask, isLoading, pending, error, clearError } = session
-  const pull = usePull(currentSegment, { isCalm })
+  // Before a new scene swaps in under the blur, have its graded drawing and its soft copy ready.
+  const looksRef = useRef({})
+  const prepare = useCallback((seg) => prepareSoft(gradedSceneUrl(sceneOptsFor(seg), looksRef.current[seg.perspective] || NEUTRAL_LOOK)), [])
+  const pull = usePull(currentSegment, { isCalm, prepare })
   const { shown, begin, cancel } = pull
 
   const [sources, setSources] = useState([])
@@ -43,6 +48,7 @@ export default function usePlayer({ session, topic, isSoundOn }) {
   )
   const looks = useMemo(() => looksForTopic(effectiveTopic), [effectiveTopic])
   const perspectives = useMemo(() => effectiveTopic.perspectives || [], [effectiveTopic])
+  looksRef.current = looks
   const look = (shown && looks[shown.perspective]) || NEUTRAL_LOOK
   const lookOf = useCallback((id) => looks[id] || NEUTRAL_LOOK, [looks])
 

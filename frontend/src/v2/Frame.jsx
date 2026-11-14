@@ -4,26 +4,19 @@
 // blurred once; the blur itself is never animated.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from 'motion/react'
-import { sceneDataUrl, sceneKindFor } from '../lib/scene.js'
+import { gradedSceneUrl, sceneOptsFor } from './gradedScene.js'
+import { prepareSoft, softUrl } from './softImage.js'
 import { DURATION, EASING, SIGNATURE } from '../constants/theme.js'
 import { sec } from '../lib/motionMode.js'
 import { AiBadge } from './ui.jsx'
 
-/** Duotone (drawn scenes) or tint (illustrations), optionally split down the middle for a contradiction. */
-function Grade({ look, splitLook, kind }) {
-  const sides = [
-    [look, `inset(0 ${splitLook ? 50 : 0}% 0 0)`],
-    [splitLook || look, `inset(0 0 0 ${splitLook ? 50 : 100}%)`],
-  ]
-  return sides.map(([l, clipPath], n) =>
-    kind === 'tint' ? (
-      <i key={n} aria-hidden="true" className="v2-grade grade-tint" style={{ backgroundColor: l.tint, clipPath }} />
-    ) : (
-      <span key={n} aria-hidden="true">
-        <i className="v2-grade grade-hi" style={{ backgroundColor: l.highlight, clipPath }} />
-        <i className="v2-grade grade-lo" style={{ backgroundColor: l.shadow, clipPath }} />
-      </span>
-    ),
+/** The faint perspective tint over a color illustration, split down the middle for a contradiction. */
+function Tint({ look, splitLook }) {
+  return (
+    <>
+      <i aria-hidden="true" className="v2-grade grade-tint" style={{ backgroundColor: look.tint, clipPath: `inset(0 ${splitLook ? 50 : 0}% 0 0)` }} />
+      {splitLook && <i aria-hidden="true" className="v2-grade grade-tint" style={{ backgroundColor: splitLook.tint, clipPath: 'inset(0 0 0 50%)' }} />}
+    </>
   )
 }
 
@@ -62,10 +55,9 @@ function useLoadedShots(urls) {
 }
 
 function Plate({ segment, look, splitLook, shotUrls, canShowImage, soft, pointer, isCalm, isPaused, crossfade, onImage }) {
-  const sceneUrl = useMemo(
-    () => sceneDataUrl({ seed: segment.segment_id, kind: sceneKindFor(`${segment.scene_prompt || ''} ${segment.title}`), width: 1600, height: 900 }),
-    [segment],
-  )
+  const scene = useMemo(() => sceneOptsFor(segment), [segment])
+  const sceneUrl = useMemo(() => gradedSceneUrl(scene, look), [scene, look])
+  const splitUrl = useMemo(() => (splitLook ? gradedSceneUrl(scene, splitLook) : null), [scene, splitLook])
   const shots = useLoadedShots(canShowImage ? shotUrls : NO_SHOTS)
   const [shotIndex, setShotIndex] = useState(0)
   const [isDeveloped, setIsDeveloped] = useState(false)
@@ -86,12 +78,26 @@ function Plate({ segment, look, splitLook, shotUrls, canShowImage, soft, pointer
           {!isDeveloped && (
             <div className="v2-drawn">
               {isCalm ? (
-                <img src={sceneUrl} alt="" className="print-gray v2-fill" />
+                <img src={sceneUrl} alt="" className="v2-fill" />
               ) : (
                 BANDS.map((b) => <Band key={b.cls} src={sceneUrl} cls={b.cls} depth={b.depth} pointer={pointer} />)
               )}
-              <motion.img src={sceneUrl} alt="" aria-hidden="true" className="print-gray v2-fill v2-softimg" style={{ opacity: soft }} />
-              <Grade look={look} splitLook={splitLook} kind="duotone" />
+              {/* a contradiction: the right half takes the other account's grade */}
+              <AnimatePresence>
+                {splitUrl && (
+                  <motion.img
+                    key="split"
+                    src={splitUrl}
+                    alt=""
+                    className="v2-fill"
+                    initial={{ clipPath: 'inset(0% 0% 0% 100%)' }}
+                    animate={{ clipPath: 'inset(0% 0% 0% 50%)' }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: sec(isCalm ? DURATION.quick : SIGNATURE.soften + SIGNATURE.swap + SIGNATURE.sharpen), ease: EASING.move }}
+                  />
+                )}
+              </AnimatePresence>
+              <Soft url={sceneUrl} soft={soft} />
             </div>
           )}
           {showImage && (
@@ -105,10 +111,10 @@ function Plate({ segment, look, splitLook, shotUrls, canShowImage, soft, pointer
               <AnimatePresence initial={false}>
                 <motion.div key={shot} className="v2-shot" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: sec(isCalm ? DURATION.quick : DURATION.slow), ease: EASING.move }}>
                   <img src={shot} alt={`Illustration: ${segment.title}`} className="print-color v2-fill" decoding="async" />
-                  <motion.img src={shot} alt="" aria-hidden="true" className="v2-fill v2-softimg v2-softimg-color" style={{ opacity: soft }} />
+                  <Soft url={shot} soft={soft} />
                 </motion.div>
               </AnimatePresence>
-              <Grade look={look} splitLook={splitLook} kind="tint" />
+              <Tint look={look} splitLook={splitLook} />
               {/* the print develops: a dark wash lifts as the first image comes up */}
               {!isCalm && <motion.i aria-hidden="true" className="v2-develop" initial={{ opacity: 0.55 }} animate={{ opacity: 0 }} transition={{ duration: sec(DURATION.slow * 1.3), ease: EASING.enter }} />}
             </motion.div>
@@ -119,10 +125,24 @@ function Plate({ segment, look, splitLook, shotUrls, canShowImage, soft, pointer
   )
 }
 
+/** The out-of-focus copy: a tiny pre-blurred bitmap when it can be made, a CSS blur otherwise. */
+function Soft({ url, soft }) {
+  const [tiny, setTiny] = useState(() => softUrl(url))
+  useEffect(() => {
+    let isLive = true
+    setTiny(softUrl(url))
+    prepareSoft(url).then((t) => isLive && setTiny(t))
+    return () => {
+      isLive = false
+    }
+  }, [url])
+  return <motion.img src={tiny || url} alt="" aria-hidden="true" className={`v2-fill v2-softimg ${tiny ? 'is-tiny' : ''}`} style={{ opacity: soft }} />
+}
+
 function Band({ src, cls, depth, pointer }) {
   const tx = useTransform(pointer.x, (v) => v * -depth)
   const ty = useTransform(pointer.y, (v) => v * -depth * 0.4)
-  return <motion.img src={src} alt="" className={`print-gray v2-fill v2-band ${cls}`} style={{ x: tx, y: ty }} />
+  return <motion.img src={src} alt="" className={`v2-fill v2-band ${cls}`} style={{ x: tx, y: ty }} />
 }
 
 /**

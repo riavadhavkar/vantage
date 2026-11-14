@@ -34,7 +34,7 @@ function watchFrames() {
  * @returns {{ shown: object|null, phase: 'idle'|'out'|'in', soft: import('motion/react').MotionValue<number>,
  *   begin: () => void, cancel: () => void }}
  */
-export default function usePull(current, { isCalm = false } = {}) {
+export default function usePull(current, { isCalm = false, prepare } = {}) {
   const [shown, setShown] = useState(current)
   const [phase, setPhase] = useState('idle')
   const clock = useMotionValue(0)
@@ -48,6 +48,9 @@ export default function usePull(current, { isCalm = false } = {}) {
   const isActive = useRef(false)
   const atHalf = useRef(false)
   const stopWatch = useRef(null)
+  const prepareRef = useRef(prepare)
+  prepareRef.current = prepare
+  const turn = useRef(0)
 
   const show = useCallback((seg) => {
     shownRef.current = seg
@@ -65,14 +68,28 @@ export default function usePull(current, { isCalm = false } = {}) {
 
   const sharpen = useCallback(
     (seg) => {
-      show(seg)
-      setPhase('in')
-      run.current = animate(clock, 1, { duration: sec(HALF), ease: 'linear', onComplete: end })
+      const mine = ++turn.current
+      let hasGone = false
+      const go = () => {
+        if (hasGone || mine !== turn.current) return
+        hasGone = true
+        show(seg)
+        setPhase('in')
+        run.current = animate(clock, 1, { duration: sec(HALF), ease: 'linear', onComplete: end })
+      }
+      // Let the next scene's out-of-focus copy get ready while the frame is fully soft (at most 150 ms),
+      // so the swap under the blur never shows a sharp frame.
+      const warm = prepareRef.current?.(seg)
+      if (warm?.then) {
+        warm.then(go, go)
+        setTimeout(go, 150)
+      } else go()
     },
     [clock, end, show],
   )
 
   const begin = useCallback(() => {
+    turn.current += 1
     run.current?.stop()
     isActive.current = true
     atHalf.current = false
@@ -98,6 +115,7 @@ export default function usePull(current, { isCalm = false } = {}) {
   /** The request failed: come back into focus on the scene we already had. */
   const cancel = useCallback(() => {
     if (!isActive.current) return
+    turn.current += 1
     run.current?.stop()
     if (isCalm) return end()
     setPhase('in')
