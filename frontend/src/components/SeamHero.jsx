@@ -12,21 +12,16 @@ import GradeLayers from './GradeLayers.jsx'
 const clamp = (v) => Math.max(6, Math.min(94, v))
 
 function Side({ side, isLead, align }) {
-  const src = side.source
   return (
     <div className={`flex-1 transition-opacity duration-300 ${isLead ? 'opacity-100' : 'opacity-45'} ${align === 'right' ? 'text-right' : ''}`}>
-      <p className="text-[15px] leading-[23px] text-prussian sm:text-[17px] sm:leading-[26px]">{side.text}</p>
-      <p className="mt-2 font-mono text-[12px] leading-[18px] text-ink-muted">
-        {SOURCE_TYPE_LABEL[src?.source_type] || 'Source'}
-        {src?.title ? ` · ${src.title}` : ''}
-      </p>
+      <p className="text-[14px] leading-[21px] text-prussian sm:text-[16px] sm:leading-[24px]">{side.text}</p>
     </div>
   )
 }
 
 export default function SeamHero({ examples }) {
   const reduce = useReducedMotion()
-  const [index, setIndex] = useState(0)
+  const [index] = useState(0)
   const [seam, setSeam] = useState(50)
   const [hasTouched, setHasTouched] = useState(false)
   const frame = useRef(null)
@@ -69,12 +64,6 @@ export default function SeamHero({ examples }) {
     setSeam((v) => clamp(v + map[e.key]))
   }
 
-  const next = () => {
-    setIndex((i) => (i + 1) % examples.length)
-    setSeam(50)
-    setHasTouched(false)
-  }
-
   const spring = reduce ? { duration: 0 } : dragging.current ? { duration: 0 } : { duration: 0.9, ease: EASE }
   const lead = useMemo(() => (seam < 46 ? 'b' : seam > 54 ? 'a' : null), [seam])
   if (!ex) return null
@@ -89,13 +78,10 @@ export default function SeamHero({ examples }) {
           exit={{ opacity: 0 }}
           transition={{ duration: reduce ? 0.15 : 0.45, ease: EASE }}
         >
-          <div className="mb-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-safelight-ink/40 px-2.5 py-0.5 text-xs font-medium text-safelight-ink">
-              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-safelight" />
-              Sources disagree
-            </span>
-            <span className="text-sm text-prussian">{ex.claim}</span>
-          </div>
+          <p className="mx-auto mb-4 max-w-[60ch] text-center text-sm text-balance text-prussian">
+            <span aria-hidden="true" className="mr-2 inline-block h-1.5 w-1.5 -translate-y-px rounded-full bg-safelight align-middle" />
+            <span className="text-safelight-ink">Sources disagree:</span> {ex.claim}
+          </p>
 
           <div
             ref={frame}
@@ -152,24 +138,13 @@ export default function SeamHero({ examples }) {
             </motion.div>
           </div>
 
-          <div className="mt-5 flex gap-6 sm:gap-12">
+          <div className="mt-4 flex gap-6 sm:gap-12">
             <Side side={ex.a} isLead={lead !== 'b'} />
             <Side side={ex.b} isLead={lead !== 'a'} align="right" />
           </div>
         </motion.div>
       </AnimatePresence>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-prussian/10 pt-3 text-xs text-ink-muted">
-        <span>Example from the demo sources: {ex.topic}</span>
-        {examples.length > 1 && (
-          <button type="button" onClick={next} className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-prussian hover:underline">
-            Next disagreement
-            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-              <path d="M3 7h8M8 4l3 3-3 3" />
-            </svg>
-          </button>
-        )}
-      </div>
     </section>
   )
 }
