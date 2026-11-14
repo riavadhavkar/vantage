@@ -10,19 +10,13 @@ import './lib/motionMode.js'
 import App from './App.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 
-const root = document.getElementById('root')
-// The design lab (/lab, /lab/<id>, or ?lab=<id>) is a separate lazy chunk; the app itself is unchanged.
-const lab = window.location.pathname.match(/^\/lab(?:\/([\w-]+))?\/?$/)
-const labId = lab ? lab[1] || '' : new URLSearchParams(window.location.search).get('lab')
+// v2 styles that reach outside the app root (view transitions) key off this.
+document.documentElement.dataset.ui = 'v2'
 
-if (labId != null) {
-  import('./lab/index.jsx').then((m) => m.mount(root, labId))
-} else {
-  ReactDOM.createRoot(root).render(
-    <React.StrictMode>
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
-    </React.StrictMode>,
-  )
-}
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  </React.StrictMode>,
+)

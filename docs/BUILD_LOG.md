@@ -254,3 +254,19 @@ Handoff is written. Waiting for review. No cutover without approval.
 
 **Verified:** lint and build pass; `UI=v2 node scripts/sketch-verify.mjs` all checks pass; screenshots in `frontend/screenshots/sketch-v2-*`.
 
+## 2026-11-14 15:18 EST. UI: v2 is the only interface (Person B)
+
+**Decision (Ria):** there is one UI. v2 stays; classic and everything else goes. Branch `b/v2-only`, from `origin/main` at `0ad5aad`.
+
+**Removed**
+
+- The classic interface: `LandingScreen`, `Player`, `Stage`, `LensRail`, `TimelineStrip`, `SourcePanel`, `Sheet`, `KnowledgeGraph`, `StoryMap`, `ChoiceButtons`, `ContradictionSplit` and the pieces only they used (home cards and rows, iris, grade layers, graded image, source tag, loading state, sound toggle, data-source note, aperture glyph), plus `usePerspectivePull`, `useTypewriter`, `lib/catalog`, `lib/seamExamples`, `lib/share`, `constants/enums`.
+- The `?ui=v2` / `?ui=classic` switch (`lib/ui.js`). The app always renders v2. `/?ui=classic` and `/?ui=v2` both just open the app.
+- The design lab (`src/lab/`, the `/lab` route, `scripts/lab-shots.mjs`) and the classic screenshot scripts.
+
+**Kept:** the shared pieces v2 uses (`AskPill`, `Subtitles`, `LanguageSelects`, `SettingsPopover`, `Ungrounded`, `VoiceInputButton`, `AmbientPlayer`, `ContinueOnPhone`, `ErrorBoundary`), `src/api`, `src/mocks`, the hooks, and all of `src/v2`.
+
+**Changed:** `App.jsx` is v2 only (session, topic, data source, languages, sound); `main.jsx` has no lab branch and sets `data-ui="v2"` itself; `DESIGN.md` and the handoff describe one interface; the `screenshots` npm script now runs `v2-shots.mjs`.
+
+**Not checked:** the older `v2-*.mjs` and `fps.mjs` scripts were only stripped of the `ui=v2` parameter. They were written before the sketch layout and may need selector updates.
+

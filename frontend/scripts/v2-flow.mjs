@@ -27,7 +27,7 @@ for (const width of widths) {
     }
     const steps = []
     try {
-      await p.goto(`${BASE}/?demo=1&ui=v2${EXTRA}`)
+      await p.goto(`${BASE}/?demo=1${EXTRA}`)
       await p.waitForTimeout(2600 * SLOW)
       await p.getByRole('button', { name: 'Begin' }).click()
       await p.waitForSelector('#v2-title')

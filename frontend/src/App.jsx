@@ -1,16 +1,13 @@
 // OWNER: Person B
-import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
-import { AnimatePresence, MotionConfig, motion, useReducedMotion } from 'motion/react'
-import LandingScreen from './components/LandingScreen.jsx'
-import Player from './components/Player.jsx'
+// One interface: v2. This file owns the session, the topic, the data source, language
+// settings and sound; V2App renders the landing page and the player from them.
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { MotionConfig } from 'motion/react'
+import V2App from './v2/V2App.jsx'
 import useSession from './hooks/useSession.js'
 import useLanguageSettings from './hooks/useLanguageSettings.js'
 import { getTopic, resolveDataSource, getDataSource } from './api/client.js'
-import { UI } from './lib/ui.js'
 import { MOTION_MODE } from './lib/motionMode.js'
-
-// The v2 interface (?ui=v2) is a separate chunk. It receives the same session and callbacks.
-const V2App = lazy(() => import('./v2/V2App.jsx'))
 
 export default function App() {
   const [dataSource, setDataSource] = useState(getDataSource())
@@ -31,7 +28,6 @@ export default function App() {
   const narrationLanguage = isOfflineData ? 'en' : lang.narrationLanguage
   const language = { ...lang, narrationLanguage, isOffline: isOfflineData }
   const session = useSession()
-  const reduce = useReducedMotion()
   const { startSession, reset } = session
 
   useEffect(() => {
@@ -92,71 +88,20 @@ export default function App() {
     window.scrollTo(0, 0)
   }, [reset])
 
-  const isPlayer = view === 'player' && !!session.currentSegment
-
-  if (UI === 'v2') {
-    return (
-      <MotionConfig reducedMotion={MOTION_MODE === 'off' ? 'always' : 'user'}>
-        <Suspense fallback={null}>
-          <V2App
-            isPlayer={isPlayer}
-            session={session}
-            topic={topic}
-            onStart={onStart}
-            onExit={onExit}
-            isSoundOn={isSoundOn}
-            onToggleSound={toggleSound}
-            dataSource={dataSource}
-            language={language}
-            onRestart={onRestart}
-          />
-        </Suspense>
-      </MotionConfig>
-    )
-  }
-  // Paper to screen: the dark stage opens like an aperture over the landing page.
-  const screenIn = reduce
-    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.2 } }
-    : {
-        initial: { clipPath: 'circle(0% at 50% 62%)' },
-        animate: { clipPath: 'circle(150% at 50% 62%)', transitionEnd: { clipPath: 'none' } },
-        transition: { duration: 0.9, ease: [0.65, 0, 0.2, 1] },
-      }
-
   return (
-    <MotionConfig reducedMotion="user">
-      {/* both pages share one grid cell so the stage can open over the paper */}
-      <div className="grid grid-cols-1">
-      <AnimatePresence initial={false}>
-        {isPlayer ? (
-          <motion.div key="screen" className="relative z-10 col-start-1 row-start-1 min-h-dvh min-w-0 bg-prussian" {...screenIn}>
-            <Player
-              session={session}
-              topic={topic}
-              isSoundOn={isSoundOn}
-              onToggleSound={toggleSound}
-              language={language}
-              onRestart={onRestart}
-              onExit={onExit}
-              dataSource={dataSource}
-            />
-          </motion.div>
-        ) : (
-          <motion.div key="paper" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 1, transition: { duration: 0.9 } }} className="col-start-1 row-start-1 min-w-0">
-            <LandingScreen
-              onStart={onStart}
-              topic={topic}
-              isStarting={session.isLoading}
-              error={session.error}
-              isSoundOn={isSoundOn}
-              onToggleSound={toggleSound}
-              language={language}
-              dataSource={dataSource}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-      </div>
+    <MotionConfig reducedMotion={MOTION_MODE === 'off' ? 'always' : 'user'}>
+      <V2App
+        isPlayer={view === 'player' && !!session.currentSegment}
+        session={session}
+        topic={topic}
+        onStart={onStart}
+        onExit={onExit}
+        isSoundOn={isSoundOn}
+        onToggleSound={toggleSound}
+        dataSource={dataSource}
+        language={language}
+        onRestart={onRestart}
+      />
     </MotionConfig>
   )
 }

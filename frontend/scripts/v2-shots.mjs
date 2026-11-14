@@ -1,4 +1,4 @@
-// Screenshots of the new UI (?ui=v2) at 390, 768 and 1440, with console, overflow and network checks.
+// Screenshots of the interface at 390, 768 and 1440, with console, overflow and network checks.
 // Usage: node scripts/v2-shots.mjs [--url http://localhost:5174] [--only landing,player,...] [--widths 390,1440] [--query "&motion=off"]
 import { chromium } from 'playwright'
 import { mkdirSync } from 'node:fs'
@@ -60,7 +60,7 @@ for (const vp of WIDTHS) {
   }
 
   await run('landing', async () => {
-    await page.goto(`${BASE}/?demo=1&ui=v2${EXTRA}`)
+    await page.goto(`${BASE}/?demo=1${EXTRA}`)
     await page.waitForTimeout(3200)
     await shot('landing')
   })

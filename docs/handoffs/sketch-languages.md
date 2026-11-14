@@ -1,5 +1,7 @@
 # Handoff: sketch layout and language support
 
+> **Latest: v2 is the only interface (branch `b/v2-only`).** The classic interface, the `?ui` switch, the design lab and every component only they used were removed. Where this document says "classic", that code no longer exists; read the v2 sections.
+
 > **Update, after the merge with main: the sketch now targets the v2 interface (`?ui=v2`), which is the one that needed the redesign.** The first pass (below) rewrote the *classic* player; it is still on this branch and still works at `/`, but v2 is the real target. Everything in "What changed" below applies to both unless it says v2.
 >
 > **v2 pass (`src/v2/`)**
