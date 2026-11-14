@@ -63,10 +63,10 @@ export default function App() {
   return (
     <MotionConfig reducedMotion="user">
       {/* both pages share one grid cell so the stage can open over the paper */}
-      <div className="grid">
+      <div className="grid grid-cols-1">
       <AnimatePresence initial={false}>
         {isPlayer ? (
-          <motion.div key="screen" className="relative z-10 col-start-1 row-start-1 min-h-dvh bg-prussian" {...screenIn}>
+          <motion.div key="screen" className="relative z-10 col-start-1 row-start-1 min-h-dvh min-w-0 bg-prussian" {...screenIn}>
             <Player
               session={session}
               topic={topic}
@@ -77,7 +77,7 @@ export default function App() {
             />
           </motion.div>
         ) : (
-          <motion.div key="paper" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 1, transition: { duration: 0.9 } }} className="col-start-1 row-start-1">
+          <motion.div key="paper" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 1, transition: { duration: 0.9 } }} className="col-start-1 row-start-1 min-w-0">
             <LandingScreen
               onStart={onStart}
               topic={topic}

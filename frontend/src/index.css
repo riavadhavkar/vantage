@@ -206,21 +206,6 @@ body {
   }
 }
 
-/* The landing page is paper: light surface, prussian ink. */
-html[data-surface='paper'],
-html[data-surface='paper'] body {
-  background: var(--color-paper);
-  color: var(--color-prussian);
-  color-scheme: light;
-}
-html[data-surface='paper'] :focus-visible {
-  outline-color: var(--color-prussian);
-}
-html[data-surface='paper'] ::selection {
-  background: var(--color-prussian);
-  color: var(--color-paper);
-}
-
 
 .stage {
   height: min(58vh, 56.25cqw);
