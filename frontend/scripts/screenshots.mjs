@@ -88,7 +88,9 @@ for (const vp of WIDTHS) {
   await page.getByRole('button', { name: 'Show all text' }).click().catch(() => {})
   await settle(page, 600)
   await page.locator('section[aria-label="Sources disagree"]').scrollIntoViewIfNeeded()
-  await settle(page, 300)
+  // The two accounts reveal when scrolled into view (350 ms delay + 550 ms). Wait for that to finish,
+  // or a phone-height screenshot catches the panel while it is still empty.
+  await settle(page, 1200)
   await shot(page, `contradiction-${vp.name}`)
 
   // source panel from a pin
