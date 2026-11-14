@@ -50,13 +50,19 @@ export default function Stage({ segment, grade, imageUrl, imageUrls, imageStatus
     const list = (imageUrls || []).filter(Boolean)
     return list.length ? list : imageUrl ? [imageUrl] : []
   }, [imageUrls, imageUrl])
+  const shotMs = useMemo(() => {
+    const words = (segment?.narrative_text || '').split(/\s+/).filter(Boolean).length
+    const planned = Math.max(segment?.scene_prompts?.length || shots.length || 1, 1)
+    const totalMs = (words / 2.6) * 1000
+    return Math.max(3000, Math.min(8000, Math.round(totalMs / planned)))
+  }, [segment, shots.length])
   const [shotIdx, setShotIdx] = useState(0)
   useEffect(() => { setShotIdx(0) }, [segment?.segment_id])
   useEffect(() => {
     if (reduce || shots.length < 2) return undefined
-    const t = setInterval(() => setShotIdx((i) => (i + 1) % shots.length), SHOT_MS)
+    const t = setInterval(() => setShotIdx((i) => (i + 1) % shots.length), shotMs)
     return () => clearInterval(t)
-  }, [shots.length, reduce])
+  }, [shots.length, reduce, shotMs])
   const currentShot = shots[shotIdx % (shots.length || 1)] || imageUrl
   const sceneUrl = useMemo(
     () =>

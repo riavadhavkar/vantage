@@ -25,6 +25,10 @@ OPENING_QUERIES = {
     "princeton": "Washington night march from Trenton to Princeton January 3 1777 battle begins",
     "titanic": "Titanic strikes iceberg night of April 14 1912 lookout warnings",
 }
+SCENE_ANCHORS = {
+    "titanic": "RMS Titanic, a 1912 ocean liner with four tall buff funnels and black hull, North Atlantic, April 1912, people in Edwardian clothing",
+    "princeton": "Battle of Princeton, New Jersey, January 1777, frozen fields and bare trees, Continental soldiers in worn brown and blue coats and British redcoats, 18th century",
+}
 TOPIC_TITLES = {"princeton": "the Battle of Princeton, January 1777",
                 "titanic": "the sinking of the Titanic, April 1912"}
 
@@ -148,6 +152,10 @@ def run_pipeline(session_id: str, choice_id: Optional[str] = None,
             "source_ids": out["source_ids"],
             "choices": [Choice(**c) for c in out["choices"]],
         }
+        anchor = SCENE_ANCHORS.get(topic_key)
+        if anchor:
+            data["scene_prompt"] = f"{anchor}. {data['scene_prompt']}"
+            data["scene_prompts"] = [f"{anchor}. {x}" for x in data.get("scene_prompts") or []]
         if not data["location"] and chunks and chunks[0].get("lat"):
             c = chunks[0]
             data["location"] = Location(lat=c["lat"], lng=c["lng"], label=c.get("location_label", ""))
