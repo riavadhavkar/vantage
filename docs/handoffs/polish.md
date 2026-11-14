@@ -99,7 +99,7 @@ VITE_VANTAGE_USE_MOCKS=1 npm run dev -- --port 5178          # http://localhost:
    - There is no confirmation and no shutter.
 9. **Language button:** a globe icon replaces the chevron and opens two controls, narration and subtitles (with "off" and "same as narration"). Photon is not in it.
 10. **Ambient sound removed:** `AmbientPlayer`, `useAmbientAudio`, `public/ambient/`, the setting, the styles, and the mentions in `DESIGN.md` and `design/MOTION.md`. The speaker toggle stays (its on/off state is still remembered).
-11. **Story connections:** the legend is on the right, in lowercase. The "React Flow" corner label is hidden with `proOptions.hideAttribution`, and React Flow is credited in the README and the share sheet's "about vantage".
+11. **Story connections:** the legend is on the right, in lowercase. The "React Flow" corner label is hidden with `proOptions.hideAttribution`, and React Flow is credited in the share sheet's "about vantage" (not the README: it belongs to Person C, see CONTRIBUTING.md).
 12. **Map:** zoom controls are top-right, styled like the graph's, and the panel is titled "map" with the place name as its subtitle.
 13. **Sources:**
     - Titled "sources". "How this was grounded" is the first, open section: numbered claims, each with a chip that opens its source.

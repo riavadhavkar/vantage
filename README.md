@@ -72,8 +72,6 @@ Some sites block scripts. `fetch_sources.py` lists any source it could not downl
 
 FastAPI · ChromaDB · Google Gemini · xAI Grok · ElevenLabs · LangChain deepagents · Photon · React · Vite
 
-The story graph is drawn with [React Flow](https://reactflow.dev) (xyflow, MIT). Its corner attribution is hidden in the app (`proOptions.hideAttribution`), so the credit lives here and in the share sheet's "about vantage". The map uses [Leaflet](https://leafletjs.com) with © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors' tiles.
-
 ## Team
 
 Built at HackPrinceton 2026 by Kashish (agents and backend), Ria (frontend and media), and Bhawna (knowledge base, demo, and docs).
