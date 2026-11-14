@@ -6,6 +6,7 @@ import { FileText, Map as MapIcon, Maximize2, Minimize2, Pause, Play, Share2, Vo
 import usePlayer from './usePlayer.js'
 import Frame from './Frame.jsx'
 import Shutter from './Shutter.jsx'
+import Logo from './Logo.jsx'
 import LensRing from './LensRing.jsx'
 import Choices from './Choices.jsx'
 import Evidence from './Evidence.jsx'
@@ -199,6 +200,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
       <header className="v2-hud">
         <div className="v2-hud-left">
           <button type="button" className="v2-brand v2-wordmark-btn" onClick={onExit} aria-label="vantage. start a new topic">
+            <Logo size={24} />
             vantage
           </button>
           <div className="v2-date-roll">
