@@ -9,6 +9,7 @@ import Captions from './Captions.jsx'
 import LensRing from './LensRing.jsx'
 import Choices from './Choices.jsx'
 import Evidence from './Evidence.jsx'
+import Disagreement from './Disagreement.jsx'
 import VoiceInputButton from '../components/VoiceInputButton.jsx'
 import ContinueOnPhone from '../components/ContinueOnPhone.jsx'
 import { DURATION, EASING, SPRING } from '../constants/theme.js'
@@ -64,6 +65,9 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
 
   if (!shown) return null
   const showNext = isTyped && P.isCurrentShown && !isPulling
+  // A contradiction splits the frame: each half takes the grade of the account on that side.
+  const dis = showNext && shown.is_grounded ? shown.contradiction : null
+  const sideLook = (side) => lookOf(P.sourcesById[side.source_id]?.perspective)
   const waitingView = pending?.perspective && isPulling ? lookOf(pending.perspective).label : null
   // The ring turns as soon as a view is asked for and keeps its target until the frame has caught up,
   // so it travels once: from the request to the moment the new scene is sharp.
@@ -72,7 +76,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
 
   return (
     <main className={`v2-player ${shouldReveal && !isCalm ? 'v2-reveal' : ''}`} style={{ '--accent': look.accent }}>
-      <Frame segment={shown} look={look} imageUrl={P.narration.imageUrl} imageStatus={P.narration.imageStatus} soft={pull.soft} isPulling={isPulling} isCalm={isCalm} isPaused={!!evidence} isUngrounded={!shown.is_grounded}>
+      <Frame segment={shown} look={dis ? sideLook(dis.side_a) : look} splitLook={dis ? sideLook(dis.side_b) : null} imageUrl={P.narration.imageUrl} imageStatus={P.narration.imageStatus} soft={pull.soft} isPulling={isPulling} isCalm={isCalm} isPaused={!!evidence} isUngrounded={!shown.is_grounded}>
         {shown.date_label && shown.is_grounded && !isPulling && (
           <p key={shown.segment_id} className="v2-titlecard" aria-hidden="true"><span>{shown.date_label}</span></p>
         )}
@@ -111,6 +115,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
         />
 
         <motion.div className="v2-side" style={{ opacity: textOpacity }}>
+          {dis && <Disagreement key={dis.contradiction_id || shown.segment_id} contradiction={dis} sourcesById={P.sourcesById} lookOf={lookOf} onOpenEvidence={(id) => openEvidence(id, shown.claims.find((c) => c.source_id === id))} isCalm={isCalm} />}
           {showNext &&
             (shown.is_final ? (
               <div className="v2-glass v2-end">

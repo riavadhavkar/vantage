@@ -139,8 +139,33 @@ html[data-motion='off'] .v2-titlecard { display: none; }
 
 @media (max-width: 899px) {
   .v2-player .v2-ringwrap { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; }
+  /* fully opaque here: the story scrolls underneath the ring on phones */
+  .v2-player .v2-ring { background: rgb(16 19 23); }
   .v2-mark-name { font-size: 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .v2-mark.is-unheard:not(.is-on) .v2-mark-name { animation: none; }
 }
+
+/* ---------- disagreement (rows 29 to 32) ---------- */
+.v2-dis { padding: 16px; border-color: var(--signal); }
+.v2-dis-flag { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; line-height: 18px; font-weight: 640; color: var(--signal-text); }
+.v2-dis-icon { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 999px; background: var(--signal); color: #14171b; font-size: 15px; font-weight: 700; animation: v2-dis-pulse var(--duration-scene) var(--ease-move) 1 both; }
+/* one pulse when the two accounts meet. Slower than three a second by a wide margin, and once. */
+@keyframes v2-dis-pulse { 0% { box-shadow: 0 0 0 0 rgb(255 106 77 / 0.7); transform: scale(1); } 40% { transform: scale(1.18); } 100% { box-shadow: 0 0 0 14px rgb(255 106 77 / 0); transform: scale(1); } }
+.v2-dis h3 { margin-top: 8px; font-size: 20px; line-height: 26px; font-weight: 620; letter-spacing: -0.01em; text-wrap: balance; }
+.v2-dis-sides { margin-top: 16px; display: grid; grid-template-columns: minmax(0, 1fr) 2px minmax(0, 1fr); gap: 12px; }
+.v2-dis-seam { background: var(--signal); transform-origin: top; }
+.v2-dis-side { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }
+.v2-dis-who { display: flex; align-items: center; gap: 8px; font-size: 12px; line-height: 16px; font-weight: 600; color: var(--accent); }
+.v2-dis-letter { display: grid; place-items: center; flex: none; width: 20px; height: 20px; border-radius: 4px; border: 1px solid var(--accent); font-weight: 700; }
+.v2-dis-text { font-size: 15px; line-height: 22px; }
+.v2-dis-side .v2-chip { max-width: 100%; margin-top: auto; padding: 5px 10px; white-space: normal; text-align: left; }
+.v2-dis-why { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 13px; line-height: 20px; color: var(--dim); }
+.v2-dis-why strong { color: var(--text); font-weight: 600; }
+@media (max-width: 520px) {
+  .v2-dis-sides { grid-template-columns: minmax(0, 1fr); }
+  .v2-dis-seam { height: 2px; transform-origin: left; }
+}
+@media (prefers-reduced-motion: reduce) { .v2-dis-icon { animation: none; } }
+html[data-motion='off'] .v2-dis-icon { animation: none; }

@@ -38,7 +38,7 @@
 /* pins (row 25): source chips on the caption card pop in with one ripple */
 .v2-pins { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
 .v2-pin { animation: v2-pin var(--duration-spring) var(--ease-spring) both; animation-delay: calc(var(--stagger) * var(--n)); max-width: 100%; overflow: visible; }
-.v2-pin > span { overflow: hidden; text-overflow: ellipsis; }
+.v2-pin { padding: 5px 10px; white-space: normal; text-align: left; }
 .v2-pin::before { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: 0 0 0 2px var(--paper); opacity: 0; animation: v2-ripple var(--duration-scene) var(--ease-enter) 1 both; animation-delay: calc(var(--stagger) * var(--n) + var(--duration-quick)); pointer-events: none; }
 @keyframes v2-pin { from { opacity: 0; transform: scale(0.8); } }
 @keyframes v2-ripple { from { opacity: 0.6; transform: scale(1); } to { opacity: 0; transform: scale(1.5, 1.9); } }
