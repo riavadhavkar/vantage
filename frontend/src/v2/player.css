@@ -33,8 +33,6 @@ html[data-lite] .v2-softfill { display: block; }
 .v2-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgb(10 12 15 / 0.6) 0%, rgb(10 12 15 / 0) 20%, rgb(10 12 15 / 0) 45%, rgb(10 12 15 / 0.84) 100%); }
 .v2-stage-badge { position: absolute; z-index: 1; top: calc(var(--bar-h) + 8px); right: var(--gutter); padding: 6px 10px; border-radius: 6px; background: rgb(10 12 15 / 0.8); animation: v2-rise var(--duration-panel) var(--ease-enter) both; }
 .v2-stage-wait { font-size: 12px; line-height: 16px; color: var(--dim); }
-.v2-stage-status { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; padding-bottom: 12dvh; }
-.v2-stage-status .v2-waiting { padding: 8px 16px; border-radius: 999px; background: rgb(10 12 15 / 0.7); }
 html[data-lite] .v2-pan, .v2-pan.ken-burns { will-change: transform; }
 html[data-lite] .v2-pan { animation: none; }
 @media (max-width: 899px), (hover: none) { .v2-pan { animation: none !important; } }

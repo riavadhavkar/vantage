@@ -18,8 +18,8 @@ import SettingsPopover from '../components/SettingsPopover.jsx'
 import useSubtitleText from '../hooks/useSubtitleText.js'
 import { aiKindFor } from '../lib/aiKind.js'
 import { messageFor } from '../api/errors.js'
-import { DURATION, EASING, SPRING } from '../constants/theme.js'
-import { sec, spring } from '../lib/motionMode.js'
+import { DURATION, EASING } from '../constants/theme.js'
+import { sec } from '../lib/motionMode.js'
 import { AiBadge, Btn, DataBadge, IconBtn, Sheet, Skeleton, Waiting } from './ui.jsx'
 import { sourceLabel } from './labels.js'
 import { CHOICE_TYPE_LABEL } from '../constants/labels.js'
@@ -69,22 +69,10 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
     [P, isCalm, lookOf],
   )
 
-  // Evidence: which source to open, and (row 26) the chip that travels from the card to the paper.
+  // Evidence: which source to open.
   const [evidence, setEvidence] = useState(null)
-  const [ghost, setGhost] = useState(null)
-  const openEvidence = useCallback(
-    (sourceId, claim, el) => {
-      const fromChip = !!el?.classList?.contains('v2-pin') && !isCalm
-      if (fromChip) {
-        const r = el.getBoundingClientRect()
-        setGhost({ label: el.textContent, from: { x: r.left, y: r.top }, to: null })
-      }
-      setEvidence({ sourceId: sourceId || null, claim: claim || null, fromChip })
-    },
-    [isCalm],
-  )
-  const landGhost = useCallback((to) => setGhost((g) => (g && to ? { ...g, to } : null)), [])
-  const closeEvidence = useCallback(() => (setEvidence(null), setGhost(null)), [])
+  const openEvidence = useCallback((sourceId, claim) => setEvidence({ sourceId: sourceId || null, claim: claim || null }), [])
+  const closeEvidence = useCallback(() => setEvidence(null), [])
   useEffect(() => closeEvidence(), [shown?.segment_id, closeEvidence])
 
   // Graph and map sheets
@@ -379,21 +367,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
         sourcesState={P.sourcesState}
         onRetry={P.loadSources}
         lookOf={lookOf}
-        onGhost={landGhost}
-        isGhosting={!!ghost}
       />
-      {ghost?.to && (
-        <motion.span
-          aria-hidden="true"
-          className="v2-chip v2-ghost"
-          initial={{ x: ghost.from.x, y: ghost.from.y }}
-          animate={{ x: ghost.to.x, y: ghost.to.y }}
-          transition={spring(SPRING)}
-          onAnimationComplete={() => setGhost(null)}
-        >
-          {ghost.label}
-        </motion.span>
-      )}
 
       <AnimatePresence>
         {isPaletteOpen && (

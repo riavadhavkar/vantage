@@ -1,7 +1,7 @@
 // Evidence lives on paper. Claims of this scene are numbered; each opens its source in place,
 // with the quoted excerpt set in a serif (the one text on screen that Vantage did not write)
 // and swept with a highlighter. Text only: this surface never shows a generated image.
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ArrowUpRight, ChevronDown } from 'lucide-react'
 import { sourceLabel } from './labels.js'
 import { Btn, Sheet, Skeleton, Waiting } from './ui.jsx'
@@ -59,14 +59,14 @@ function SourceCard({ source, look, informed, citedFor }) {
   )
 }
 
-function Row({ id, isOpen, onToggle, number, text, source, look, informed, citedFor, isGhostTarget, isGhosting }) {
+function Row({ id, isOpen, onToggle, number, text, source, look, informed, citedFor }) {
   return (
     <li className={`v2-ev-row ${isOpen ? 'is-open' : ''}`}>
       {number != null && <span className="mono v2-ev-n" aria-hidden="true">{number}</span>}
       <div className="v2-ev-main">
         {text && <p className="v2-ev-claim">{text}</p>}
         <button type="button" className="v2-ev-toggle" aria-expanded={isOpen} aria-controls={`ev-${id}`} onClick={onToggle}>
-          <span className="v2-chip" data-ghost-target={isGhostTarget || undefined} style={isGhostTarget && isGhosting ? { opacity: 0 } : undefined}>
+          <span className="v2-chip">
             {sourceLabel(source)}
             {source?.attribution ? ` · ${source.attribution}` : ''}
           </span>
@@ -82,8 +82,7 @@ function Row({ id, isOpen, onToggle, number, text, source, look, informed, cited
   )
 }
 
-function Body({ focus, segment, segments, sources, sourcesById, sourcesState, onRetry, lookOf, onGhost, isGhosting }) {
-  const root = useRef(null)
+function Body({ focus, segment, segments, sources, sourcesById, sourcesState, onRetry, lookOf }) {
   const claims = useMemo(() => segment.claims || [], [segment])
   const firstKey = () => {
     if (focus?.claim) return focus.claim.claim_id
@@ -100,23 +99,11 @@ function Body({ focus, segment, segments, sources, sourcesById, sourcesState, on
   const rest = sources.filter((s) => !heard.has(s.source_id) && !here.has(s.source_id))
   const loose = (segment.source_ids || []).filter((id) => !claims.some((c) => c.source_id === id))
 
-  // Row 26: the chip that was pressed travels to its place on the paper.
-  useLayoutEffect(() => {
-    const target = root.current?.querySelector('[data-ghost-target]')
-    const sheet = root.current?.closest('.v2-sheet')
-    if (!target || !sheet) return onGhost(null)
-    const cs = getComputedStyle(sheet)
-    const r = target.getBoundingClientRect()
-    onGhost({ x: r.left - (parseFloat(cs.getPropertyValue('--sheet-x')) || 0), y: r.top - (parseFloat(cs.getPropertyValue('--sheet-y')) || 0) })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   const isLoading = sourcesState === 'loading' && sources.length === 0
   const hasError = sourcesState === 'error' && sources.length === 0
-  const ghostKey = focus?.fromChip ? openKey : null
 
   return (
-    <div ref={root} className="v2-ev">
+    <div className="v2-ev">
       {isLoading ? (
         <div className="v2-ev-wait">
           <Waiting message="Pulling the files" slowMessage="Still pulling the files. This can take a few seconds." />
@@ -147,12 +134,10 @@ function Body({ focus, segment, segments, sources, sourcesById, sourcesState, on
                   informed={informedBy(c.source_id)}
                   isOpen={openKey === c.claim_id}
                   onToggle={() => toggle(c.claim_id)}
-                  isGhostTarget={ghostKey === c.claim_id}
-                  isGhosting={isGhosting}
                 />
               ))}
               {loose.map((id) => (
-                <Row key={id} id={`s-${id}`} source={sourcesById[id]} look={lookOf(sourcesById[id]?.perspective)} informed={informedBy(id)} isOpen={openKey === `s-${id}`} onToggle={() => toggle(`s-${id}`)} isGhostTarget={ghostKey === `s-${id}`} isGhosting={isGhosting} />
+                <Row key={id} id={`s-${id}`} source={sourcesById[id]} look={lookOf(sourcesById[id]?.perspective)} informed={informedBy(id)} isOpen={openKey === `s-${id}`} onToggle={() => toggle(`s-${id}`)} />
               ))}
             </ol>
             {segment.grounding_notes && <p className="v2-ev-note">{segment.grounding_notes}</p>}
@@ -186,9 +171,9 @@ function Body({ focus, segment, segments, sources, sourcesById, sourcesState, on
 }
 
 /**
- * @param {{ focus: {sourceId?: string, claim?: object, fromChip?: boolean}|null, onClose: () => void, segment: object,
+ * @param {{ focus: {sourceId?: string, claim?: object}|null, onClose: () => void, segment: object,
  *   segments: object[], sources: object[], sourcesById: object, sourcesState: string, onRetry: () => void,
- *   lookOf: Function, onGhost: (to: {x: number, y: number}|null) => void, isGhosting: boolean }} props
+ *   lookOf: Function }} props
  */
 export default function Evidence({ focus, onClose, ...rest }) {
   return (
