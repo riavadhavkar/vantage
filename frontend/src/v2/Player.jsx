@@ -1,6 +1,6 @@
 // The new player: a full-bleed stage with the story on glass over it, and a lens ring that
 // decides who is telling it. Data and actions come from usePlayer (same calls as classic).
-import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, motion, useTransform } from 'motion/react'
 import { FileText, Map as MapIcon, Maximize2, Minimize2, Pause, Play, Share2, Volume2, VolumeX, Waypoints } from 'lucide-react'
 import usePlayer from './usePlayer.js'
@@ -148,20 +148,6 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
   const [isAmbientOn, setIsAmbientOn] = useState(false)
   const [isSharing, setIsSharing] = useState(false)
   const closeShare = useCallback(() => setIsSharing(false), [])
-  const shareStats = useMemo(
-    () => [
-      { label: 'points of view heard', value: Object.keys(P.heard).length },
-      { label: 'sources cited', value: P.citedCount },
-      { label: 'disagreements seen', value: P.segments.filter((x) => x.contradiction).length },
-    ],
-    [P.heard, P.citedCount, P.segments],
-  )
-  const shareSummary = useMemo(() => {
-    const [h, c, d] = shareStats.map((x) => x.value)
-    const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
-    return `Heard ${h} of ${plural(P.perspectives.length, 'point of view', 'points of view')}  ·  ${plural(c, 'source', 'sources')} cited${d ? `  ·  ${plural(d, 'disagreement', 'disagreements')}` : ''}`
-  }, [shareStats, P.perspectives.length])
-
   // Cmd+K / Ctrl+K
   const [isPaletteOpen, setIsPaletteOpen] = useState(false)
   useEffect(() => {
@@ -281,7 +267,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
             <IconBtn label="map" icon={MapIcon} isPressed={panel === 'map'} onClick={() => setPanel('map')} />
             <IconBtn label="sources" icon={FileText} badge={P.citedCount || null} isPressed={!!evidence} onClick={() => openEvidence()} />
             <IconBtn label={isSoundOn ? 'sound on' : 'sound off'} icon={isSoundOn ? Volume2 : VolumeX} onClick={onToggleSound} tip="left" />
-            <SettingsPopover variant="v2" language={language} onRestart={onRestart} mood={shown.mood} isAmbientOn={isAmbientOn} onToggleAmbient={() => setIsAmbientOn((v) => !v)} linkCode={session.linkCode} />
+            <SettingsPopover variant="v2" language={language} onRestart={onRestart} mood={shown.mood} isAmbientOn={isAmbientOn} onToggleAmbient={() => setIsAmbientOn((v) => !v)} />
           </div>
           {aiKind && <AiBadge kind={aiKind} className="v2-hud-badge" />}
         </div>
@@ -450,7 +436,16 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
       <AnimatePresence>
         {isSharing && (
           <Suspense fallback={null}>
-            <ShareCard key="share" segment={shown} look={look} topicTitle={P.topic?.title || ''} sourcesById={P.sourcesById} stats={shareStats} summary={shareSummary} dataSource={dataSource} onClose={closeShare} />
+            <ShareCard
+              key="share"
+              segment={shown}
+              look={look}
+              topicTitle={P.topic?.title || ''}
+              imageUrl={n.imageStatus === 'ready' ? n.imageUrl : null}
+              linkCode={session.linkCode}
+              dataSource={dataSource}
+              onClose={closeShare}
+            />
           </Suspense>
         )}
       </AnimatePresence>

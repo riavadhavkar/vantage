@@ -6,11 +6,10 @@ import { AnimatePresence, motion } from 'motion/react'
 import { ChevronDown } from 'lucide-react'
 import LanguageSelects from './LanguageSelects.jsx'
 import AmbientPlayer from './AmbientPlayer.jsx'
-import ContinueOnPhone from './ContinueOnPhone.jsx'
 import IconButton from './IconButton.jsx'
 import { IconBtn } from '../v2/ui.jsx'
 
-export default function SettingsPopover({ language, onRestart, mood, isAmbientOn, onToggleAmbient, linkCode, variant = 'classic' }) {
+export default function SettingsPopover({ language, onRestart, mood, isAmbientOn, onToggleAmbient, variant = 'classic' }) {
   const [isOpen, setIsOpen] = useState(false)
   const [pending, setPending] = useState(null) // narration code awaiting confirmation
   const root = useRef(null)
@@ -89,7 +88,6 @@ export default function SettingsPopover({ language, onRestart, mood, isAmbientOn
             )}
             <div className="mt-3 flex flex-col gap-1 border-t border-print/20 pt-3">
               <AmbientPlayer mood={mood} isOn={isAmbientOn} onToggle={onToggleAmbient} />
-              <ContinueOnPhone linkCode={linkCode} />
             </div>
           </motion.div>
         )}
