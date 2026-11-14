@@ -1,0 +1,47 @@
+from_doc,to_doc,relation,note
+D01,D02,opposing-view,Mercer reported dead (Jan 5) vs report 'premature' (Jan 7)
+D10,D02,opposing-view,Howe's official report lists Mercer among the dead; Washington says he is alive
+D07,D08,opposing-view,"Rush: head blow likely fatal, and lamented him while alive; standard story: seven bayonet wounds"
+D07,D02,same-event,Both show confusion over whether Mercer was alive in the days after the battle
+D18,D19,opposing-view,Hamilton cannonball: no contemporary evidence (Archives) vs stated as fact (Princetoniana)
+D18,D31,same-event,Trustees' minutes confirm a cannonball/portrait; the Hamilton attribution is the disputed part
+D01,D10,opposing-view,"British losses: Washington 'near 500' vs Howe ~18 killed, ~58 wounded, ~200 missing"
+D10,D21,opposing-view,Howe's figures vs historians calling them 'notoriously shady' and estimating ~450
+D04,D20,opposing-view,British losses ~280 (Mount Vernon) vs 276 rising to ~450 (PBS); American ~30 slain (Washington) vs 60-70 (PBS)
+D11,D12,opposing-view,Wardrop: the 55th 'run off in the greatest confusion' vs Howe thanks 'part of the 55th'
+D22,D05,opposing-view,"British framing (17th and 55th were heroes) vs American framing (fine fox chase, rout)"
+D30,D03,caused-by,Spy intelligence on British positions made the night march and east-side attack possible
+D33,D03,happened-next,Expiring enlistments and the march from Trenton lead into the battle
+D06,D08,same-event,Mercer's stand in the orchard
+D13,D06,same-event,Mawhood's view of the same orchard fight
+D24,D13,same-event,British cavalry and infantry views of the opening
+D08,D09,happened-next,"Mercer carried to the Clarke House, dies there Jan 12"
+D09,D27,same-event,Clarke House as hospital; Susannah cared for the wounded
+D06,D05,happened-next,"Mercer's line breaks, then Washington's rally"
+D05,D34,happened-next,"Rally on the battlefield, then the fight moves into town and Nassau Hall"
+D19,D34,same-event,Nassau Hall surrender
+D14,D28,same-event,Civilian experience of the 26-day occupation
+D14,D29,same-event,Divided loyalties during occupation
+D16,D26,same-event,Prime's story: documented facts and first-person interpretation
+D16,D17,same-event,Enslaved and Black men in the campaign
+D25,D20,same-event,Peale's men with frozen feet in the aftermath
+D20,D32,happened-next,From 1777 aftermath to the modern fight to preserve the field
+D01,D15,same-event,"Soldiers' letters home after the victories (Washington to Congress, Read to his wife)"
+T02,T13,opposing-view,Lightoller: sank 'absolutely intact' vs survivors who saw her break in two
+T02,T19,opposing-view,"Lightoller's testimony vs the 1985 wreck, found in two halves"
+T09,T13,same-event,Gracie records Jack Thayer insisting the ship split; officers disagreed
+T14,T02,opposing-view,Compiled survivor testimony on the breakup vs the officer's account the inquiries accepted
+T03,T09,same-event,Lightoller and Gracie on the upturned Collapsible B
+T10,T12,opposing-view,"Bride heard 'Autumn' vs survivors who heard 'Nearer, My God, to Thee'"
+T10,T11,same-event,Bride's newspaper story and his Senate testimony
+T04,T05,opposing-view,"Mersey: Californian could have reached Titanic vs Lord's account (company rockets, asleep after 17 hours)"
+T04,T06,opposing-view,1912 finding vs the 1992 government reappraisal
+T07,T04,same-event,Both inquiries' findings against the Californian
+T15,T16,opposing-view,CQD position was correct vs wreck found ~13 miles away
+T16,T05,caused-by,A wrong distress position complicates every claim about how close the Californian really was
+T17,T18,same-event,Survival by class
+T21,T17,same-event,A steerage passenger's own story behind the numbers
+T08,T09,same-event,Two passenger memoirs written within a year
+T01,T19,happened-next,"The sinking, then the 1985 discovery"
+T20,T04,happened-next,"Senate report first, then the British report"
+T18,T01,happened-next,"Boarding at three ports, then the voyage and collision"
