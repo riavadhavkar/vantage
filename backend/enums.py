@@ -1,15 +1,20 @@
-"""Shared enum values. Mirror EXACTLY in frontend/src/constants/enums.js. Owner: A."""
+"""Shared enum values. Mirror EXACTLY in frontend/src/constants/enums.js. Owner: A.
+Perspectives match data/documents.csv (princeton + titanic).
+"""
 from enum import Enum
 
 
 class Perspective(str, Enum):
     NARRATOR = "narrator"
-    BRITISH_RAJ = "british_raj"
-    CONGRESS_LEADERSHIP = "congress_leadership"
-    MUSLIM_LEAGUE = "muslim_league"
-    SIKH_COMMUNITY = "sikh_community"
-    REFUGEE = "refugee"
     HISTORIAN = "historian"
+    # princeton
+    AMERICAN = "american"
+    BRITISH = "british"
+    TOWNSPEOPLE = "townspeople"
+    # titanic
+    CREW = "crew"
+    FIRST_CLASS = "first_class"
+    STEERAGE = "steerage"
 
 
 class Mood(str, Enum):
@@ -39,6 +44,8 @@ class ChoiceType(str, Enum):
 class SourceType(str, Enum):
     PRIMARY = "primary"
     SECONDARY = "secondary"
+    SECONDARY_WITH_PRIMARY = "secondary_with_primary"
+    INTERPRETIVE_FIRST_PERSON = "interpretive_first_person"
     ORAL_HISTORY = "oral_history"
     NEWS = "news"
     ENCYCLOPEDIA = "encyclopedia"
@@ -47,3 +54,10 @@ class SourceType(str, Enum):
 class Mode(str, Enum):
     WEB = "web"
     IMESSAGE = "imessage"
+
+
+# Which perspectives belong to which topic (used to steer the narrator).
+PERSPECTIVES_BY_TOPIC = {
+    "princeton": ["narrator", "historian", "american", "british", "townspeople"],
+    "titanic": ["narrator", "historian", "crew", "first_class", "steerage"],
+}

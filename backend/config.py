@@ -18,12 +18,13 @@ MAX_CHUNKS = 5
 # Fill real ElevenLabs voice IDs. Keys must match enums.Perspective values.
 VOICE_BY_PERSPECTIVE = {
     "narrator": "",
-    "british_raj": "",
-    "congress_leadership": "",
-    "muslim_league": "",
-    "sikh_community": "",
-    "refugee": "",
     "historian": "",
+    "american": "",
+    "british": "",
+    "townspeople": "",
+    "crew": "",
+    "first_class": "",
+    "steerage": "",
 }
 
 # Gemini models (override in .env if one fails)
