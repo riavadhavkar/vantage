@@ -17,7 +17,8 @@ _gemini_down_until = 0.0
 
 def _generate(prompt: str, system: Optional[str], as_json: bool) -> str:
     global _gemini_down_until
-    if _time.time() < _gemini_down_until:
+    import os as _os
+    if _os.getenv("VANTAGE_TEXT_PROVIDER", "gemini").lower() == "xai" or _time.time() < _gemini_down_until:
         from services import xai_service
         return xai_service.generate_text(prompt, system, as_json)
     cfg = types.GenerateContentConfig(
