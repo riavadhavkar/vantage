@@ -155,16 +155,20 @@ body {
   text-wrap: pretty;
 }
 
+/* Slow pan and zoom so a scene reads as moving footage. It sits on the wrapper around the
+   image (not the image itself) so the perspective tint moves with it; the wrapper's parent
+   clips it, and each scene remounts the wrapper, which restarts the move. */
 @keyframes ken-burns {
   from {
-    transform: scale(1.04) translate3d(-1%, 0.5%, 0);
+    transform: scale(1) translate3d(0, 0, 0);
   }
   to {
-    transform: scale(1.12) translate3d(1.5%, -1%, 0);
+    transform: scale(1.08) translate3d(-1.5%, -1%, 0);
   }
 }
 .ken-burns {
-  animation: ken-burns 24s var(--ease-focus) infinite alternate;
+  animation: ken-burns 24s ease-in-out infinite alternate;
+  transform-origin: center;
   will-change: transform;
 }
 
