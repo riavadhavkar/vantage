@@ -1,0 +1,6 @@
+/* Map (MOTION.md row 45) */
+.v2-map, .v2-chart { width: 100%; height: 100%; }
+.v2-chart { position: relative; }
+.v2-chart svg { width: 100%; height: 100%; font-family: var(--font-sans); }
+.v2-chart p { position: absolute; left: 24px; bottom: 12px; font-family: var(--font-mono); font-size: 12px; line-height: 16px; color: var(--dim); }
+.v2-map-empty { padding: 24px; font-size: 15px; line-height: 22px; color: var(--dim); max-width: 52ch; }

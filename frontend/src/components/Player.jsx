@@ -112,8 +112,12 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
     if (shown?.segment_id && narration.imageUrl)
       setThumbs((t) => (t[shown.segment_id] ? t : { ...t, [shown.segment_id]: narration.imageUrl }))
   }, [shown?.segment_id, narration.imageUrl])
-  const [isTyped, setIsTyped] = useState(false)
-  useEffect(() => setIsTyped(false), [shown?.segment_id])
+  // Which scene has finished typing. Keyed by scene: with reduced motion the text is instant, and a
+  // plain reset effect here used to run after the card reported "done", so the choices never appeared.
+  const [typedId, setTypedId] = useState(null)
+  const shownId = shown?.segment_id
+  const setIsTyped = useCallback((done) => setTypedId((id) => (done ? shownId : id === shownId ? null : id)), [shownId])
+  const isTyped = typedId != null && typedId === shownId
 
   useEffect(() => {
     if (!sessionId) return

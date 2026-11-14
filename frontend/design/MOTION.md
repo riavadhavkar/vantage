@@ -1,6 +1,6 @@
 # Vantage UI v2: motion
 
-Status: specification, waiting for approval with [PLAN.md](PLAN.md). The tokens and review flags exist; the animations do not yet.
+Status: built behind `?ui=v2` on 2026-11-14. The table below is the specification that was approved; "As built" at the end lists where the build differs and the measured numbers.
 
 ## Why anything moves
 
@@ -162,13 +162,46 @@ The icon (unequal sign), the words "Sources disagree" and the letters A and B ca
 4. **Hidden tab:** loops stop (checked by counting running animations with `document.getAnimations()`).
 5. **Flash rate:** no repeating animation shorter than 334 ms a cycle (read from the table and the CSS).
 
-Baseline, measured today on the phase 1 Aperture prototype (headless Chromium on this laptop, not a phone):
+## As built
 
-| Case | CPU | Avg fps | Frames over 33 ms | Over 50 ms |
-| --- | --- | --- | --- | --- |
-| Focus pull, 1440 | 1x | 56.1 | 3 of 87 | 0 |
-| Focus pull, 1440 | 4x | 52.0 | 4 of 84 | 0 |
-| Focus pull, 390 | 4x | 60.0 | 0 of 96 | 0 |
-| Landing pull, 1440 | 4x | 58.8 | 1 of 95 | 0 |
+**Where the build differs from the table**
 
-The desktop drops are there at 1x too, which points at the backdrop blur on the glass panels over a changing frame, not at CPU. Lite mode exists for that case.
+| Row | Specified | Built | Why |
+| --- | --- | --- | --- |
+| 6 | Landing frame grows into the stage with View Transitions | Built that way; browsers without the API get a circular reveal of the player | As planned; only Chromium was tested |
+| 7 | Pan from scale 1.04 to 1.10 | Scale 1 to 1.08 with a small drift, ease-in-out, 24 s | A teammate asked for these values during the build; same class as classic |
+| 8 | Parallax follows the pan and the pointer | Follows the pointer only | The pan already moves the whole frame |
+| 9 | Grade layers crossfade | The drawn scene carries its grade in the image, and the whole frame crossfades under the blur | Removing blend layers is what brought the switch inside its frame budget |
+| 13 | Blurred copy via a CSS blur rendered once | A 256 px pre-blurred bitmap stretched by the GPU (CSS blur only for cross-origin illustrations) | Rasterizing a full-screen blur on every scene change dropped frames |
+| 16 | Haptic tick | Built, untested | No Android device here |
+| 19 | Speaking indicator | Built: shows speaking, not a measured level | Browsers expose no level for speech synthesis |
+| 21 | Shared layout animation from the dot | A wash grows from the dot and fades; the chosen row stays lit | Simpler and transform-only |
+| 23 | Ring fills by one step per scene | Ring draws once, the first time a view is heard; the count is in the label | There is no honest total to fill toward |
+| 26 | Shared layout animation | A copy of the chip travels on a spring to its place on the paper | Layout animation inside a moving sheet was unreliable |
+| 27 | Highlighter line by line | All lines of the excerpt sweep together | Per-line timing needs measured line breaks |
+| 33 | Skeleton lines for text | Used on the evidence paper and the graph; the caption card never needs one (the old text stays at 35% during a switch) | |
+| 39 | Tooltip delay 400 ms | Built with CSS; shown at once on keyboard focus, hidden on touch | |
+| 43 | Camera glides to the current node | Starts on the first scene and glides out to the whole path; in a story of more than 6 scenes it goes to the current scene | With a few scenes, zooming to one hides the others |
+| 45 | Marker travels between locations | Only when the scene has `travel_from` | A line between unrelated scenes would imply a journey that did not happen |
+| new | (not in the plan) | Storyboard: the frame cuts between a scene's shots, paced to the narration, crossfade `slow` | Added on main during the build; shots show only after they have loaded |
+| new | (not in the plan) | Glass panels stop blurring their backdrop while the frame is changing | Performance |
+
+**Frame rate at 4x CPU throttle** (`node scripts/fps.mjs --case <name> [--width 390]`). Headless Chromium on a laptop: a proxy, not a phone. Budget: no frame over 50 ms, at most 3 over 33 ms.
+
+| Case (rows) | 1440: avg fps, over 33 ms, over 50 ms | 390: avg fps, over 33 ms, over 50 ms | In budget |
+| --- | --- | --- | --- |
+| Landing load (1 to 4) | 57.7, 3, 2 | 59.7, 1, 0 | Phone yes. Desktop no: two long frames at first paint |
+| Perspective switch (12 to 16) | 54.3, 1, 0 | 60.0, 0, 0 | Yes |
+| Choice in the same view (20, 21) | 49.8, 6, 0 | 60.0, 0, 0 | Phone yes. Desktop no: 6 frames over 33 ms, none over 50 |
+| Pin to evidence (25 to 28, 40) | 58.8, 1, 1 | 59.4, 0, 0 | Phone yes. Desktop: one frame at 50.1 ms |
+| Contradiction (29 to 32) | 60.0, 0, 0 | 60.0, 0, 0 | Yes |
+| Graph opens (41 to 44) | 58.3, 0, 0 | 59.6, 0, 0 | Yes |
+| Share card opens (46, 47) | 55.6, 2, 1 | 57.1, 1, 1 | No: one long frame (133 ms and 100 ms) while the PNG is drawn, before the develop animation starts |
+
+The perspective switch began at 37 fps with 11 frames over 33 ms and 3 over 50. Three runs after the fixes gave 52.4 to 54.3 fps with 1 to 3 frames over 33 ms and none over 50.
+
+**Other checks** (`node scripts/v2-verify.mjs --prod <url>`): keyboard-only walkthrough, 44 px touch targets at 390, reduced motion (text instant, no endless animations, nothing missing), loops paused when the tab is hidden or a sheet is open, layout shift 0.011 on the landing page and 0.007 in the player on the production build. Largest paint was 72 ms, but that is localhost with no network, so it says nothing about a real connection.
+
+**Flash rate.** The fastest repeating animations are the speaking bars (900 ms), the waiting dots (1,200 ms) and the skeleton shimmer (1,400 ms): all slower than three per second. Pulses (unheard views, the disagreement badge, the current graph node) run once or twice and stop.
+
+**Frame sequence.** `design/screens/signature-1440-*ms.png`, taken at `?motion=slow` and named by real elapsed time divided by 3. At 279 ms the old scene is fully soft; at 398 ms the new scene is crossfading in under the blur; no sharp frame appears in between.

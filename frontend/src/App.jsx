@@ -1,10 +1,15 @@
 // OWNER: Person B
-import { useCallback, useEffect, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, MotionConfig, motion, useReducedMotion } from 'motion/react'
 import LandingScreen from './components/LandingScreen.jsx'
 import Player from './components/Player.jsx'
 import useSession from './hooks/useSession.js'
 import { getTopic, resolveDataSource, getDataSource } from './api/client.js'
+import { UI } from './lib/ui.js'
+import { MOTION_MODE } from './lib/motionMode.js'
+
+// The new interface (?ui=v2) is a separate chunk. It receives the same session and callbacks.
+const V2App = lazy(() => import('./v2/V2App.jsx'))
 
 export default function App() {
   const [dataSource, setDataSource] = useState(getDataSource())
@@ -51,6 +56,25 @@ export default function App() {
   }, [reset])
 
   const isPlayer = view === 'player' && !!session.currentSegment
+
+  if (UI === 'v2') {
+    return (
+      <MotionConfig reducedMotion={MOTION_MODE === 'off' ? 'always' : 'user'}>
+        <Suspense fallback={null}>
+          <V2App
+            isPlayer={isPlayer}
+            session={session}
+            topic={topic}
+            onStart={onStart}
+            onExit={onExit}
+            isSoundOn={isSoundOn}
+            onToggleSound={() => setIsSoundOn((v) => !v)}
+            dataSource={dataSource}
+          />
+        </Suspense>
+      </MotionConfig>
+    )
+  }
   // Paper to screen: the dark stage opens like an aperture over the landing page.
   const screenIn = reduce
     ? { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.2 } }

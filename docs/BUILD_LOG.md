@@ -110,3 +110,118 @@ None.
 **Next**
 
 Waiting for approval of PLAN.md and MOTION.md. Build starts at 11:15.
+
+## 2026-11-14 11:08 EST. UI redesign, phase 3: hourly entry 1, Tier 1 built (Person B)
+
+Build started 10:10 (Ria said to start early), an hour ahead of the planned 11:15.
+
+**Answers from Ria before starting:** a few live checks against the backend are allowed (at most 5); AI illustrations stay in color with a faint tint; underline only confident claim matches; serif for excerpts only.
+
+**Requests that arrived during the build, all done**
+
+- Ken Burns on illustrations (teammate): classic already panned them, but the easing put most of the move in the first 3 seconds. Applied the teammate's values to the existing keyframes (scale 1 to 1.08 over 24 s, ease-in-out). Verified on a mock illustration: scale 1.0108 after 6 s, and the move restarts on a new scene.
+- Map tiles (Ria): CARTO now needs a key. Switched `StoryMap` to OpenStreetMap tiles with attribution; 21 tiles loaded with HTTP 200. The tiles are light, so the tile layer is inverted to a dark map. Also fixed two things I saw while testing: the map did not resize in full view, and a single place at sea opened on an empty ocean (now zoom 5).
+- "Push the changes once you finish": pushed `b/ui-redesign` at 10:22. It was merged to main as PR #28.
+- "Keep checking main and pull": merged main four times so far (voices, colorful images, transcribe, storyboard). All clean.
+
+**Tier 1, in the order built (one commit each, lint and build passing)**
+
+1. Foundation and landing: `?ui=v2` switch, token re-pointing, primitives, load sequence, pointer focus.
+2. Stage and captions: three depth bands, illustration develop-in with badge, title card, word-level reveal, claim underlines, speaking indicator.
+3. Lens ring and the perspective switch on one clock, coverage rings, choices, ask.
+4. Evidence paper and pins, with the travelling chip and highlighter.
+5. Disagreement view: split frame, accounts A and B, one pulse.
+6. States: error, waiting, offline, ungrounded, end of thread; graph and map in the new sheet.
+7. Performance pass on the switch.
+
+**Storyboard (new on main during the build).** `useNarration` now returns several shots per scene. The v2 frame cuts between them every 4 s like classic, and only ever shows shots that have loaded, so a failed image cannot blank the frame.
+
+**How I verified it**
+
+- `scripts/v2-flow.mjs`: the whole demo path at 1440 and 390 (begin, pin to evidence and Escape, switch by ring, switch by choice, contradiction, end of thread) with no console errors and no network calls.
+- `scripts/v2-states.mjs`: 9 of 9 scenarios pass (ungrounded, error with retry, failed switch returns to focus, offline badge, unknown topic, image failure keeps the drawn scene with no badge, image arrival shows the badge, graph, map).
+- Frame rate at 4x CPU throttle (`scripts/fps.mjs`, headless Chromium on this laptop, not a phone):
+
+  | Case | 1440 | 390 |
+  | --- | --- | --- |
+  | Landing load | 56 fps, 2 frames over 50 ms (at first paint) | 59.7 fps, none over 33 ms |
+  | Perspective switch | 52 to 54 fps, 1 to 3 frames over 33 ms, none over 50 (three runs) | 60 fps, none over 17 ms |
+  | Choice in the same view | 49.8 fps, 3 over 33, none over 50 | 60 fps |
+  | Pin to evidence | 57.7 fps, 2 over 33, 1 over 50 | 59.5 fps |
+  | Contradiction | 60 fps | 60 fps |
+
+  The desktop switch started at 37 fps with 11 frames over 33 ms. Three changes fixed it: the duotone is baked into drawn scenes (no blend layers), the out-of-focus copy is a 256 px pre-blurred bitmap, and glass stops blurring while the frame changes.
+- Slow-motion frame sequence of the switch saved as `design/screens/signature-1440-*ms.png`, named by real elapsed time. Checked: soft at 279 ms, new scene crossfading in under the blur at 398 ms, no sharp frame in between.
+
+**Bugs found in classic and fixed there (classic is the fallback)**
+
+- With "reduce motion" on, classic never showed the choices, so the story could not continue. A reset effect ran after the card had reported "done". Verified fixed with and without the setting.
+- Speech start could crash the player (fixed earlier today).
+
+**Decisions made alone, and why**
+
+- Coverage ring is binary: it draws the first time a view is heard, and the count is in the label. A proportional ring has no honest denominator, since the topic does not say how many scenes a view has.
+- A tap on the text finishes it; a sentence opens its source only once all the text is there. Otherwise "tap to skip" and "tap the underline" collide.
+- The ring shows each point of view once. Copies outside the current turn are hidden.
+- Highlighter sweeps all lines of an excerpt together, not line by line (MOTION.md row 27 said line by line). Per-line timing needs measuring line breaks; not worth the risk.
+- Storyboard pacing (4 s) is not scaled by `?motion=slow`: it is content pacing, not interface motion.
+
+**Not verified**
+
+- Real voices and real illustrations. The backend is not answering on :8000, so the live checks Ria allowed have not been possible yet.
+- Safari and Firefox.
+
+**Needs Ria**
+
+- Start the backend on :8000 if the live checks should happen.
+
+**Next**
+
+Second critique pass on Tier 1 screens, then Tier 2: share card, Cmd+K palette, graph motion, map motion.
+
+## 2026-11-14 11:50 EST. UI redesign, phase 3: hourly entry 2, Tier 2 built and verified (Person B)
+
+**Built since the last entry (one commit each, lint and build passing)**
+
+- Share card: a 1080 by 1350 PNG drawn on a canvas, develops like a photograph, counts roll up. Export tested at 1440 and 390 (a file was downloaded both times).
+- Cmd+K palette: tested by keyboard only (filter, switch view, open the map by typing "map", Escape).
+- Graph motion in a v2 copy of the graph (nodes grow in, edges draw, camera glides out, current node breathes twice).
+- Map motion in a v2 copy of the map: the marker travels only when a scene has `travel_from`. Tested on the drawn chart and on live tiles.
+- From main (merged twice more, one conflict in the classic player resolved by keeping both changes): shots paced to the narration, graph nodes that reopen an earlier scene, real thumbnails in the graph.
+
+**Bugs found by the second critique pass and the verification script, all fixed**
+
+- The "Jump to" button was styled by a stylesheet that loads only with the palette, so it rendered unstyled and crowded the phone bar.
+- Focus could leave an open sheet through a closed details block.
+- With reduced motion the blurred copy of the wordmark stayed on top of the sharp one.
+- On tablets the ring's faded edges let scrolling text show through.
+- Graph node buttons could not be clicked (React Flow disables pointer events on nodes that cannot be dragged).
+
+**How I verified it**
+
+- `v2-flow.mjs --runs 5`: the demo path passed 10 of 10 times (5 at 1440, 5 at 390), no console errors, no network calls. Also passes with `?motion=off` and with the OS reduced-motion setting.
+- `v2-states.mjs`: 12 of 12 scenarios at 1440, and all pass at 390.
+- `v2-verify.mjs`: keyboard only, touch targets (all at least 44 px at 390), reduced motion, loops paused, layout shift 0.011 and 0.007 on the production build.
+- `fps.mjs`, final numbers in MOTION.md. The perspective switch is inside the budget. Three desktop cases are not: landing load (two long frames at first paint), a choice in the same view (6 frames over 33 ms), opening the share card (one 133 ms frame).
+- Classic: `scripts/screenshots.mjs` runs clean after every merge; choices appear with and without reduced motion.
+
+**Decisions made alone, and why**
+
+- A graph thumbnail that is an AI illustration gets a small sparkle badge and a legend line in v2. main shows those thumbnails in classic with no label; the trust rule says every generated image is labeled, so I kept it in v2 and left classic for Ria to decide.
+- While looking back at an earlier scene, the ring and the choices are off until you return. Choosing from an old scene would send an old choice to the session.
+- The share card draws the scene, not the illustration, so a cross-origin image cannot break the export.
+- I did not chase the remaining desktop frame misses further: they are single frames or short runs outside the signature, and the two fixes that remain (deferring the PNG draw to a worker, preloading the next drawn scene) are riskier than the gain this late.
+
+**Not verified**
+
+- Real voices and real images in v2: the backend never answered on :8000, so no live checks were made.
+- Safari, Firefox, a real phone, a screen reader.
+
+**Needs Ria**
+
+- Run the backend and open `/?ui=v2` once to hear the real voices and see the real illustrations.
+- The decisions listed in `frontend/design/HANDOFF.md`.
+
+**Next**
+
+Handoff is written. Waiting for review. No cutover without approval.
