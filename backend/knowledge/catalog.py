@@ -7,8 +7,8 @@ DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "
 SOURCES_DIR = os.path.join(DATA_DIR, "sources")
 
 TOPIC_KEYWORDS = {
-    "titanic": ["titanic", "iceberg", "1912", "lusitania", "white star"],
-    "princeton": ["princeton", "1777", "mercer", "nassau", "washington", "revolution"],
+    "titanic": ["titanic", "iceberg", "1912", "white star", "lifeboat", "carpathia", "californian", "steerage", "lightoller", "lookout"],
+    "princeton": ["princeton", "1777", "mercer", "nassau", "washington", "revolution", "mawhood", "redcoat", "hessian", "trenton"],
 }
 
 
