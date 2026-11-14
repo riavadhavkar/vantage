@@ -17,7 +17,8 @@ for (const width of widths) {
     const p = await ctx.newPage()
     const errs = []
     p.on('pageerror', (e) => errs.push(e.message))
-    p.on('console', (m) => (m.type() === 'error' || m.type() === 'warning') && errs.push(m.text().slice(0, 200)))
+    // Motion prints a development-only notice when reduced motion is on; that is expected in those runs
+    p.on('console', (m) => (m.type() === 'error' || m.type() === 'warning') && !/Reduced Motion enabled/.test(m.text()) && errs.push(m.text().slice(0, 200)))
     p.on('request', (r) => !r.url().startsWith(BASE) && !/^(data|blob):/.test(r.url()) && errs.push('network: ' + r.url()))
     const title = (t) => p.waitForFunction((x) => document.querySelector('#v2-title')?.textContent === x, t, { timeout: 20000 })
     const skip = async () => {
@@ -40,7 +41,8 @@ for (const width of widths) {
       await p.waitForSelector('[role=dialog] .v2-quote')
       await p.waitForTimeout(1200 * SLOW)
       if (await p.locator('.v2-ghost').count()) throw new Error('the travelling chip never landed')
-      if ((await p.locator('[data-ghost-target]').first().evaluate((el) => getComputedStyle(el).opacity)) !== '1') throw new Error('target chip stayed hidden')
+      // with motion off there is no travelling chip, so no target to check
+      if ((await p.locator('[data-ghost-target]').count()) && (await p.locator('[data-ghost-target]').first().evaluate((el) => getComputedStyle(el).opacity)) !== '1') throw new Error('target chip stayed hidden')
       await p.keyboard.press('Escape')
       await p.waitForTimeout(600 * SLOW)
       if (await p.locator('[role=dialog]').count()) throw new Error('evidence did not close on Escape')
