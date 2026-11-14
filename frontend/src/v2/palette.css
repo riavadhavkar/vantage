@@ -13,7 +13,7 @@
 .v2-pal-label { display: flex; align-items: center; gap: 8px; font-size: 15px; line-height: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .v2-pal-label i { flex: none; width: 10px; height: 10px; border-radius: 999px; background: var(--accent); }
 .v2-pal .v2-pal-none { display: block; padding: 12px; min-height: 0; font-size: 13px; color: var(--dim); cursor: default; }
-.v2-jump { display: none; align-items: center; gap: 8px; height: 36px; margin-right: 8px; padding: 0 8px 0 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 13px; color: var(--dim); position: relative; transition: border-color var(--duration-micro) linear, color var(--duration-micro) linear, transform var(--duration-micro) var(--ease-enter); }
+.v2-jump { display: none; flex: none; white-space: nowrap; align-items: center; gap: 8px; height: 36px; margin-right: 8px; padding: 0 8px 0 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 13px; color: var(--dim); position: relative; transition: border-color var(--duration-micro) linear, color var(--duration-micro) linear, transform var(--duration-micro) var(--ease-enter); }
 .v2-jump::after { content: ''; position: absolute; inset: -4px 0; }
 .v2-jump:hover { border-color: rgb(255 255 255 / 0.4); color: var(--text); }
 .v2-jump:active { transform: scale(0.97); }

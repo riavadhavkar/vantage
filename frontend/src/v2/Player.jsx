@@ -21,9 +21,9 @@ import { sourceLabel } from './labels.js'
 import { CHOICE_TYPE_LABEL } from '../constants/labels.js'
 import './player.css'
 
-// The graph and the map are the existing components, loaded on demand, in the new sheet.
-const KnowledgeGraph = lazy(() => import('../components/KnowledgeGraph.jsx'))
-const StoryMap = lazy(() => import('../components/StoryMap.jsx'))
+// The graph and the map load on demand.
+const Graph = lazy(() => import('./Graph.jsx'))
+const TravelMap = lazy(() => import('./TravelMap.jsx'))
 const ShareCard = lazy(() => import('./ShareCard.jsx'))
 const Palette = lazy(() => import('./Palette.jsx'))
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
@@ -86,7 +86,6 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
   const { setIsGraphOpen } = P
   useEffect(() => setIsGraphOpen(panel === 'graph'), [panel, setIsGraphOpen])
   const closePanel = useCallback(() => (setPanel(null), setIsFull(false)), [])
-  const classicGrades = useMemo(() => Object.fromEntries(Object.entries(P.looks).map(([id, l]) => [id, l.classic])), [P.looks])
   const [isAmbientOn, setIsAmbientOn] = useState(false)
   const [isSharing, setIsSharing] = useState(false)
   const closeShare = useCallback(() => setIsSharing(false), [])
@@ -288,7 +287,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
           </div>
         ) : (
           <Suspense fallback={<div className="v2-sheet-wait"><Waiting message="Tracing connections" /></div>}>
-            <KnowledgeGraph nodes={P.graph.nodes} edges={P.graph.edges} currentSegmentId={P.graph.currentId} grades={classicGrades} perspectives={P.perspectives} />
+            <Graph nodes={P.graph.nodes} edges={P.graph.edges} currentSegmentId={P.graph.currentId} looks={P.looks} perspectives={P.perspectives} />
             {P.graphState === 'error' && <p className="v2-sheet-note" role="status">Showing the scenes seen so far. The full graph could not load.</p>}
           </Suspense>
         )}
@@ -302,7 +301,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
         headerExtra={<Btn variant="ghost" icon={isFull ? Minimize2 : Maximize2} aria-pressed={isFull} onClick={() => setIsFull((v) => !v)}>{isFull ? 'Exit full view' : 'Full view'}</Btn>}
       >
         <Suspense fallback={<div className="v2-sheet-wait"><Waiting message="Unrolling the map" /></div>}>
-          <StoryMap location={shown.location} travelFrom={shown.travel_from} isOffline={dataSource !== 'live' && dataSource !== 'mock'} />
+          <TravelMap location={shown.location} travelFrom={shown.travel_from} isOffline={dataSource !== 'live' && dataSource !== 'mock'} />
         </Suspense>
       </Sheet>
 

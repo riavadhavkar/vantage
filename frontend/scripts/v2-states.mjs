@@ -132,5 +132,27 @@ await scenario('map', BASE, '?demo=1&ui=v2', async (p) => {
   await p.waitForTimeout(1200)
 })
 
+// the one scene in the sample story where the story travels: the marker makes the journey
+for (const [name, base, query, wait] of [['map-travel-chart', BASE, '?demo=1&ui=v2', '[role=dialog] svg[role=img]'], ['map-travel-tiles', MOCK, '?ui=v2', '.leaflet-tile-loaded']]) {
+  await scenario(name, base, query, async (p, say) => {
+    await begin(p)
+    for (const [choice, next] of [[/What happened at 11:40 pm/, 'Iceberg right ahead'], [/Did she break in two/, 'Did she break in two?'], [/What the wreck showed/, 'Found in two halves']]) {
+      await p.getByRole('button', { name: choice }).click()
+      await title(p, next)
+      await p.waitForTimeout(1300)
+      if (await p.locator('.v2-word:not(.is-in)').count()) await p.locator('.v2-captions').click().catch(() => {})
+      await p.waitForTimeout(1300)
+    }
+    await p.getByRole('button', { name: 'Where this happened' }).click()
+    await p.waitForSelector(wait, { timeout: 15000 })
+    const read = () => p.evaluate(() => { const c = document.querySelector('.v2-chart circle[fill="#EFEDE6"]'); const m = document.querySelector('.leaflet-marker-icon'); return c ? `${Number(c.getAttribute('cx')).toFixed(1)},${Number(c.getAttribute('cy')).toFixed(1)}` : m ? m.style.transform : 'none' })
+    const a = await read()
+    await p.waitForTimeout(2200)
+    const z = await read()
+    say.push(`marker moved from ${a} to ${z}`)
+    if (a === z) throw new Error('the marker did not travel')
+  }, { allowNetwork: name.endsWith('tiles') })
+}
+
 await b.close()
 if (failures) process.exitCode = 1
