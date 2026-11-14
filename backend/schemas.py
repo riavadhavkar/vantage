@@ -80,7 +80,7 @@ class AskRequest(BaseModel):
 class TtsRequest(BaseModel):
     segment_id: str
     text: str
-    voice_id: str
+    voice_id: Optional[str] = None
 
 
 class ImageRequest(BaseModel):
