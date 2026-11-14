@@ -30,8 +30,13 @@ const BANDS = [
 ]
 
 // Storyboard: a scene can have several shots (useNarration fills imageUrls as they arrive).
-// The frame cuts between them at the same pace as the classic stage.
-const SHOT_MS = 4000
+// The frame cuts between them at the pace of the narration, with the same formula as the classic
+// stage: the time it takes to say the text (2.6 words a second), shared between the planned shots.
+function shotDuration(segment, shotCount) {
+  const words = String(segment?.narrative_text || '').split(/\s+/).filter(Boolean).length
+  const planned = Math.max(segment?.scene_prompts?.length || shotCount || 1, 1)
+  return Math.max(3000, Math.min(8000, Math.round(((words / 2.6) * 1000) / planned)))
+}
 
 /** Only shots that have actually loaded are ever shown, so a failed image can never blank the frame. */
 function useLoadedShots(urls) {
@@ -67,9 +72,9 @@ function Plate({ segment, look, splitLook, shotUrls, canShowImage, soft, pointer
   useEffect(() => onImage?.(showImage), [showImage, onImage])
   useEffect(() => {
     if (isCalm || isPaused || shots.length < 2) return
-    const t = setInterval(() => setShotIndex((i) => (i + 1) % shots.length), SHOT_MS)
+    const t = setInterval(() => setShotIndex((i) => (i + 1) % shots.length), shotDuration(segment, shots.length))
     return () => clearInterval(t)
-  }, [shots.length, isCalm, isPaused])
+  }, [shots.length, isCalm, isPaused, segment])
 
   return (
     <motion.div className="v2-plate" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: sec(crossfade), ease: EASING.move }}>

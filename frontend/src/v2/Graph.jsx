@@ -4,6 +4,7 @@
 // began, and the scene you are on breathes twice and then rests.
 import { memo, useEffect, useMemo } from 'react'
 import { ReactFlow, Background, Controls, Handle, Position, MarkerType, useReactFlow, useNodesInitialized } from '@xyflow/react'
+import { Sparkles } from 'lucide-react'
 import '@xyflow/react/dist/style.css'
 import { DURATION, STAGGER_STEP_MS } from '../constants/theme.js'
 import { ms, useCalmMotion } from '../lib/motionMode.js'
@@ -25,19 +26,37 @@ const EDGE_STYLE = {
 }
 
 const SceneNode = memo(function SceneNode({ data }) {
-  const { segment, look, isCurrent, order } = data
-  const thumb = gradedSceneUrl({ seed: segment.segment_id, kind: sceneKindFor(`${segment.scene_prompt || ''} ${segment.title}`), width: 320, height: 200 }, look)
+  const { segment, look, isCurrent, order, real, onSelect } = data
+  // The scene's own illustration when it had one (labeled, because it is AI-made); the drawn scene otherwise.
+  const thumb = real || gradedSceneUrl({ seed: segment.segment_id, kind: sceneKindFor(`${segment.scene_prompt || ''} ${segment.title}`), width: 320, height: 200 }, look)
+  const body = (
+    <>
+      <span className={`v2-node-thumb ${isCurrent ? 'is-current' : ''}`}>
+        <img src={thumb} alt="" className={real ? 'print-color' : ''} />
+        {real && (
+          <span className="v2-node-ai" title="AI-generated illustration">
+            <Sparkles aria-hidden="true" size={10} strokeWidth={2.2} />
+            <span className="v2-sr">AI-generated illustration</span>
+          </span>
+        )}
+      </span>
+      <span className="v2-node-title">{segment.title}</span>
+      <span className="v2-node-who">
+        {look.label}
+        {isCurrent ? ' · now' : ''}
+      </span>
+    </>
+  )
   return (
     <div className="v2-node" style={{ '--order': order, '--accent': look.accent }}>
       <Handle type="target" position={Position.Left} className="v2-node-handle" />
-      <div className={`v2-node-thumb ${isCurrent ? 'is-current' : ''}`}>
-        <img src={thumb} alt="" />
-      </div>
-      <p className="v2-node-title">{segment.title}</p>
-      <p className="v2-node-who">
-        {look.label}
-        {isCurrent ? ' · now' : ''}
-      </p>
+      {onSelect ? (
+        <button type="button" className="v2-node-btn nodrag nopan" onClick={() => onSelect(segment.segment_id)} aria-label={`${isCurrent ? 'Return to' : 'Look back at'} ${segment.title}${look.label ? `, ${look.label}` : ''}`}>
+          {body}
+        </button>
+      ) : (
+        <div className="v2-node-btn">{body}</div>
+      )}
       <Handle type="source" position={Position.Right} className="v2-node-handle" />
     </div>
   )
@@ -65,7 +84,7 @@ function Camera({ firstId, currentId, count, isCalm }) {
   return null
 }
 
-export default function Graph({ nodes, edges, currentSegmentId, looks = {}, perspectives = [] }) {
+export default function Graph({ nodes, edges, currentSegmentId, looks = {}, perspectives = [], thumbs = {}, onSelectNode }) {
   const isCalm = useCalmMotion()
   const lanes = useMemo(() => Object.fromEntries(perspectives.map((p, i) => [p.perspective_id, i])), [perspectives])
   const rfNodes = useMemo(
@@ -74,12 +93,12 @@ export default function Graph({ nodes, edges, currentSegmentId, looks = {}, pers
         id: s.segment_id,
         type: 'scene',
         position: { x: i * 230, y: (lanes[s.perspective] ?? perspectives.length) * 150 },
-        data: { segment: s, look: looks[s.perspective] || NEUTRAL_LOOK, isCurrent: s.segment_id === currentSegmentId, order: i },
+        data: { segment: s, look: looks[s.perspective] || NEUTRAL_LOOK, isCurrent: s.segment_id === currentSegmentId, order: i, real: thumbs[s.segment_id] || null, onSelect: onSelectNode },
         draggable: false,
         connectable: false,
         ariaLabel: `${s.title}${looks[s.perspective]?.label ? `, ${looks[s.perspective].label}` : ''}${s.segment_id === currentSegmentId ? ', the scene you are on' : ''}`,
       })),
-    [nodes, lanes, looks, currentSegmentId, perspectives.length],
+    [nodes, lanes, looks, currentSegmentId, perspectives.length, thumbs, onSelectNode],
   )
   const rfEdges = useMemo(
     () =>
@@ -111,6 +130,7 @@ export default function Graph({ nodes, edges, currentSegmentId, looks = {}, pers
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={false}
+        nodesFocusable={false}
         colorMode="dark"
         style={{ background: 'transparent' }}
       >
@@ -127,6 +147,12 @@ export default function Graph({ nodes, edges, currentSegmentId, looks = {}, pers
             {st.label}
           </li>
         ))}
+        {Object.keys(thumbs).length > 0 && (
+          <li>
+            <span className="v2-node-ai is-legend"><Sparkles aria-hidden="true" size={10} strokeWidth={2.2} /></span>
+            AI-generated illustration
+          </li>
+        )}
       </ul>
     </div>
   )

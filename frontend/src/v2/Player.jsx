@@ -86,6 +86,17 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
   const { setIsGraphOpen } = P
   useEffect(() => setIsGraphOpen(panel === 'graph'), [panel, setIsGraphOpen])
   const closePanel = useCallback(() => (setPanel(null), setIsFull(false)), [])
+  // From the graph: reopen an earlier scene (or come back to the current one).
+  const { viewScene } = P
+  const lookBack = useCallback(
+    (id) => {
+      viewScene(id)
+      setPanel(null)
+      setIsFull(false)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    },
+    [viewScene],
+  )
   const [isAmbientOn, setIsAmbientOn] = useState(false)
   const [isSharing, setIsSharing] = useState(false)
   const closeShare = useCallback(() => setIsSharing(false), [])
@@ -135,7 +146,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
   const paletteItems = !isPaletteOpen
     ? []
     : [
-        ...(isLoading || isPulling ? [] : P.perspectives.filter((p) => p.perspective_id !== shown.perspective)).map((p) => ({
+        ...(isLoading || isPulling || P.isLookingBack ? [] : P.perspectives.filter((p) => p.perspective_id !== shown.perspective)).map((p) => ({
           id: `p-${p.perspective_id}`,
           group: 'Switch to',
           label: p.label,
@@ -223,6 +234,12 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
         />
 
         <motion.div className="v2-side" style={{ opacity: textOpacity }}>
+          {P.isLookingBack && !isPulling && (
+            <div className="v2-glass v2-back" role="status">
+              <p>You are looking back at an earlier scene.</p>
+              <Btn variant="quiet" onClick={() => viewScene(null)}>Return to where you were</Btn>
+            </div>
+          )}
           {P.error && (
             <div role="alert" className="v2-glass v2-note v2-error">
               <p>{messageFor(P.error)}</p>
@@ -268,7 +285,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
           heard={P.heard}
           lookOf={lookOf}
           onSelect={P.selectPerspective}
-          isBusy={isLoading || isPulling}
+          isBusy={isLoading || isPulling || P.isLookingBack}
         />
       </div>
 
@@ -287,7 +304,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
           </div>
         ) : (
           <Suspense fallback={<div className="v2-sheet-wait"><Waiting message="Tracing connections" /></div>}>
-            <Graph nodes={P.graph.nodes} edges={P.graph.edges} currentSegmentId={P.graph.currentId} looks={P.looks} perspectives={P.perspectives} />
+            <Graph nodes={P.graph.nodes} edges={P.graph.edges} currentSegmentId={P.graph.currentId} looks={P.looks} perspectives={P.perspectives} thumbs={P.thumbs} onSelectNode={lookBack} />
             {P.graphState === 'error' && <p className="v2-sheet-note" role="status">Showing the scenes seen so far. The full graph could not load.</p>}
           </Suspense>
         )}

@@ -125,6 +125,23 @@ await scenario('graph', BASE, '?demo=1&ui=v2', async (p) => {
   await p.waitForTimeout(1500)
 })
 
+await scenario('look-back', BASE, '?demo=1&ui=v2', async (p, say) => {
+  await begin(p)
+  await p.getByRole('button', { name: /What happened at 11:40 pm/ }).click()
+  await title(p, 'Iceberg right ahead')
+  await p.waitForTimeout(1500)
+  await p.getByRole('button', { name: 'How the story connects' }).click()
+  await p.getByRole('button', { name: /Look back at Warnings on the wire/ }).click()
+  await title(p, 'Warnings on the wire')
+  await p.waitForTimeout(1200)
+  const note = await p.getByText('You are looking back at an earlier scene.').count()
+  const choicesWhileBack = await p.locator('.v2-choice').count()
+  await p.getByRole('button', { name: 'Return to where you were' }).click()
+  await title(p, 'Iceberg right ahead')
+  say.push(`note shown ${note}, choices hidden while looking back ${choicesWhileBack === 0}, returned to "${await p.locator('#v2-title').textContent()}"`)
+  if (!note || choicesWhileBack) throw new Error('looking back did not behave')
+})
+
 await scenario('map', BASE, '?demo=1&ui=v2', async (p) => {
   await begin(p)
   await p.getByRole('button', { name: 'Where this happened' }).click()

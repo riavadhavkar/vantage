@@ -26,3 +26,14 @@
 }
 html[data-motion='off'] .v2-node-thumb.is-current::after { animation: none; }
 @media (max-width: 640px) { .v2-graph-legend { font-size: 11px; padding: 8px; } }
+
+/* a scene can be reopened from the graph; its node is a real button */
+.v2-node-btn { display: block; width: 100%; text-align: left; border-radius: 6px; }
+.v2-node-btn > span { display: block; }
+/* React Flow turns pointer events off on nodes that cannot be dragged; the button needs them */
+button.v2-node-btn { pointer-events: all; cursor: pointer; transition: transform var(--duration-micro) var(--ease-enter); }
+button.v2-node-btn:hover .v2-node-thumb:not(.is-current) { box-shadow: 0 0 0 1px rgb(255 255 255 / 0.5); }
+button.v2-node-btn:active { transform: scale(0.98); }
+/* every AI-made image is labeled, at thumbnail size too */
+.v2-node-ai { position: absolute; right: 4px; bottom: 4px; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 4px; background: rgb(10 12 15 / 0.85); color: var(--text); }
+.v2-node-ai.is-legend { position: static; flex: none; width: 28px; }

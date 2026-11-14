@@ -36,7 +36,13 @@ export default function usePlayer({ session, topic, isSoundOn }) {
   const looksRef = useRef({})
   const prepare = useCallback((seg) => prepareSoft(gradedSceneUrl(sceneOptsFor(seg), looksRef.current[seg.perspective] || NEUTRAL_LOOK)), [])
   const pull = usePull(currentSegment, { isCalm, prepare })
-  const { shown, begin, cancel } = pull
+  const { shown: live, begin, cancel } = pull
+  // Looking back: a scene picked in the graph is shown again without changing where the story is.
+  const [viewedId, setViewedId] = useState(null)
+  useEffect(() => setViewedId(null), [currentSegment?.segment_id])
+  const shown = (viewedId && segments.find((s) => s.segment_id === viewedId)) || live
+  const isLookingBack = !!live && !!shown && shown.segment_id !== live.segment_id
+  const viewScene = useCallback((id) => setViewedId(id && id !== live?.segment_id ? id : null), [live])
 
   const [sources, setSources] = useState([])
   const [sourcesState, setSourcesState] = useState('idle')
@@ -54,6 +60,12 @@ export default function usePlayer({ session, topic, isSoundOn }) {
 
   const voiceIndex = Math.max(0, perspectives.findIndex((p) => p.perspective_id === shown?.perspective))
   const narration = useNarration(shown, { isSoundOn, shouldAutoplay: pull.phase === 'idle', voiceIndex })
+  // The first illustration each scene showed, for the graph's thumbnails.
+  const [thumbs, setThumbs] = useState({})
+  const shownKey = shown?.segment_id
+  useEffect(() => {
+    if (shownKey && narration.imageUrl) setThumbs((t) => (t[shownKey] ? t : { ...t, [shownKey]: narration.imageUrl }))
+  }, [shownKey, narration.imageUrl])
 
   const loadSources = useCallback(() => {
     if (!sessionId) return
@@ -102,7 +114,7 @@ export default function usePlayer({ session, topic, isSoundOn }) {
   )
   const selectPerspective = useCallback(
     (id) => {
-      if (!shown || isLoading || id === shown.perspective) return
+      if (!shown || isLoading || isLookingBack || id === shown.perspective) return
       const p = perspectives.find((x) => x.perspective_id === id)
       if (!p) return
       const choice =
@@ -110,7 +122,7 @@ export default function usePlayer({ session, topic, isSoundOn }) {
       if (choice && shown.is_grounded) doChoose(choice)
       else doAsk(`Tell this moment from the point of view of ${p.label}.`, { perspective: id })
     },
-    [shown, isLoading, perspectives, doChoose, doAsk],
+    [shown, isLoading, isLookingBack, perspectives, doChoose, doAsk],
   )
   const recover = useCallback(() => {
     const other = perspectives.find((p) => p.perspective_id !== shown?.perspective)
@@ -125,11 +137,11 @@ export default function usePlayer({ session, topic, isSoundOn }) {
   // focus pull does not count as heard yet.
   const heard = useMemo(() => {
     const m = {}
-    const shownIndex = segments.findIndex((s) => s.segment_id === shown?.segment_id)
+    const shownIndex = segments.findIndex((s) => s.segment_id === live?.segment_id)
     const list = shownIndex >= 0 ? segments.slice(0, shownIndex + 1) : segments
     for (const s of list) if (s.is_grounded) m[s.perspective] = (m[s.perspective] || 0) + 1
     return m
-  }, [segments, shown])
+  }, [segments, live])
 
   // Graph from GET /api/graph while it is open; falls back to the scenes this browser has seen.
   const [isGraphOpen, setIsGraphOpen] = useState(false)
@@ -179,6 +191,9 @@ export default function usePlayer({ session, topic, isSoundOn }) {
     pull,
     shown,
     isCurrentShown: !!shown && !!currentSegment && shown.segment_id === currentSegment.segment_id,
+    isLookingBack,
+    viewScene,
+    thumbs,
     segments,
     topic: effectiveTopic,
     perspectives,
