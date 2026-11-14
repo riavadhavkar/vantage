@@ -15,6 +15,8 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
   const [imageUrl, setImageUrl] = useState(null)
   const [imageUrls, setImageUrls] = useState([])
   const [imageStatus, setImageStatus] = useState('idle') // idle | loading | ready | failed
+  // Which segment the image and audio state above belong to (it updates in the same batch).
+  const [forId, setForId] = useState(null)
   const [audioUrl, setAudioUrl] = useState(null)
   const [audioDurationMs, setAudioDurationMs] = useState(null)
   const [audioStatus, setAudioStatus] = useState('idle') // idle | loading | ready | failed
@@ -29,6 +31,7 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
     if (!segment) return
     const id = segment.segment_id
     currentId.current = id
+    setForId(id)
     const audio = getNarrationAudio()
     audio?.pause()
     speech.current?.cancel()
@@ -218,5 +221,5 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
   }, [isDeviceVoice])
 
   const voiceSource = audioStatus === 'ready' ? 'remote' : isDeviceVoice ? 'device' : audioStatus === 'loading' ? 'loading' : null
-  return { audioUrl, audioDurationMs, imageUrl, imageUrls, imageStatus, audioStatus, voiceSource, isPlaying, play, pause, hasFinished }
+  return { forId, audioUrl, audioDurationMs, imageUrl, imageUrls, imageStatus, audioStatus, voiceSource, isPlaying, play, pause, hasFinished }
 }

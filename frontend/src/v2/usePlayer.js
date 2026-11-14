@@ -29,7 +29,7 @@ const tick = () => {
   }
 }
 
-export default function usePlayer({ session, topic, isSoundOn }) {
+export default function usePlayer({ session, topic, isSoundOn, isHeld = false }) {
   const isCalm = useCalmMotion()
   const { currentSegment, segments, sessionId, choose, ask, isLoading, pending, error, clearError } = session
   // Before a new scene swaps in under the blur, have its graded drawing and its soft copy ready.
@@ -59,7 +59,8 @@ export default function usePlayer({ session, topic, isSoundOn }) {
   const lookOf = useCallback((id) => looks[id] || NEUTRAL_LOOK, [looks])
 
   const voiceIndex = Math.max(0, perspectives.findIndex((p) => p.perspective_id === shown?.perspective))
-  const narration = useNarration(shown, { isSoundOn, shouldAutoplay: pull.phase === 'idle', voiceIndex })
+  // isHeld: the shutter is waiting for this scene's illustration, so the voice waits too.
+  const narration = useNarration(shown, { isSoundOn, shouldAutoplay: pull.phase === 'idle' && !isHeld, voiceIndex })
   // The first illustration each scene showed, for the graph's thumbnails.
   const [thumbs, setThumbs] = useState({})
   const shownKey = shown?.segment_id

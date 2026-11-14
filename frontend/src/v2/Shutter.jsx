@@ -6,12 +6,13 @@ import Logo from './Logo.jsx'
 import { DURATION } from '../constants/theme.js'
 import { sec, useCalmMotion } from '../lib/motionMode.js'
 
-export default function Shutter({ message, variant = 'overlay', action = null }) {
+/** isInstant: appear without a fade (it takes over from the landing page's shutter). */
+export default function Shutter({ message, variant = 'overlay', action = null, isInstant = false }) {
   const isCalm = useCalmMotion()
   return (
     <motion.div
       className={`v2-shutter is-${variant}`}
-      initial={{ opacity: 0 }}
+      initial={isInstant ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: sec(isCalm ? DURATION.quick : DURATION.panel) }}

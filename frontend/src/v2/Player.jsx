@@ -19,7 +19,7 @@ import useSubtitleText from '../hooks/useSubtitleText.js'
 import { aiKindFor } from '../lib/aiKind.js'
 import { messageFor } from '../api/errors.js'
 import { DURATION, EASING } from '../constants/theme.js'
-import { sec } from '../lib/motionMode.js'
+import { ms, sec } from '../lib/motionMode.js'
 import { AiBadge, Btn, DataBadge, IconBtn, Sheet, Skeleton, Waiting } from './ui.jsx'
 import { sourceLabel } from './labels.js'
 import { CHOICE_TYPE_LABEL } from '../constants/labels.js'
@@ -32,16 +32,61 @@ const TravelMap = lazy(() => import('./TravelMap.jsx'))
 const ShareCard = lazy(() => import('./ShareCard.jsx'))
 const Palette = lazy(() => import('./Palette.jsx'))
 
+/** After this long behind the shutter, offer to go on with the drawn scene. */
+const IMAGE_WAIT_MS = 20000
+
+/** undefined while an image is loading, true once decoded, 'error' if it failed. */
+function useDecoded(url) {
+  const [state, setState] = useState({})
+  useEffect(() => {
+    if (!url) return
+    let isLive = true
+    const img = new Image()
+    img.onload = () => isLive && setState((s) => ({ ...s, [url]: true }))
+    img.onerror = () => isLive && setState((s) => ({ ...s, [url]: 'error' }))
+    img.src = url
+    return () => {
+      isLive = false
+    }
+  }, [url])
+  return url ? state[url] : undefined
+}
+
 export default function Player({ session, topic, isSoundOn, onToggleSound, language, onRestart, onExit, dataSource, shouldReveal = false }) {
-  const P = usePlayer({ session, topic, isSoundOn })
+  // isHeld comes from the illustration gate below (the previous render's value, kept in state)
+  const [isHeld, setIsHeld] = useState(false)
+  const P = usePlayer({ session, topic, isSoundOn, isHeld })
   const { shown, pull, look, lookOf, isCalm, isLoading, pending } = P
+  const isPulling = pull.phase !== 'idle'
+
+  // The shutter holds a new scene until its illustration has loaded (decoded, not just requested).
+  // It lets go when the image fails (the drawn scene stays), or when the viewer continues without it.
+  const n = P.narration
+  const [released, setReleased] = useState(() => new Set())
+  const release = useCallback((id) => setReleased((r) => (r.has(id) ? r : new Set(r).add(id))), [])
+  const decoded = useDecoded(n.imageStatus === 'ready' ? n.imageUrl : null)
+  const liveId = shown && P.isCurrentShown && shown.is_grounded ? shown.segment_id : null
+  const isMine = !!liveId && n.forId === liveId
+  const waitsForImage =
+    !!liveId &&
+    !released.has(liveId) &&
+    (isMine ? n.imageStatus === 'loading' || (n.imageStatus === 'ready' && decoded === undefined) : !!shown.scene_prompt && !shown.image_url)
+  useEffect(() => {
+    if (isMine && !waitsForImage && !released.has(liveId)) release(liveId)
+  }, [isMine, waitsForImage, liveId, released, release])
+  useEffect(() => setIsHeld(waitsForImage), [waitsForImage])
+  const [slowId, setSlowId] = useState(null)
+  useEffect(() => {
+    if (!waitsForImage) return
+    const t = setTimeout(() => setSlowId(liveId), ms(IMAGE_WAIT_MS))
+    return () => clearTimeout(t)
+  }, [waitsForImage, liveId])
   // Which scene has finished narrating. Keyed by scene, so an instant typewriter (reduced motion)
   // cannot be reset by a later effect, and a new scene never inherits "finished" from the last one.
   const [typedId, setTypedId] = useState(null)
   const shownId = shown?.segment_id
   const setIsTyped = useCallback((done) => setTypedId((id) => (done ? shownId : id === shownId ? null : id)), [shownId])
   const isTyped = typedId != null && typedId === shownId
-  const isPulling = pull.phase !== 'idle'
   const subtitle = useSubtitleText(shown, language)
   const [isTranscriptOpen, setIsTranscriptOpen] = useState(false)
   const closeTranscript = useCallback(() => setIsTranscriptOpen(false), [])
@@ -281,7 +326,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
           isPlaying={narration.isPlaying}
           hasFinished={narration.hasFinished}
           isVisible={subtitle.status !== 'off' && !!shown.is_grounded}
-          isActive={!isPulling}
+          isActive={!isPulling && !waitsForImage}
           onDoneChange={setIsTyped}
           onOpen={() => setIsTranscriptOpen(true)}
           note={subtitleNote}
@@ -368,6 +413,23 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
         onRetry={P.loadSources}
         lookOf={lookOf}
       />
+
+      <AnimatePresence>
+        {waitsForImage && (
+          <Shutter
+            key="image"
+            isInstant={P.segments.length <= 1}
+            message={P.segments.length <= 1 ? 'opening the archive...' : 'developing the illustration...'}
+            action={
+              slowId === liveId ? (
+                <button type="button" className="v2-link" onClick={() => release(liveId)}>
+                  continue without the image
+                </button>
+              ) : null
+            }
+          />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {isPaletteOpen && (
