@@ -77,6 +77,16 @@ body {
   mix-blend-mode: lighten;
 }
 
+/* AI illustrations stay in color: a light pull toward neutral, plus a faint
+   perspective tint so switching lenses still reads. */
+.print-color {
+  filter: grayscale(0.2) contrast(1.05);
+}
+.grade-tint {
+  mix-blend-mode: soft-light;
+  opacity: 0.35;
+}
+
 .sr-only-live {
   position: absolute;
   width: 1px;
