@@ -1,6 +1,6 @@
 // OWNER: Person B
 import { useCallback, useEffect, useState } from 'react'
-import { MotionConfig } from 'motion/react'
+import { AnimatePresence, MotionConfig, motion, useReducedMotion } from 'motion/react'
 import LandingScreen from './components/LandingScreen.jsx'
 import Player from './components/Player.jsx'
 import useSession from './hooks/useSession.js'
@@ -12,6 +12,7 @@ export default function App() {
   const [view, setView] = useState('landing')
   const [isSoundOn, setIsSoundOn] = useState(true)
   const session = useSession()
+  const reduce = useReducedMotion()
   const { startSession, reset } = session
 
   useEffect(() => {
@@ -33,12 +34,12 @@ export default function App() {
       const data = await startSession(text)
       if (!data) return
       try {
-        setTopic(await getTopic())
+        setTopic(await getTopic(data.session_id))
       } catch {
         // keep the landing topic
       }
-      setView('player')
       window.scrollTo(0, 0)
+      setView('player')
     },
     [startSession],
   )
@@ -49,29 +50,47 @@ export default function App() {
     window.scrollTo(0, 0)
   }, [reset])
 
-  const isPlayer = view === 'player' && session.currentSegment
+  const isPlayer = view === 'player' && !!session.currentSegment
+  // Paper to screen: the dark stage opens like an aperture over the landing page.
+  const screenIn = reduce
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.2 } }
+    : {
+        initial: { clipPath: 'circle(0% at 50% 62%)' },
+        animate: { clipPath: 'circle(150% at 50% 62%)', transitionEnd: { clipPath: 'none' } },
+        transition: { duration: 0.9, ease: [0.65, 0, 0.2, 1] },
+      }
+
   return (
     <MotionConfig reducedMotion="user">
-      {isPlayer ? (
-      <Player
-        session={session}
-        topic={topic}
-        isSoundOn={isSoundOn}
-        onToggleSound={() => setIsSoundOn((v) => !v)}
-        onExit={onExit}
-        dataSource={dataSource}
-      />
-      ) : (
-    <LandingScreen
-      onStart={onStart}
-      topic={topic}
-      isStarting={session.isLoading}
-      error={session.error}
-      isSoundOn={isSoundOn}
-      onToggleSound={() => setIsSoundOn((v) => !v)}
-      dataSource={dataSource}
-    />
-      )}
+      {/* both pages share one grid cell so the stage can open over the paper */}
+      <div className="grid grid-cols-1">
+      <AnimatePresence initial={false}>
+        {isPlayer ? (
+          <motion.div key="screen" className="relative z-10 col-start-1 row-start-1 min-h-dvh min-w-0 bg-prussian" {...screenIn}>
+            <Player
+              session={session}
+              topic={topic}
+              isSoundOn={isSoundOn}
+              onToggleSound={() => setIsSoundOn((v) => !v)}
+              onExit={onExit}
+              dataSource={dataSource}
+            />
+          </motion.div>
+        ) : (
+          <motion.div key="paper" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 1, transition: { duration: 0.9 } }} className="col-start-1 row-start-1 min-w-0">
+            <LandingScreen
+              onStart={onStart}
+              topic={topic}
+              isStarting={session.isLoading}
+              error={session.error}
+              isSoundOn={isSoundOn}
+              onToggleSound={() => setIsSoundOn((v) => !v)}
+              dataSource={dataSource}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      </div>
     </MotionConfig>
   )
 }

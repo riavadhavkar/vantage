@@ -14,6 +14,7 @@ import DataSourceNote from './DataSourceNote.jsx'
 import SoundToggle from './SoundToggle.jsx'
 import VoiceInputButton from './VoiceInputButton.jsx'
 import AmbientPlayer from './AmbientPlayer.jsx'
+import ContinueOnPhone from './ContinueOnPhone.jsx'
 import useNarration from '../hooks/useNarration.js'
 import usePerspectivePull from '../hooks/usePerspectivePull.js'
 import useMediaQuery from '../hooks/useMediaQuery.js'
@@ -21,6 +22,9 @@ import { gradesForTopic, FALLBACK_GRADE } from '../constants/theme.js'
 import { getSources, getGraph } from '../api/client.js'
 import { messageFor } from '../api/errors.js'
 import { deriveTopic } from '../api/normalize.js'
+
+// Activity from the phone (iMessage) lands in the server's graph, so the open graph polls.
+const GRAPH_POLL_MS = 5000
 
 const KnowledgeGraph = lazy(() => import('./KnowledgeGraph.jsx'))
 const StoryMap = lazy(() => import('./StoryMap.jsx'))
@@ -82,7 +86,7 @@ function IconButton({ label, onClick, children, isPressed, badge }) {
 export default function Player({ session, topic, isSoundOn, onToggleSound, onExit, dataSource }) {
   const reduce = useReducedMotion()
   const isMobile = useMediaQuery('(max-width: 1023px)')
-  const { currentSegment, segments, sessionId, choose, ask, isLoading, pending, error, clearError } = session
+  const { currentSegment, segments, sessionId, linkCode, choose, ask, isLoading, pending, error, clearError } = session
   const { shown, pull, beginPull, cancelPull } = usePerspectivePull(currentSegment, { isReduced: !!reduce })
 
   // Sources (declared early: a derived topic reads their perspectives)
@@ -106,12 +110,17 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
   useEffect(() => {
     if (!sessionId) return
     let isLive = true
-    setSourcesState('loading')
-    getSources(sessionId)
-      .then((d) => isLive && (setSources(d.sources || []), setSourcesState('ready')))
-      .catch(() => isLive && setSourcesState('error'))
+    const load = () => {
+      setSourcesState('loading')
+      getSources(sessionId)
+        .then((d) => isLive && (setSources(d.sources || []), setSourcesState('ready')))
+        .catch(() => isLive && setSourcesState('error'))
+    }
+    load()
+    window.addEventListener('focus', load)
     return () => {
       isLive = false
+      window.removeEventListener('focus', load)
     }
   }, [sessionId, segments.length])
   const sourcesById = useMemo(() => Object.fromEntries(sources.map((s) => [s.source_id, s])), [sources])
@@ -179,12 +188,23 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
   useEffect(() => {
     if (!sessionId || panel !== 'graph') return
     let isLive = true
-    setGraphState('loading')
-    getGraph(sessionId)
-      .then((d) => isLive && (setGraphData(d), setGraphState('ready')))
-      .catch(() => isLive && setGraphState('error'))
+    const load = (isFirst) => {
+      if (isFirst) setGraphState('loading')
+      getGraph(sessionId)
+        .then((d) => isLive && (setGraphData(d), setGraphState('ready')))
+        .catch(() => isLive && isFirst && setGraphState('error'))
+    }
+    load(true)
+    const timer = setInterval(() => document.visibilityState === 'visible' && load(false), GRAPH_POLL_MS)
+    const onFocus = () => load(false)
+    const onVisible = () => document.visibilityState === 'visible' && load(false)
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisible)
     return () => {
       isLive = false
+      clearInterval(timer)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisible)
     }
   }, [sessionId, panel, segments.length])
 
@@ -247,6 +267,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
         >
           <div className="sticky top-6">
             <LensRail perspectives={perspectives} current={shown?.perspective} grades={grades} heardCounts={heardCounts} onSelect={selectLens} isBusy={isLoading} />
+            <ContinueOnPhone linkCode={linkCode} className="mt-8" />
           </div>
         </motion.aside>
 
@@ -326,6 +347,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
                 />
               )}
             </div>
+            <ContinueOnPhone linkCode={linkCode} className="mt-10 max-w-[64ch] lg:hidden" />
           </div>
         </main>
       </div>

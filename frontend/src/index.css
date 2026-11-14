@@ -9,6 +9,9 @@
   --color-fiber: #d9d8cc;
   --color-safelight: #d2402f;
   --color-safelight-text: #f0715f;
+  --color-paper: #f4f3ee;
+  --color-ink-muted: #5b6b78;
+  --color-safelight-ink: #b8321f;
 
   /* One family for everything; mono only for source excerpts and metadata. */
   --font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -53,7 +56,6 @@ body {
 :focus-visible {
   outline: 2px solid var(--color-print);
   outline-offset: 3px;
-  border-radius: 2px;
 }
 
 .on-paper :focus-visible {
@@ -204,29 +206,6 @@ body {
   }
 }
 
-/* Landing hero */
-.hero-frame {
-  height: clamp(340px, 62vh, 760px);
-}
-@media (max-width: 640px) {
-  .hero-frame {
-    height: clamp(300px, 56vh, 520px);
-  }
-}
-.wordmark-slice {
-  width: calc(300% + 8px);
-  text-align: center;
-}
-.wordmark {
-  font-family: var(--font-sans);
-  font-weight: 650;
-  font-size: 23cqw;
-  line-height: 0.8;
-  color: var(--color-print);
-  letter-spacing: -0.06em;
-  transform: translateY(0.1em);
-  white-space: nowrap;
-}
 
 .stage {
   height: min(58vh, 56.25cqw);

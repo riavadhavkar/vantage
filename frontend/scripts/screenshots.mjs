@@ -37,12 +37,20 @@ for (const vp of WIDTHS) {
   await page.goto(BASE + QUERY)
   await settle(page, 4200)
   await shot(page, `landing-${vp.name}`)
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+  await page.screenshot({ path: `${out}/${PREFIX}landing-full-${vp.name}.png`, fullPage: true })
+  const overflow = await page.evaluate(() => {
+    // overflow-x is hidden globally, which would mask a too-wide page; lift it to measure
+    const els = [document.documentElement, document.body]
+    const prev = els.map((e) => e.style.overflowX)
+    els.forEach((e) => (e.style.overflowX = 'visible'))
+    const extra = document.documentElement.scrollWidth - window.innerWidth
+    els.forEach((e, i) => (e.style.overflowX = prev[i]))
+    return extra
+  })
   if (overflow > 0) console.log(`[${vp.name}] horizontal overflow: ${overflow}px`)
 
   // first scene
-  await page.fill('#topic-input', 'Titanic')
-  await page.click('button[type=submit]')
+  await page.getByRole('button', { name: 'Begin', exact: true }).click()
   await page.waitForSelector('.stage h2')
   await settle(page, 1500)
   await page.getByRole('button', { name: 'Show all text' }).click().catch(() => {})
