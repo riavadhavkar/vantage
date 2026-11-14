@@ -87,7 +87,10 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
   const reduce = useReducedMotion()
   const isMobile = useMediaQuery('(max-width: 1023px)')
   const { currentSegment, segments, sessionId, linkCode, choose, ask, isLoading, pending, error, clearError } = session
-  const { shown, pull, beginPull, cancelPull } = usePerspectivePull(currentSegment, { isReduced: !!reduce })
+  const { shown: liveShown, pull, beginPull, cancelPull } = usePerspectivePull(currentSegment, { isReduced: !!reduce })
+  const [viewedId, setViewedId] = useState(null)
+  useEffect(() => setViewedId(null), [currentSegment?.segment_id])
+  const shown = (viewedId && (segments || []).find((s) => s.segment_id === viewedId)) || liveShown
 
   // Sources (declared early: a derived topic reads their perspectives)
   const [sources, setSources] = useState([])
@@ -104,6 +107,11 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
 
   const voiceIndex = Math.max(0, perspectives.findIndex((p) => p.perspective_id === shown?.perspective))
   const narration = useNarration(shown, { isSoundOn, shouldAutoplay: pull === 'idle', voiceIndex })
+  const [thumbs, setThumbs] = useState({})
+  useEffect(() => {
+    if (shown?.segment_id && narration.imageUrl)
+      setThumbs((t) => (t[shown.segment_id] ? t : { ...t, [shown.segment_id]: narration.imageUrl }))
+  }, [shown?.segment_id, narration.imageUrl])
   const [isTyped, setIsTyped] = useState(false)
   useEffect(() => setIsTyped(false), [shown?.segment_id])
 
@@ -429,7 +437,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
           <LoadingState message="Tracing connections..." slowMessage="Still tracing connections. This can take a few seconds." className="p-6" />
         ) : (
           <Suspense fallback={<LoadingState message="Tracing connections..." className="p-6" />}>
-            <KnowledgeGraph nodes={graph.nodes} edges={graph.edges} currentSegmentId={graph.currentId} grades={grades} perspectives={perspectives} />
+            <KnowledgeGraph nodes={graph.nodes} edges={graph.edges} currentSegmentId={graph.currentId} grades={grades} perspectives={perspectives} thumbs={thumbs} onSelectNode={(id) => { setViewedId(id === currentSegment?.segment_id ? null : id); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />
             {graphState === 'loading' && (
               <p className="absolute top-3 left-4 text-xs text-fog sm:left-8" role="status">Updating connections...</p>
             )}

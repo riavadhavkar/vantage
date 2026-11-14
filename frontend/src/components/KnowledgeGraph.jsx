@@ -16,14 +16,14 @@ const EDGE_STYLE = {
 }
 
 const PrintNode = memo(function PrintNode({ data }) {
-  const { segment, grade, isCurrent } = data
-  const thumb = sceneDataUrl({ seed: segment.segment_id, kind: sceneKindFor(`${segment.scene_prompt || ''} ${segment.title}`), width: 320, height: 200 })
+  const { segment, grade, isCurrent, thumb: real } = data
+  const thumb = real || sceneDataUrl({ seed: segment.segment_id, kind: sceneKindFor(`${segment.scene_prompt || ''} ${segment.title}`), width: 320, height: 200 })
   return (
     <div className="graph-node-grow w-[188px]">
       <Handle type="target" position={Position.Left} className="!h-1.5 !w-1.5 !border-0 !bg-fog" />
       <div className={`relative h-[66px] w-full overflow-hidden rounded-md ${isCurrent ? 'pulse-twice ring-2 ring-print' : 'ring-1 ring-print/15'}`}>
-        <img src={thumb} alt="" className="print-gray absolute inset-0 h-full w-full object-cover" />
-        <GradeLayers grade={grade} />
+        <img src={thumb} alt="" className={`${real ? '' : 'print-gray '}absolute inset-0 h-full w-full object-cover`} />
+        {!real && <GradeLayers grade={grade} />}
       </div>
       <p className="mt-1.5 text-[14px] font-medium leading-[18px] text-print">{segment.title}</p>
       <p className="text-[12px] leading-[16px]" style={{ color: grade.text }}>
@@ -37,7 +37,7 @@ const PrintNode = memo(function PrintNode({ data }) {
 
 const nodeTypes = { print: PrintNode }
 
-export default function KnowledgeGraph({ nodes, edges, currentSegmentId, grades = {}, perspectives = [], onSelectNode }) {
+export default function KnowledgeGraph({ nodes, edges, currentSegmentId, grades = {}, perspectives = [], onSelectNode, thumbs = {} }) {
   const lanes = useMemo(() => {
     const m = {}
     perspectives.forEach((p, i) => (m[p.perspective_id] = i))
@@ -50,12 +50,12 @@ export default function KnowledgeGraph({ nodes, edges, currentSegmentId, grades 
         id: s.segment_id,
         type: 'print',
         position: { x: i * 230, y: (lanes[s.perspective] ?? perspectives.length) * 150 },
-        data: { segment: s, grade: grades[s.perspective] || FALLBACK_GRADE, isCurrent: s.segment_id === currentSegmentId },
+        data: { segment: s, grade: grades[s.perspective] || FALLBACK_GRADE, isCurrent: s.segment_id === currentSegmentId, thumb: thumbs[s.segment_id] },
         draggable: false,
         connectable: false,
         ariaLabel: `${s.title}${grades[s.perspective]?.label ? `, ${grades[s.perspective].label}` : ''}`,
       })),
-    [nodes, lanes, grades, currentSegmentId, perspectives.length],
+    [nodes, lanes, grades, currentSegmentId, perspectives.length, thumbs],
   )
 
   const rfEdges = useMemo(
