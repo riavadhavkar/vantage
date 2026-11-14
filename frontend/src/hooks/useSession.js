@@ -33,9 +33,9 @@ export default function useSession() {
   }, [])
 
   const startSession = useCallback(
-    (topic) =>
+    (topic, language) =>
       run({ kind: 'start' }, async () => {
-        const data = await api.startSession(topic)
+        const data = await api.startSession(topic, language)
         sessionRef.current = data.session_id
         setSessionId(data.session_id)
         setLinkCode(data.link_code ?? null)
