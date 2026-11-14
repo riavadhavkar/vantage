@@ -39,9 +39,9 @@ XAI_TEXT_MODEL_DEFAULT = "grok-4.20-0309-non-reasoning"
 
 def generate_text(prompt: str, system: Optional[str] = None, as_json: bool = False) -> str:
     from config import XAI_TEXT_MODEL
-    messages = []
-    if system:
-        messages.append({"role": "system", "content": system})
+    style = ("Write in polished standard English with full punctuation: commas, apostrophes "
+             "(ship's, didn't), and periods. Never drop punctuation. No em dashes.")
+    messages = [{"role": "system", "content": (system + "\n\n" + style) if system else style}]
     messages.append({"role": "user", "content": prompt})
     body = {"model": XAI_TEXT_MODEL or XAI_TEXT_MODEL_DEFAULT, "messages": messages}
     if as_json:

@@ -8,10 +8,18 @@ from google.genai import types
 from config import (GEMINI_API_KEY, GEMINI_TEXT_MODEL, GEMINI_FALLBACK_TEXT_MODEL,
                     GEMINI_IMAGE_MODEL, GEMINI_EMBED_MODEL, IMAGE_STYLE_PREFIX)
 
-_client = genai.Client(api_key=GEMINI_API_KEY)
+_client = genai.Client(api_key=GEMINI_API_KEY, http_options=types.HttpOptions(timeout=20000))
+
+
+import time as _time
+_gemini_down_until = 0.0
 
 
 def _generate(prompt: str, system: Optional[str], as_json: bool) -> str:
+    global _gemini_down_until
+    if _time.time() < _gemini_down_until:
+        from services import xai_service
+        return xai_service.generate_text(prompt, system, as_json)
     cfg = types.GenerateContentConfig(
         system_instruction=system,
         response_mime_type="application/json" if as_json else None,
@@ -24,9 +32,10 @@ def _generate(prompt: str, system: Optional[str], as_json: bool) -> str:
         except Exception as e:
             last_error = e
             print(f"[gemini] {model} failed: {e}")
+    _gemini_down_until = _time.time() + 120
     try:
         from services import xai_service
-        print("[gemini] falling back to grok")
+        print("[gemini] falling back to grok (skipping gemini for 2 min)")
         return xai_service.generate_text(prompt, system, as_json)
     except Exception as e:
         print(f"[grok] fallback failed: {e}")

@@ -80,7 +80,7 @@ class AskRequest(BaseModel):
 class TtsRequest(BaseModel):
     segment_id: str
     text: str
-    voice_id: str
+    voice_id: Optional[str] = None
 
 
 class ImageRequest(BaseModel):
@@ -92,6 +92,7 @@ class ImageRequest(BaseModel):
 class StartResponse(BaseModel):
     session_id: str
     segment: Segment
+    link_code: Optional[str] = None
 
 
 class SegmentResponse(BaseModel):

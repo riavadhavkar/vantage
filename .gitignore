@@ -9,3 +9,5 @@ dist/
 .vscode/
 .idea/
 data/chroma/
+photon/node_modules/
+backend/media/
