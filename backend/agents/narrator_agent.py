@@ -92,6 +92,7 @@ class NarratorAgent:
             "perspective": _pick(raw.get("perspective"), perspectives, "narrator"),
             "mood": _pick(raw.get("mood"), MOODS, "neutral"),
             "scene_prompt": (raw.get("scene_prompt") or "").strip(),
+            "scene_prompts": [str(x).strip() for x in (raw.get("scene_prompts") or []) if str(x).strip()][:3],
             "location": location,
             "date_label": raw.get("date_label") or None,
             "source_ids": list(dict.fromkeys(used)),
