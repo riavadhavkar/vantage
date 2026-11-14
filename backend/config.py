@@ -41,3 +41,4 @@ XAI_IMAGE_MODEL = os.getenv("XAI_IMAGE_MODEL", "")
 
 XAI_API_KEY = os.getenv("XAI_API_KEY", "")
 XAI_IMAGE_MODEL = os.getenv("XAI_IMAGE_MODEL", "")
+XAI_TEXT_MODEL = os.getenv("XAI_TEXT_MODEL", "")

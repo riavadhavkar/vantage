@@ -24,6 +24,12 @@ def _generate(prompt: str, system: Optional[str], as_json: bool) -> str:
         except Exception as e:
             last_error = e
             print(f"[gemini] {model} failed: {e}")
+    try:
+        from services import xai_service
+        print("[gemini] falling back to grok")
+        return xai_service.generate_text(prompt, system, as_json)
+    except Exception as e:
+        print(f"[grok] fallback failed: {e}")
     raise last_error
 
 
