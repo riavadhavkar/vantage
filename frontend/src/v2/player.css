@@ -187,3 +187,11 @@ html[data-motion='off'] .v2-dis-icon { animation: none; }
 .v2-ambient button:hover { background: rgb(255 255 255 / 0.12); }
 @media (min-width: 1100px) { .v2-ambient { display: inline-flex; } }
 @media (max-width: 899px) { .v2-sheet-dark .v2-btn-ghost span { display: none; } }
+
+/* ---------- the Jump to button (opens the Cmd+K palette). Desktop only; styled here, not in the
+   palette's own stylesheet, because that one loads only when the palette first opens. ---------- */
+.v2-jump { display: none; flex: none; white-space: nowrap; align-items: center; gap: 8px; height: 36px; margin-right: 8px; padding: 0 8px 0 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 13px; color: var(--dim); position: relative; transition: border-color var(--duration-micro) linear, color var(--duration-micro) linear, transform var(--duration-micro) var(--ease-enter); }
+.v2-jump::after { content: ''; position: absolute; inset: -4px 0; }
+.v2-jump:hover { border-color: rgb(255 255 255 / 0.4); color: var(--text); }
+.v2-jump:active { transform: scale(0.97); }
+@media (min-width: 1100px) { .v2-jump { display: inline-flex; } }
