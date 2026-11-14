@@ -12,3 +12,4 @@ httpx
 requests
 trafilatura
 pypdf
+langchain-xai

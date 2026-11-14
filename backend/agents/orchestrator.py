@@ -7,7 +7,7 @@ from typing import Optional
 from enums import Mode, PERSPECTIVES_BY_TOPIC
 from schemas import Segment, Choice, Location, Contradiction, ContradictionSide
 from state import session_store
-from config import VOICE_BY_PERSPECTIVE
+from config import VOICE_BY_PERSPECTIVE, AGENT_MODE
 from agents.narrator_agent import NarratorAgent
 from agents.mock_segments import MOCK_BY_TOPIC
 from knowledge.catalog import resolve_topic
@@ -121,7 +121,20 @@ def run_pipeline(session_id: str, choice_id: Optional[str] = None,
 
     contradiction_key = None
     try:
-        out = _narrator.run(topic_title, state.get("history", []), action, chunks, perspectives)
+        out = None
+        if AGENT_MODE == "deep" and topic_key:
+            try:
+                from agents import deep_director
+                out, deep_chunks, trace = deep_director.run(
+                    topic_key, topic_title, state.get("history", []), action, query,
+                    chosen_perspective, perspectives, state.get("seen_chunk_ids", []))
+                chunks = deep_chunks or chunks
+                state["last_agent_trace"] = trace
+            except Exception as e:
+                print(f"[orchestrator] deep mode failed, using fast narrator: {str(e)[:300]}")
+                out = None
+        if out is None:
+            out = _narrator.run(topic_title, state.get("history", []), action, chunks, perspectives)
         data = {
             "segment_id": _unique_id(state, out["slug"]),
             "title": out["title"],
