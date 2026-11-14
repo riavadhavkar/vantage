@@ -69,5 +69,5 @@ Screenshots: `frontend/design/screens/v2-*.png` (every screen at 390, 768, 1440)
 
 - New UI: `frontend/src/v2/`. Switch: `frontend/src/lib/ui.js`. Motion flag: `frontend/src/lib/motionMode.js`.
 - Design: `frontend/DESIGN.md`. Plan: `frontend/design/PLAN.md`. Motion: `frontend/design/MOTION.md`.
-- Checks: `scripts/v2-flow.mjs` (demo path), `v2-states.mjs` (13 non-happy paths), `v2-verify.mjs` (keyboard, touch targets, reduced motion, loops, load), `fps.mjs` (frame rate), `v2-shots.mjs` (screenshots).
+- Checks: `scripts/v2-flow.mjs` (demo path), `v2-states.mjs` (12 non-happy paths), `v2-verify.mjs` (keyboard, touch targets, reduced motion, loops, load), `fps.mjs` (frame rate), `v2-shots.mjs` (screenshots).
 - Log: `docs/BUILD_LOG.md`.

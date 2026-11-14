@@ -200,7 +200,7 @@ Second critique pass on Tier 1 screens, then Tier 2: share card, Cmd+K palette, 
 **How I verified it**
 
 - `v2-flow.mjs --runs 5`: the demo path passed 10 of 10 times (5 at 1440, 5 at 390), no console errors, no network calls. Also passes with `?motion=off` and with the OS reduced-motion setting.
-- `v2-states.mjs`: 13 of 13 scenarios at 1440, and all pass at 390.
+- `v2-states.mjs`: 12 of 12 scenarios at 1440, and all pass at 390.
 - `v2-verify.mjs`: keyboard only, touch targets (all at least 44 px at 390), reduced motion, loops paused, layout shift 0.011 and 0.007 on the production build.
 - `fps.mjs`, final numbers in MOTION.md. The perspective switch is inside the budget. Three desktop cases are not: landing load (two long frames at first paint), a choice in the same view (6 frames over 33 ms), opening the share card (one 133 ms frame).
 - Classic: `scripts/screenshots.mjs` runs clean after every merge; choices appear with and without reduced motion.
