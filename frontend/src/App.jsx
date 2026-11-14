@@ -1,5 +1,6 @@
 // OWNER: Person B
 import { useCallback, useEffect, useState } from 'react'
+import { MotionConfig } from 'motion/react'
 import LandingScreen from './components/LandingScreen.jsx'
 import Player from './components/Player.jsx'
 import useSession from './hooks/useSession.js'
@@ -48,8 +49,10 @@ export default function App() {
     window.scrollTo(0, 0)
   }, [reset])
 
-  if (view === 'player' && session.currentSegment) {
-    return (
+  const isPlayer = view === 'player' && session.currentSegment
+  return (
+    <MotionConfig reducedMotion="user">
+      {isPlayer ? (
       <Player
         session={session}
         topic={topic}
@@ -58,10 +61,7 @@ export default function App() {
         onExit={onExit}
         dataSource={dataSource}
       />
-    )
-  }
-
-  return (
+      ) : (
     <LandingScreen
       onStart={onStart}
       topic={topic}
@@ -71,5 +71,7 @@ export default function App() {
       onToggleSound={() => setIsSoundOn((v) => !v)}
       dataSource={dataSource}
     />
+      )}
+    </MotionConfig>
   )
 }

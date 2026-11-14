@@ -9,7 +9,7 @@ export default function AmbientPlayer({ mood, isOn, onToggle }) {
       type="button"
       onClick={onToggle}
       aria-pressed={isOn}
-      className="inline-flex min-h-11 items-center gap-2 rounded-[2px] px-2 text-sm text-print hover:bg-prussian/60"
+      className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-sm text-print hover:bg-prussian/60"
       title={isOn && !isAvailable ? 'No ambient track for this mood' : undefined}
     >
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.3">

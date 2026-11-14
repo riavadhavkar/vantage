@@ -2,7 +2,8 @@
 // Renders a segment's narration on the dark stage. The typed text is also the caption.
 // An ungrounded segment is never narrated: it shows an honest fallback instead.
 import { useEffect, useId, useState } from 'react'
-import { useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { EASE, rise } from '../lib/motion.js'
 import useTypewriter from '../hooks/useTypewriter.js'
 import SourceTag from './SourceTag.jsx'
 import ContradictionSplit from './ContradictionSplit.jsx'
@@ -20,7 +21,7 @@ function Grounding({ segment, sourcesById, onOpenSource }) {
         onClick={() => setIsOpen((v) => !v)}
         className="inline-flex min-h-11 items-center gap-2 text-sm text-print hover:text-white"
       >
-        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" className={isOpen ? 'rotate-90' : ''}>
+        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" className={`transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}>
           <path d="M4 2l4 4-4 4" fill="none" stroke="currentColor" strokeWidth="1.4" />
         </svg>
         <span>
@@ -28,8 +29,17 @@ function Grounding({ segment, sourcesById, onOpenSource }) {
           <span className="text-fog">. How this was grounded</span>
         </span>
       </button>
+      <AnimatePresence initial={false}>
       {isOpen && (
-        <div id={id} className="mt-2 border-l border-print/15 pl-4">
+        <motion.div
+          id={id}
+          key="grounding"
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.35, ease: EASE }}
+          className="mt-2 overflow-hidden border-l border-print/15 pl-4"
+        >
           {segment.claims.length === 0 && (
             <ul className="divide-y divide-print/10">
               {segment.source_ids.map((id) => (
@@ -49,26 +59,27 @@ function Grounding({ segment, sourcesById, onOpenSource }) {
             ))}
           </ul>
           {segment.grounding_notes && <p className="mt-2 text-xs text-fog">{segment.grounding_notes}</p>}
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   )
 }
 
 function Ungrounded({ segment, onRecover }) {
   return (
-    <div role="status" className="max-w-[64ch]">
+    <motion.div role="status" className="max-w-[64ch]" {...rise(0.1)}>
       <div aria-hidden="true" className="mb-4 h-px w-16 bg-safelight" />
-      <p className="font-serif text-[18px] leading-[30px] text-print sm:text-[21px] sm:leading-[34px]">
+      <p className="text-[17px] leading-[27px] text-print sm:text-[19px] sm:leading-[30px]">
         We could not ground this part in the sources, so we are not narrating it.
       </p>
       {segment.grounding_notes && <p className="mt-3 text-sm text-fog">{segment.grounding_notes}</p>}
       {onRecover && (
-        <button type="button" onClick={onRecover} className="mt-5 min-h-11 rounded-[2px] border border-print/30 px-4 text-sm text-print hover:bg-developer">
+        <button type="button" onClick={onRecover} className="mt-5 min-h-11 rounded-md border border-print/30 px-4 text-sm text-print hover:bg-developer">
           Try another point of view
         </button>
       )}
-    </div>
+    </motion.div>
   )
 }
 
@@ -100,7 +111,7 @@ export default function NarrativeCard({ segment, isActive, sourcesById = {}, onO
       <p
         aria-hidden="true"
         onClick={complete}
-        className={`cursor-text font-serif text-[18px] leading-[30px] text-pretty text-print transition-opacity duration-200 sm:text-[21px] sm:leading-[34px] ${isActive ? '' : 'opacity-40'}`}
+        className={`cursor-text text-[17px] leading-[27px] text-pretty text-print transition-opacity duration-200 sm:text-[19px] sm:leading-[30px] ${isActive ? '' : 'opacity-40'}`}
       >
         {shown}
         {!isDone && (
@@ -117,11 +128,13 @@ export default function NarrativeCard({ segment, isActive, sourcesById = {}, onO
       )}
       {isDone && (
         <>
-          <Grounding segment={segment} sourcesById={sourcesById} onOpenSource={onOpenSource} />
+          <motion.div {...rise(0, 8)}>
+            <Grounding segment={segment} sourcesById={sourcesById} onOpenSource={onOpenSource} />
+          </motion.div>
           {segment.contradiction && (
-            <div className="mt-6">
+            <motion.div className="mt-6" {...rise(0.15, 16)}>
               <ContradictionSplit contradiction={segment.contradiction} sourcesById={sourcesById} onOpenSource={onOpenSource} />
-            </div>
+            </motion.div>
           )}
         </>
       )}
