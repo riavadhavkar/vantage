@@ -65,7 +65,9 @@ export default function TravelMap({ location, travelFrom, isOffline }) {
 
   useEffect(() => {
     if (useChart || !location || !el.current) return
-    const map = L.map(el.current, { zoomControl: true, attributionControl: true, scrollWheelZoom: false })
+    // zoom on the right, like the story connections controls
+    const map = L.map(el.current, { zoomControl: false, attributionControl: true, scrollWheelZoom: false })
+    L.control.zoom({ position: 'topright', zoomInTitle: 'zoom in', zoomOutTitle: 'zoom out' }).addTo(map)
     const tiles = L.tileLayer(TILE_URL, { attribution: ATTRIBUTION, subdomains: 'abc', maxZoom: 12 })
     let errors = 0
     tiles.on('tileerror', () => {

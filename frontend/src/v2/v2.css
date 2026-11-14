@@ -154,6 +154,7 @@ html[data-lite] .v2 {
 .v2-sheet-head h2 { font-size: 20px; line-height: 26px; font-weight: 640; letter-spacing: -0.01em; }
 .v2-sheet-dark .v2-sheet-head h2 { font-size: 17px; line-height: 24px; }
 .v2-sheet-head p { margin-top: 2px; font-size: 13px; line-height: 18px; color: var(--ink-dim); }
+.v2-sheet-dark .v2-sheet-head p { color: var(--dim); }
 .v2-sheet-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; position: relative; }
 @media (max-width: 899px) {
   .v2-sheet-paper { --sheet-x: 0px; --sheet-y: 48px; top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 88dvh; border-radius: 14px 14px 0 0; padding-bottom: env(safe-area-inset-bottom); }

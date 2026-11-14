@@ -4,3 +4,8 @@
 .v2-chart svg { width: 100%; height: 100%; font-family: var(--font-sans); }
 .v2-chart p { position: absolute; left: 24px; bottom: 12px; font-family: var(--font-mono); font-size: 12px; line-height: 16px; color: var(--dim); }
 .v2-map-empty { padding: 24px; font-size: 15px; line-height: 22px; color: var(--dim); max-width: 52ch; }
+/* zoom controls on the right, in the same style as the story connections controls */
+.v2 .leaflet-top.leaflet-right { top: 12px; right: 12px; }
+.v2 .leaflet-bar { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; box-shadow: none; }
+.v2 .leaflet-bar a { width: 32px; height: 32px; line-height: 32px; background: var(--raised); color: var(--text); border-bottom-color: var(--line); }
+.v2 .leaflet-bar a:hover { background: #20242a; }
