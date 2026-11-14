@@ -1,6 +1,6 @@
 # Handoff: landing redo and 13 player fixes
 
-**Branch:** `b/ui-polish`, worktree `../vantage-polish`, from `main` at `04986bb`. 21 commits, not pushed.
+**Branch:** `b/ui-polish`, worktree `../vantage-polish`, from `main` at `04986bb`. 24 commits.
 **Tested with:** the in-browser mock server and the cached demo. The real backend was not running (`curl localhost:8000/api/health` refused both times I checked), so nothing here was tried against live `/api/translate`, `/api/tts` or `/api/image`.
 
 ## How to review
@@ -125,9 +125,10 @@ Scripts to re-run them are in `frontend/scripts`: `polish-landing.mjs`, `polish-
 
 ## Verification
 
-- **Build and lint** pass at every commit, with one exception:
+- **Build and lint:** I ran both before each code commit, and both passed, with one exception:
   - The ambient-removal commit was first made with a broken stylesheet, because my check only grepped the build output.
-  - I fixed it and amended that commit before going on, and switched to checking exit codes. The history as it stands builds at every commit.
+  - I fixed it and amended that commit before going on, and switched to checking exit codes.
+  - I did not re-run build and lint on every commit of the final history afterwards; they pass on the branch tip.
 - **Console errors:** none in any scripted run.
 - **Keyboard only, end to end:**
   - Landing: Tab to the options, Enter, arrows, Enter, Enter to start.
@@ -175,7 +176,7 @@ Scripts to re-run them are in `frontend/scripts`: `polish-landing.mjs`, `polish-
 
 - **`frontend/scripts/v2-flow.mjs`, `v2-verify.mjs`, `v2-states.mjs`, `v2-shots.mjs` and `fps.mjs`** were written for v2 before the sketch layout. Their selectors (caption card, choice rows, "Jump to") no longer exist. Rewrite them or remove them.
 - **`api/normalize.js`:** the backend `Segment` still has no `claims`, `is_grounded` or `grounding_notes`, so the adapter is still needed. Only its `connected_to`-as-a-string branch is obsolete.
-- **`frontend/design/PLAN.md` and `HANDOFF.md`** still mention ambient sound and the classic UI as history. I didn't edit them (the rules say to leave `frontend/design/` alone).
+- **`frontend/design/PLAN.md` and `HANDOFF.md`** still mention ambient sound and the classic UI as history. I didn't edit them. In `frontend/design/` I changed only the ambient row of `MOTION.md`, because item 10 asks for documentation mentions to go; nothing there was deleted.
 - **Old screenshots:** `frontend/screenshots/` holds older `sketch-*` and `v2-*` images. They are git-ignored, so they're only on disk.
 
 ## Backend notes (for the backend owner)

@@ -273,10 +273,10 @@ Handoff is written. Waiting for review. No cutover without approval.
 
 ## 2026-11-14 16:45 EST. UI polish: landing redo and 13 player fixes (Person B)
 
-**Branch:** `b/ui-polish` in `../vantage-polish`, from `main` at `04986bb`. 21 commits, not pushed. Details in `docs/handoffs/polish.md`.
+**Branch:** `b/ui-polish` in `../vantage-polish`, from `main` at `04986bb`. 24 commits. Details in `docs/handoffs/polish.md`.
 
 **Housekeeping:** deleted merged local branches `b/v2-only`, `b/graph-ui`, `b/media`, `b/ui-sketch` and the `../vantage-sketch` worktree; deleted merged remote `b/graph-ui`, `b/ui-sketch`, `b/v2-only`. Skipped `b/ui-redesign` (live worktree with a dev server, 2 unpushed commits). Removed unused classic CSS, an unused font package, and dead pin code.
 
 **Changes:** landing page redone (blur-in wordmark with the shutter logo, three-step bar for narration, subtitles and story); bold shutter text for perspective pulls; shutter holds until each scene's illustration loads; one-line measured subtitles and a toast stack; share sheet with a 1080 x 1350 image, ai mark, save with metadata, Photon QR; choice pills removed; narration language changes in place (translate and re-voice the same scene); globe language button; ambient sound removed; graph legend right and attribution credited; map zoom right and titled "map"; sources redesigned as collapsible cards (backbone or supporting, informed perspective, open original). Remaining interface text lowercased; Devanagari font added to the v2 stack.
 
-**Verified:** build and lint at every commit; scripted keyboard, reduced motion, demo with no outside requests, language switch, Hindi font, one-line subtitles at 390/768/1440, 56.7 fps at 4x CPU during the landing load, 1080 x 1350 PNG with tEXt metadata, contrast AA everywhere checked. Not tested against the live backend (not running).
+**Verified:** build and lint run before each code commit (one commit was amended after it first broke the build; not re-run on every commit afterwards, they pass on the tip); scripted keyboard, reduced motion, demo with no outside requests, language switch, Hindi font, one-line subtitles at 390/768/1440, 56.7 fps at 4x CPU during the landing load, 1080 x 1350 PNG with tEXt metadata, contrast AA everywhere checked. Not tested against the live backend (not running).
