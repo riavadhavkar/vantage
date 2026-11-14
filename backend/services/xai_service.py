@@ -32,3 +32,25 @@ def generate_image(scene_prompt: str, model: Optional[str] = None) -> Optional[b
     except Exception as e:
         print(f"[xai] image failed: {str(e)[:200]}")
     return None
+
+
+XAI_TEXT_MODEL_DEFAULT = "grok-4.20-0309-non-reasoning"
+
+
+def generate_text(prompt: str, system: Optional[str] = None, as_json: bool = False) -> str:
+    from config import XAI_TEXT_MODEL
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": prompt})
+    body = {"model": XAI_TEXT_MODEL or XAI_TEXT_MODEL_DEFAULT, "messages": messages}
+    if as_json:
+        body["response_format"] = {"type": "json_object"}
+    r = httpx.post(
+        "https://api.x.ai/v1/chat/completions",
+        headers={"Authorization": "Bearer " + XAI_API_KEY},
+        json=body,
+        timeout=90,
+    )
+    r.raise_for_status()
+    return r.json()["choices"][0]["message"]["content"]
