@@ -19,7 +19,8 @@ export default function App() {
     }
   })
   const lastTopic = useRef(null)
-  const lang = useLanguageSettings()
+  const [isSourceKnown, setIsSourceKnown] = useState(false)
+  const lang = useLanguageSettings(isSourceKnown)
   const isOfflineData = dataSource === 'demo' || dataSource === 'offline'
   // Offline, the cached story is English: narration cannot change and subtitles cannot translate.
   const narrationLanguage = isOfflineData ? 'en' : lang.narrationLanguage
@@ -34,6 +35,7 @@ export default function App() {
       .then((src) => {
         if (!isLive) return
         setDataSource(src)
+        setIsSourceKnown(true)
         return getTopic().then((t) => isLive && setTopic(t))
       })
       .catch(() => {})

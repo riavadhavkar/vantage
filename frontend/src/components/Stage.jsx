@@ -97,8 +97,8 @@ export default function Stage({ segment, grade, imageUrl, imageStatus, pull, pul
       <div className="vignette pointer-events-none absolute inset-0" />
 
       {/* scrims: legible HUD at the top, legible subtitles at the bottom */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-prussian/85 via-prussian/40 to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-prussian/95 via-prussian/65 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[46%] bg-gradient-to-b from-prussian/90 via-prussian/70 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-prussian/95 via-prussian/75 to-transparent" />
 
       {showPins && (
         <motion.ul

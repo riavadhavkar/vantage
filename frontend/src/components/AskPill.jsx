@@ -33,7 +33,7 @@ export default function AskPill({ perspectives = [], onSubmit, isLoading }) {
   }
 
   return (
-    <form onSubmit={submit} className="relative flex h-11 items-center rounded-full border border-print/35 bg-prussian/80 pl-4 backdrop-blur-sm focus-within:border-print/80">
+    <form onSubmit={submit} className="relative flex h-11 items-center rounded-full border border-print/35 bg-prussian/80 pl-4 backdrop-blur-sm focus-within:border-print focus-within:ring-2 focus-within:ring-print/50">
       <label htmlFor="ask-input" className="sr-only">
         ask a question about this moment
       </label>
@@ -46,7 +46,7 @@ export default function AskPill({ perspectives = [], onSubmit, isLoading }) {
         autoComplete="off"
         enterKeyHint="send"
         placeholder=""
-        className="h-full min-w-0 flex-1 bg-transparent text-sm text-print focus:outline-none"
+        className="h-full min-w-0 flex-1 bg-transparent text-sm text-print outline-none focus-visible:outline-none"
       />
       {/* the visible placeholder: crossfades between phrases */}
       {!value && (

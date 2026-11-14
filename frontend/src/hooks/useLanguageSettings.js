@@ -14,7 +14,8 @@ function load() {
   }
 }
 
-export default function useLanguageSettings() {
+/** @param {boolean} isReady true once the data source (live, mock, demo, offline) is known */
+export default function useLanguageSettings(isReady) {
   const [settings, setSettings] = useState(load)
   const [languages, setLanguages] = useState(FALLBACK_LANGUAGES)
 
@@ -27,6 +28,7 @@ export default function useLanguageSettings() {
   }, [settings])
 
   useEffect(() => {
+    if (!isReady) return
     let isLive = true
     getLanguages()
       .then((d) => isLive && setLanguages(d.languages))
@@ -34,7 +36,7 @@ export default function useLanguageSettings() {
     return () => {
       isLive = false
     }
-  }, [])
+  }, [isReady])
 
   const setNarrationLanguage = useCallback((narrationLanguage) => setSettings((s) => ({ ...s, narrationLanguage })), [])
   const setSubtitleLanguage = useCallback((subtitleLanguage) => setSettings((s) => ({ ...s, subtitleLanguage })), [])
