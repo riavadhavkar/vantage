@@ -110,3 +110,71 @@ None.
 **Next**
 
 Waiting for approval of PLAN.md and MOTION.md. Build starts at 11:15.
+
+## 2026-11-14 11:08 EST. UI redesign, phase 3: hourly entry 1, Tier 1 built (Person B)
+
+Build started 10:10 (Ria said to start early), an hour ahead of the planned 11:15.
+
+**Answers from Ria before starting:** a few live checks against the backend are allowed (at most 5); AI illustrations stay in color with a faint tint; underline only confident claim matches; serif for excerpts only.
+
+**Requests that arrived during the build, all done**
+
+- Ken Burns on illustrations (teammate): classic already panned them, but the easing put most of the move in the first 3 seconds. Applied the teammate's values to the existing keyframes (scale 1 to 1.08 over 24 s, ease-in-out). Verified on a mock illustration: scale 1.0108 after 6 s, and the move restarts on a new scene.
+- Map tiles (Ria): CARTO now needs a key. Switched `StoryMap` to OpenStreetMap tiles with attribution; 21 tiles loaded with HTTP 200. The tiles are light, so the tile layer is inverted to a dark map. Also fixed two things I saw while testing: the map did not resize in full view, and a single place at sea opened on an empty ocean (now zoom 5).
+- "Push the changes once you finish": pushed `b/ui-redesign` at 10:22. It was merged to main as PR #28.
+- "Keep checking main and pull": merged main four times so far (voices, colorful images, transcribe, storyboard). All clean.
+
+**Tier 1, in the order built (one commit each, lint and build passing)**
+
+1. Foundation and landing: `?ui=v2` switch, token re-pointing, primitives, load sequence, pointer focus.
+2. Stage and captions: three depth bands, illustration develop-in with badge, title card, word-level reveal, claim underlines, speaking indicator.
+3. Lens ring and the perspective switch on one clock, coverage rings, choices, ask.
+4. Evidence paper and pins, with the travelling chip and highlighter.
+5. Disagreement view: split frame, accounts A and B, one pulse.
+6. States: error, waiting, offline, ungrounded, end of thread; graph and map in the new sheet.
+7. Performance pass on the switch.
+
+**Storyboard (new on main during the build).** `useNarration` now returns several shots per scene. The v2 frame cuts between them every 4 s like classic, and only ever shows shots that have loaded, so a failed image cannot blank the frame.
+
+**How I verified it**
+
+- `scripts/v2-flow.mjs`: the whole demo path at 1440 and 390 (begin, pin to evidence and Escape, switch by ring, switch by choice, contradiction, end of thread) with no console errors and no network calls.
+- `scripts/v2-states.mjs`: 9 of 9 scenarios pass (ungrounded, error with retry, failed switch returns to focus, offline badge, unknown topic, image failure keeps the drawn scene with no badge, image arrival shows the badge, graph, map).
+- Frame rate at 4x CPU throttle (`scripts/fps.mjs`, headless Chromium on this laptop, not a phone):
+
+  | Case | 1440 | 390 |
+  | --- | --- | --- |
+  | Landing load | 56 fps, 2 frames over 50 ms (at first paint) | 59.7 fps, none over 33 ms |
+  | Perspective switch | 52 to 54 fps, 1 to 3 frames over 33 ms, none over 50 (three runs) | 60 fps, none over 17 ms |
+  | Choice in the same view | 49.8 fps, 3 over 33, none over 50 | 60 fps |
+  | Pin to evidence | 57.7 fps, 2 over 33, 1 over 50 | 59.5 fps |
+  | Contradiction | 60 fps | 60 fps |
+
+  The desktop switch started at 37 fps with 11 frames over 33 ms. Three changes fixed it: the duotone is baked into drawn scenes (no blend layers), the out-of-focus copy is a 256 px pre-blurred bitmap, and glass stops blurring while the frame changes.
+- Slow-motion frame sequence of the switch saved as `design/screens/signature-1440-*ms.png`, named by real elapsed time. Checked: soft at 279 ms, new scene crossfading in under the blur at 398 ms, no sharp frame in between.
+
+**Bugs found in classic and fixed there (classic is the fallback)**
+
+- With "reduce motion" on, classic never showed the choices, so the story could not continue. A reset effect ran after the card had reported "done". Verified fixed with and without the setting.
+- Speech start could crash the player (fixed earlier today).
+
+**Decisions made alone, and why**
+
+- Coverage ring is binary: it draws the first time a view is heard, and the count is in the label. A proportional ring has no honest denominator, since the topic does not say how many scenes a view has.
+- A tap on the text finishes it; a sentence opens its source only once all the text is there. Otherwise "tap to skip" and "tap the underline" collide.
+- The ring shows each point of view once. Copies outside the current turn are hidden.
+- Highlighter sweeps all lines of an excerpt together, not line by line (MOTION.md row 27 said line by line). Per-line timing needs measuring line breaks; not worth the risk.
+- Storyboard pacing (4 s) is not scaled by `?motion=slow`: it is content pacing, not interface motion.
+
+**Not verified**
+
+- Real voices and real illustrations. The backend is not answering on :8000, so the live checks Ria allowed have not been possible yet.
+- Safari and Firefox.
+
+**Needs Ria**
+
+- Start the backend on :8000 if the live checks should happen.
+
+**Next**
+
+Second critique pass on Tier 1 screens, then Tier 2: share card, Cmd+K palette, graph motion, map motion.
