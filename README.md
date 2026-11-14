@@ -1,8 +1,8 @@
 # Vantage
 
-**History, seen from every side.**
+**Every story, seen from every side.**
 
-Vantage is an interactive documentary engine. You pick a moment in history, choose whose eyes to see it through, and the story is written for you as you go, one narrated, illustrated scene at a time. Every scene is grounded in real sources, and when those sources disagree, Vantage shows you the disagreement instead of hiding it.
+Vantage is an interactive documentary engine for any event, past or present. You pick a moment, choose whose eyes to see it through, and the story is written for you as you go, one narrated, illustrated scene at a time. Every scene is grounded in real sources, and when those sources disagree, Vantage shows you the disagreement instead of hiding it.
 
 Demo video: _coming soon_ · Devpost: _coming soon_
 
@@ -23,7 +23,7 @@ The backend is a FastAPI service with two agent modes.
 - **Fast mode** (about 5 seconds): retrieves the most relevant source passages for your perspective and choice, and a grounded narrator writes the next scene.
 - **Deep mode** (about 12 seconds): a Director agent hands the work to a Researcher, a Narrator, and a Fact-checker that re-checks every claim against the sources and looks up documented disagreements.
 
-The knowledge base is more than 50 hand-curated sources on the two topics chunked into ChromaDB, plus a hand-built list of where those sources agree, follow each other, or contradict each other. Narration comes from Gemini with Grok as a fallback, scenes are illustrated with Grok image generation, and each perspective has its own ElevenLabs voice. The iMessage side runs on Photon.
+The knowledge base is more than 50 hand-curated sources on the two topics chunked into ChromaDB, plus a hand-built list of where those sources agree, follow each other, or contradict each other. Narration comes from Gemini with Grok as a fallback, scenes are painted as full-color cinematic illustrations with Grok image generation, and each perspective has its own ElevenLabs voice. The iMessage side runs on Photon.
 
 The full system overview is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
