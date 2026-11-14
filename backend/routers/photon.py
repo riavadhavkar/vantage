@@ -1,5 +1,8 @@
-"""/api/photon/chat: short iMessage-style answers from the same knowledge base. Owner: A.
-Called by photon/bot.mjs, which receives iMessages through Photon Spectrum.
+"""/api/photon/chat: iMessage answers from the same knowledge base. Owner: A.
+Called by photon_bot.py. Two modes:
+- Linked: the viewer texted "VANTAGE 1234" from the web app. Their phone joins that web session,
+  so questions and choices continue the SAME documentary (and show up on the web graph).
+- Unlinked: short grounded Q&A about a topic.
 """
 import re
 from typing import Optional
@@ -7,13 +10,15 @@ from typing import Optional
 from fastapi import APIRouter
 from pydantic import BaseModel
 
+from enums import Mode
 from knowledge.catalog import resolve_topic
 from knowledge import retriever
 from services import gemini_service
+from state import session_store
 
 router = APIRouter()
 
-_CHATS = {}  # sender_id -> {"topic": str or None, "history": [(question, answer)]}
+_CHATS = {}  # sender_id -> {"topic", "history", "session_id"}
 
 TOPIC_NAMES = {
     "princeton": "the Battle of Princeton (January 1777)",
@@ -23,10 +28,11 @@ INTRO = (
     "Hi, I'm Vantage, an interactive documentary engine. I tell history from several "
     "perspectives using real primary sources, and I point out where those sources disagree. "
     "Text TITANIC or PRINCETON to pick a story, then ask me anything about it. "
-    "The full cinematic version, with narration, maps and illustrations, lives in the web app."
+    "Watching on the web? Text the VANTAGE code on your screen to continue your documentary here."
 )
 INTRO_TRIGGERS = ("what is this", "what does this", "what can you", "who are you",
                   "what is vantage", "how does this work")
+LINK_RE = re.compile(r"^\s*(?:vantage\s*)?#?(\d{4})\s*$", re.I)
 
 
 class PhotonChatRequest(BaseModel):
@@ -37,6 +43,7 @@ class PhotonChatRequest(BaseModel):
 class PhotonChatResponse(BaseModel):
     reply: str
     topic: Optional[str] = None
+    session_id: Optional[str] = None
 
 
 def _clean(text: str) -> str:
@@ -49,15 +56,81 @@ def _short(title: str) -> str:
     return title if len(title) <= 45 else title[:42].rstrip() + "..."
 
 
+def _format_segment(seg) -> str:
+    lines = [seg.title, "", _clean(seg.narrative_text)]
+    if seg.contradiction:
+        c = seg.contradiction
+        lines += ["", f"Sources disagree: {c.side_a.text} vs {c.side_b.text}"]
+    if seg.choices:
+        lines += ["", "Reply with a number:"]
+        lines += [f"{i}. {ch.label}" for i, ch in enumerate(seg.choices, 1)]
+    return "\n".join(lines)
+
+
+def _linked_reply(chat: dict, text: str) -> Optional[PhotonChatResponse]:
+    """Continue the linked web session. Returns None if the link is gone."""
+    from agents.orchestrator import run_pipeline  # local import avoids a cycle at startup
+    state = session_store.get_viewer_state(chat["session_id"])
+    if state is None:
+        chat["session_id"] = None
+        return None
+
+    low = text.strip().lower()
+    choices = list(state.get("offered_choices", {}).values())
+    choice_id = None
+    if low.isdigit() and choices and 1 <= int(low) <= len(choices):
+        choice_id = choices[int(low) - 1]["choice_id"]
+    elif low in ("next", "continue", "go on", "more") and choices:
+        choice_id = choices[0]["choice_id"]
+
+    seg = (run_pipeline(state["session_id"], choice_id=choice_id, mode=Mode.IMESSAGE) if choice_id
+           else run_pipeline(state["session_id"], question=text, mode=Mode.IMESSAGE))
+    if seg is None:
+        return PhotonChatResponse(reply="I lost track of that documentary. Text TITANIC or PRINCETON to start fresh.")
+    return PhotonChatResponse(reply=_format_segment(seg), topic=state.get("topic_key"),
+                              session_id=state["session_id"])
+
+
 @router.post("/photon/chat", response_model=PhotonChatResponse)
 def photon_chat(body: PhotonChatRequest):
-    chat = _CHATS.setdefault(body.sender_id, {"topic": None, "history": []})
+    chat = _CHATS.setdefault(body.sender_id, {"topic": None, "history": [], "session_id": None})
     text = body.text.strip()
     low = text.lower()
 
-    if low in ("hi", "hello", "hey", "help", "start", "menu", "?") or any(t in low for t in INTRO_TRIGGERS):
-        return PhotonChatResponse(reply=INTRO, topic=chat["topic"])
+    # 1. Linking a web session: "VANTAGE 4821" or just "4821"
+    m = LINK_RE.match(text)
+    if m:
+        state = session_store.get_session_by_code(m.group(1))
+        if state is None:
+            return PhotonChatResponse(reply="I could not find that code. Check the number on your screen and try again.")
+        chat["session_id"] = state["session_id"]
+        chat["topic"] = state.get("topic_key") or resolve_topic(state["topic"])
+        history = state.get("history", [])
+        last = history[-1].split(":")[0] if history else "the opening"
+        n = len(history)
+        reply = (f"Linked to your documentary on {TOPIC_NAMES.get(chat['topic'], 'your topic')}. "
+                 f"You've watched {n} segment{'s' if n != 1 else ''}, most recently: {last}. "
+                 "Ask me anything, or text NEXT to keep going.")
+        offered = list(state.get("offered_choices", {}).values())
+        if offered:
+            reply += "\n\nOr reply with a number:\n" + "\n".join(
+                f"{i}. {c['label']}" for i, c in enumerate(offered, 1))
+        return PhotonChatResponse(reply=reply, topic=chat["topic"], session_id=state["session_id"])
 
+    if low in ("hi", "hello", "hey", "help", "start", "menu", "?") or any(t in low for t in INTRO_TRIGGERS):
+        return PhotonChatResponse(reply=INTRO, topic=chat["topic"], session_id=chat["session_id"])
+
+    if low in ("unlink", "stop", "reset"):
+        chat.update(topic=None, history=[], session_id=None)
+        return PhotonChatResponse(reply="Unlinked. Text TITANIC or PRINCETON to start a new story.")
+
+    # 2. Linked to a web session: continue that exact documentary
+    if chat["session_id"]:
+        linked = _linked_reply(chat, text)
+        if linked:
+            return linked
+
+    # 3. Unlinked Q&A
     new_topic = resolve_topic(text)
     if new_topic and new_topic != chat["topic"]:
         chat["topic"], chat["history"] = new_topic, []

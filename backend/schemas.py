@@ -92,6 +92,7 @@ class ImageRequest(BaseModel):
 class StartResponse(BaseModel):
     session_id: str
     segment: Segment
+    link_code: Optional[str] = None
 
 
 class SegmentResponse(BaseModel):
