@@ -59,7 +59,7 @@ for (const vp of WIDTHS) {
 
   // perspective pull to passengers via the first choice
   await page.evaluate(() => window.scrollTo(0, 0))
-  await page.getByRole('button', { name: 'Hear it from the passengers' }).click()
+  await page.getByRole('button', { name: 'Hear it from the cabin passengers' }).click()
   await page.waitForTimeout(220)
   await shot(page, `pull-mid-${vp.name}`)
   await page.waitForFunction(() => document.querySelector('.stage h2')?.textContent === 'A slight jolt')
@@ -69,7 +69,7 @@ for (const vp of WIDTHS) {
   await shot(page, `player-passengers-${vp.name}`)
 
   // to the contradiction
-  await page.getByRole('button', { name: 'Why the lifeboats left half empty' }).click()
+  await page.getByRole('button', { name: 'Hear it from third class' }).click()
   await page.waitForFunction(() => document.querySelector('.stage h2')?.textContent === 'Room for half')
   await settle(page, 900)
   await page.getByRole('button', { name: 'Show all text' }).click().catch(() => {})

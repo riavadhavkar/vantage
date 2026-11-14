@@ -10,7 +10,7 @@ import GradeLayers from './GradeLayers.jsx'
 
 // How each vantage frames the shared scene: a crop, not a different picture.
 const VANTAGES = [
-  { scale: 1.9, origin: '18% 72%' }, // low and close
+  { scale: 1.7, origin: '34% 58%' }, // low and close
   { scale: 1.0, origin: '50% 50%' }, // wide
   { scale: 1.45, origin: '82% 38%' }, // high, from the far side
 ]

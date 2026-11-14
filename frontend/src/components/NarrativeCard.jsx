@@ -10,7 +10,7 @@ import ContradictionSplit from './ContradictionSplit.jsx'
 function Grounding({ segment, sourcesById, onOpenSource }) {
   const [isOpen, setIsOpen] = useState(false)
   const id = useId()
-  const count = segment.source_ids?.length || new Set(segment.claims.map((c) => c.source_id)).size
+  const count = new Set([...(segment.source_ids || []), ...segment.claims.map((c) => c.source_id)]).size
   return (
     <div className="mt-5">
       <button
@@ -30,6 +30,16 @@ function Grounding({ segment, sourcesById, onOpenSource }) {
       </button>
       {isOpen && (
         <div id={id} className="mt-2 border-l border-print/15 pl-4">
+          {segment.claims.length === 0 && (
+            <ul className="divide-y divide-print/10">
+              {segment.source_ids.map((id) => (
+                <li key={id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                  <p className="text-sm text-print">{sourcesById[id]?.title || 'A cited source'}</p>
+                  <SourceTag source={sourcesById[id]} onOpen={() => onOpenSource(id)} className="self-start" />
+                </li>
+              ))}
+            </ul>
+          )}
           <ul className="divide-y divide-print/10">
             {segment.claims.map((c) => (
               <li key={c.claim_id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
@@ -90,7 +100,7 @@ export default function NarrativeCard({ segment, isActive, sourcesById = {}, onO
       <p
         aria-hidden="true"
         onClick={complete}
-        className="cursor-text font-serif text-[18px] leading-[30px] text-pretty text-print sm:text-[21px] sm:leading-[34px]"
+        className={`cursor-text font-serif text-[18px] leading-[30px] text-pretty text-print transition-opacity duration-200 sm:text-[21px] sm:leading-[34px] ${isActive ? '' : 'opacity-40'}`}
       >
         {shown}
         {!isDone && (

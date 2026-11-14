@@ -31,7 +31,11 @@ export default function LandingScreen({ onStart, topic, isStarting, error, isSou
 
   const begin = (text) => {
     const t = (text ?? value).trim()
-    if (!t || isStarting) return
+    if (isStarting) return
+    if (!t) {
+      document.getElementById('topic-input')?.focus()
+      return
+    }
     unlockAudio()
     onStart(t)
   }
@@ -88,7 +92,7 @@ export default function LandingScreen({ onStart, topic, isStarting, error, isSou
             />
             <button
               type="submit"
-              disabled={isStarting || !value.trim()}
+              disabled={isStarting}
               className="min-h-12 rounded-[2px] bg-print px-6 text-base font-semibold text-prussian hover:bg-white disabled:cursor-not-allowed disabled:opacity-55"
             >
               Begin

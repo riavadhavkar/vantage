@@ -162,8 +162,15 @@ body {
 }
 
 /* React Flow: keep it on our palette */
+.react-flow {
+  --xy-background-color: transparent;
+  --xy-background-color-default: transparent;
+}
 .react-flow__attribution {
-  display: none;
+  background: transparent !important;
+}
+.react-flow__attribution a {
+  color: var(--color-fog) !important;
 }
 .react-flow__controls-button {
   background: var(--color-developer);
@@ -228,12 +235,12 @@ body {
   line-height: 0.8;
   color: var(--color-print);
   letter-spacing: -0.02em;
-  transform: translateY(0.13em);
+  transform: translateY(0.07em);
   white-space: nowrap;
 }
 
 .stage {
-  height: min(62vh, 56.25cqw);
+  height: min(58vh, 56.25cqw);
   min-height: 220px;
 }
 .stage-wrap {

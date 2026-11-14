@@ -9,6 +9,8 @@ import { TYPE_SPEED_MS } from '../constants/theme.js'
 export default function useTypewriter(text, { isActive = true, isInstant = false, speedMs = TYPE_SPEED_MS } = {}) {
   const [count, setCount] = useState(isInstant ? text.length : 0)
   const raf = useRef(0)
+  const countRef = useRef(count)
+  const textRef = useRef(text)
 
   useEffect(() => {
     cancelAnimationFrame(raf.current)
@@ -16,11 +18,17 @@ export default function useTypewriter(text, { isActive = true, isInstant = false
       setCount(text.length)
       return
     }
-    setCount(0)
+    // New text starts over; pausing (isActive false) keeps what is already shown.
+    if (textRef.current !== text) {
+      textRef.current = text
+      countRef.current = 0
+      setCount(0)
+    }
     if (!isActive) return
-    const start = performance.now()
+    const start = performance.now() - countRef.current * speedMs
     const tick = (now) => {
       const n = Math.min(text.length, Math.floor((now - start) / speedMs))
+      countRef.current = n
       setCount(n)
       if (n < text.length) raf.current = requestAnimationFrame(tick)
     }
@@ -30,6 +38,7 @@ export default function useTypewriter(text, { isActive = true, isInstant = false
 
   const complete = useCallback(() => {
     cancelAnimationFrame(raf.current)
+    countRef.current = text.length
     setCount(text.length)
   }, [text])
 

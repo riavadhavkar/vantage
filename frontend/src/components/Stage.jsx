@@ -27,6 +27,11 @@ function pinsFor(segment, sourcesById) {
     seen.add(c.source_id)
     pins.push({ claim: c, source: sourcesById[c.source_id] || null })
   }
+  if (!pins.length) {
+    for (const id of segment?.source_ids || []) {
+      pins.push({ claim: { claim_id: `${segment.segment_id}-${id}`, source_id: id, text: null }, source: sourcesById[id] || null })
+    }
+  }
   const used = new Set()
   return pins.slice(0, 3).map((p) => {
     let slot = hashString(p.claim.claim_id) % PIN_SLOTS.length
@@ -105,15 +110,12 @@ export default function Stage({ segment, grade, imageUrl, imageStatus, pull, pul
       {segment?.is_grounded && imageStatus === 'loading' && (
         <p className="absolute top-3 right-3 z-10 rounded-[2px] bg-prussian/70 px-2 py-1 text-xs text-fog">Developing the illustration...</p>
       )}
-      {segment?.is_grounded && imageStatus === 'failed' && (
-        <p className="absolute top-3 right-3 z-10 rounded-[2px] bg-prussian/70 px-2 py-1 text-xs text-fog">Drawn scene. The illustration could not load.</p>
-      )}
 
       {showPins && (
         <ul className="absolute inset-0 z-10" aria-label="Evidence in this scene">
           {pins.map(({ claim, source, pos }) => (
             <li key={claim.claim_id} className="absolute flex flex-col items-center" style={{ left: `${pos[0]}%`, top: `${pos[1]}%` }}>
-              <SourceTag source={source} onOpen={() => onOpenSource(claim.source_id, claim)} className="shadow-[0_1px_0_rgb(10_30_48/0.4)]" />
+              <SourceTag source={source} onOpen={() => onOpenSource(claim.source_id, claim.text ? claim : null)} className="shadow-[0_1px_0_rgb(10_30_48/0.4)]" />
               <span aria-hidden="true" className="h-3 w-px bg-fiber/80" />
               <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-fiber" />
             </li>

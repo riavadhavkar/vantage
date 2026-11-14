@@ -76,7 +76,7 @@ export default function KnowledgeGraph({ nodes, edges, currentSegmentId, grades 
   )
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full w-full bg-prussian">
       <ReactFlow
         nodes={rfNodes}
         edges={rfEdges}
@@ -89,7 +89,6 @@ export default function KnowledgeGraph({ nodes, edges, currentSegmentId, grades 
         nodesConnectable={false}
         elementsSelectable={!!onSelectNode}
         onNodeClick={onSelectNode ? (_, n) => onSelectNode(n.id) : undefined}
-        proOptions={{ hideAttribution: true }}
         colorMode="dark"
         style={{ background: 'transparent' }}
       >
@@ -100,7 +99,7 @@ export default function KnowledgeGraph({ nodes, edges, currentSegmentId, grades 
         {Object.entries(EDGE_STYLE).map(([key, st]) => (
           <li key={key} className="flex items-center gap-2">
             <svg aria-hidden="true" width="28" height="6">
-              <line x1="0" y1="3" x2="28" y2="3" {...Object.fromEntries(Object.entries(st.style).map(([k, v]) => [k.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase()), v]))} />
+              <line x1="0" y1="3" x2="28" y2="3" {...st.style} />
             </svg>
             {st.label}
           </li>

@@ -1,3 +1,2 @@
 public/demo/
-screenshots/*.png
-!screenshots/devpost-*.png
+screenshots/

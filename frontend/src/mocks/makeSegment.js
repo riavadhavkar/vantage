@@ -1,7 +1,6 @@
 // OWNER: Person B
-// Helpers that keep mock objects exactly on the contract: optional fields null, lists [].
+// Helpers that keep mock objects on the contract: optional fields null, lists [].
 
-/** @returns {import('./types').Segment} */
 export function makeSegment(fields) {
   return {
     segment_id: null,
@@ -11,7 +10,7 @@ export function makeSegment(fields) {
     perspective: null,
     mood: 'neutral',
     voice_id: null,
-    scene_prompt: null,
+    scene_prompt: '',
     image_url: null,
     audio_url: null,
     location: null,
@@ -21,7 +20,7 @@ export function makeSegment(fields) {
     claims: [],
     is_grounded: true,
     grounding_notes: null,
-    connected_to: null,
+    connected_to: [],
     edge_type: null,
     choices: [],
     contradiction: null,
@@ -30,7 +29,7 @@ export function makeSegment(fields) {
   }
 }
 
-/** Claim helper: [text, source_id] pairs -> Claim objects. */
+/** [text, source_id] pairs -> Claim objects. */
 export function claims(segmentId, pairs) {
   return pairs.map(([text, source_id], i) => ({
     claim_id: `${segmentId}-claim-${i + 1}`,
@@ -40,8 +39,30 @@ export function claims(segmentId, pairs) {
   }))
 }
 
-export function sourceIdsOf(claimList) {
-  return [...new Set(claimList.map((c) => c.source_id))]
+// The team source list uses some types outside the SourceType enum. Map them for the mocks
+// and flag them in docs/BUILD_LOG.md for Person C.
+const TYPE_MAP = {
+  secondary_with_primary: 'secondary',
+  interpretive_first_person: 'secondary',
+  official_modern: 'primary',
+  press_1912: 'news',
+}
+
+/**
+ * Build a Source from a row of data/documents.csv. The excerpt is the team's note,
+ * labeled as a summary: verbatim chunks come from the backend retriever.
+ */
+export function sourceFromRow([source_id, title, publisher, url, source_type, perspective, note]) {
+  return {
+    source_id,
+    title,
+    source_type: TYPE_MAP[source_type] || source_type,
+    perspective,
+    url,
+    excerpt: `SAMPLE: Summary from the team source list, not a quotation. ${note}`,
+    license: null,
+    attribution: publisher,
+  }
 }
 
 /**
@@ -52,7 +73,7 @@ export function sourceIdsOf(claimList) {
  */
 export function finalizeBundle(bundle) {
   for (const s of bundle.segments) {
-    s.source_ids = s.source_ids.length ? s.source_ids : sourceIdsOf(s.claims)
+    if (!s.source_ids.length) s.source_ids = [...new Set(s.claims.map((c) => c.source_id))]
     const p = bundle.topic.perspectives.find((x) => x.perspective_id === s.perspective)
     if (p && !s.voice_id) s.voice_id = p.voice_id
   }

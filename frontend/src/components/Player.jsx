@@ -19,15 +19,18 @@ import useMediaQuery from '../hooks/useMediaQuery.js'
 import { gradesForTopic, FALLBACK_GRADE } from '../constants/theme.js'
 import { getSources } from '../api/client.js'
 import { messageFor } from '../api/errors.js'
+import { deriveTopic } from '../api/normalize.js'
 
 const KnowledgeGraph = lazy(() => import('./KnowledgeGraph.jsx'))
 const StoryMap = lazy(() => import('./StoryMap.jsx'))
 
 function graphFromSegments(segments) {
   const ids = new Set(segments.map((s) => s.segment_id))
-  const edges = segments
-    .filter((s) => s.connected_to && ids.has(s.connected_to))
-    .map((s) => ({ source: s.connected_to, target: s.segment_id, edge_type: s.edge_type || 'happened_next' }))
+  const edges = segments.flatMap((s) =>
+    (s.connected_to || [])
+      .filter((from) => ids.has(from))
+      .map((from) => ({ source: from, target: s.segment_id, edge_type: s.edge_type || 'happened_next' })),
+  )
   return { nodes: segments, edges }
 }
 
@@ -62,17 +65,23 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
   const { currentSegment, segments, sessionId, choose, ask, isLoading, pending, error, clearError } = session
   const { shown, pull, beginPull, cancelPull } = usePerspectivePull(currentSegment, { isReduced: !!reduce })
 
-  const grades = useMemo(() => gradesForTopic(topic), [topic])
-  const perspectives = useMemo(() => topic?.perspectives || [], [topic])
+  // Sources (declared early: a derived topic reads their perspectives)
+  const [sources, setSources] = useState([])
+  const [sourcesState, setSourcesState] = useState('idle')
+
+  // Perspectives are data. Without GET /api/topic, derive them from what the session has shown.
+  const effectiveTopic = useMemo(
+    () => (topic?.perspectives?.length ? topic : deriveTopic({ title: topic?.title, segments, sources })),
+    [topic, segments, sources],
+  )
+  const grades = useMemo(() => gradesForTopic(effectiveTopic), [effectiveTopic])
+  const perspectives = useMemo(() => effectiveTopic.perspectives || [], [effectiveTopic])
   const grade = (shown && grades[shown.perspective]) || FALLBACK_GRADE
 
   const narration = useNarration(shown, { isSoundOn, shouldAutoplay: pull === 'idle' })
   const [isTyped, setIsTyped] = useState(false)
   useEffect(() => setIsTyped(false), [shown?.segment_id])
 
-  // Sources
-  const [sources, setSources] = useState([])
-  const [sourcesState, setSourcesState] = useState('idle')
   useEffect(() => {
     if (!sessionId) return
     let isLive = true
@@ -197,11 +206,11 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
             />
           </div>
 
-          <div className="mt-3 px-4 sm:px-0 lg:hidden">
+          <div className="mt-3 px-4 sm:px-8 lg:hidden">
             <LensRail layout="strip" perspectives={perspectives} current={shown?.perspective} grades={grades} heardCounts={heardCounts} onSelect={selectLens} isBusy={isLoading} />
           </div>
 
-          <div className="mt-6 px-4 sm:mt-8 sm:px-0">
+          <div className="mt-6 px-4 sm:mt-8 sm:px-8">
             {error && (
               <div role="alert" className="mb-6 flex max-w-[64ch] flex-wrap items-center gap-x-4 gap-y-2 border-l-2 border-safelight py-1 pl-4">
                 <p className="text-sm text-print">{messageFor(error)}</p>
@@ -216,7 +225,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
             )}
 
             {narration.audioStatus === 'failed' && shown?.is_grounded && (
-              <p className="mb-4 text-xs text-fog">The narration voice could not load. Captions continue below.</p>
+              <p className="mb-4 text-xs text-fog">Narration audio is unavailable for this scene. Captions only.</p>
             )}
 
             <NarrativeCard

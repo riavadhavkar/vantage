@@ -134,7 +134,7 @@ export function createMockServer({ bundles, isDemo = false, mediaBase = '' }) {
             perspective: currentSeg?.perspective ?? null,
             mood: 'neutral',
             voice_id: currentSeg?.voice_id ?? null,
-            scene_prompt: currentSeg?.scene_prompt ?? null,
+            scene_prompt: currentSeg?.scene_prompt ?? '',
             image_url: null,
             audio_url: null,
             location: null,
@@ -144,7 +144,7 @@ export function createMockServer({ bundles, isDemo = false, mediaBase = '' }) {
             claims: [],
             is_grounded: false,
             grounding_notes: `SAMPLE: No passage in this topic's sources answers "${question}".`,
-            connected_to: current,
+            connected_to: [current],
             edge_type: 'deeper_context',
             choices: (currentSeg?.choices || []).slice(0, 2),
             contradiction: null,
@@ -155,7 +155,7 @@ export function createMockServer({ bundles, isDemo = false, mediaBase = '' }) {
       return {
         segment: emit(session, pick, {
           segment_id: session.visited.includes(pick.segment_id) ? `${pick.segment_id}-ask-${session.asks}` : pick.segment_id,
-          connected_to: current,
+          connected_to: [current],
           edge_type: persp ? 'opposing_view' : 'deeper_context',
         }),
       }
@@ -169,11 +169,17 @@ export function createMockServer({ bundles, isDemo = false, mediaBase = '' }) {
     async getGraph(sessionId) {
       await delay(300)
       const session = getSession(sessionId)
+      const last = session.visited[session.visited.length - 1]
       const nodes = session.visited.map((id) => {
         const s = segIndex.get(id.replace(/-ask-\d+$/, ''))?.segment
-        return { segment_id: id, title: s?.title ?? '', perspective: s?.perspective ?? null }
+        return { id, label: s?.title ?? '', perspective: s?.perspective ?? null, is_current: id === last }
       })
-      return { nodes, edges: [] }
+      const ids = new Set(session.visited)
+      const edges = session.visited.flatMap((id) => {
+        const s = segIndex.get(id.replace(/-ask-\d+$/, ''))?.segment
+        return (s?.connected_to || []).filter((f) => ids.has(f)).map((f) => ({ id: `${f}->${id}`, source: f, target: id, edge_type: s.edge_type }))
+      })
+      return { nodes, edges }
     },
 
     async generateAudio({ segment_id, text }) {

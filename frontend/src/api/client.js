@@ -1,6 +1,7 @@
 // OWNER: Person B
 // Every network call lives here. The frontend never holds an API key and never picks a voice.
 import { ApiError } from './errors.js'
+import { normalizeSegment, normalizeSource } from './normalize.js'
 
 export { ApiError }
 
@@ -105,26 +106,30 @@ export async function getTopic() {
 
 /** @returns {Promise<{session_id: string, segment: object}>} */
 export async function startSession(topic) {
-  if (isLocal()) return (await server()).startSession(topic)
-  return request('/start', { method: 'POST', body: { topic } })
+  const data = isLocal() ? await (await server()).startSession(topic) : await request('/start', { method: 'POST', body: { topic } })
+  return { ...data, segment: normalizeSegment(data.segment) }
 }
 
 /** @returns {Promise<{segment: object}>} */
 export async function getNextSegment(sessionId, choiceId) {
-  if (isLocal()) return (await server()).getNextSegment(sessionId, choiceId)
-  return request('/next-segment', { method: 'POST', body: { session_id: sessionId, choice_id: choiceId } })
+  const data = isLocal()
+    ? await (await server()).getNextSegment(sessionId, choiceId)
+    : await request('/next-segment', { method: 'POST', body: { session_id: sessionId, choice_id: choiceId } })
+  return { segment: normalizeSegment(data.segment) }
 }
 
 /** @returns {Promise<{segment: object}>} */
 export async function askQuestion(sessionId, question) {
-  if (isLocal()) return (await server()).askQuestion(sessionId, question)
-  return request('/ask', { method: 'POST', body: { session_id: sessionId, question } })
+  const data = isLocal()
+    ? await (await server()).askQuestion(sessionId, question)
+    : await request('/ask', { method: 'POST', body: { session_id: sessionId, question } })
+  return { segment: normalizeSegment(data.segment) }
 }
 
 /** @returns {Promise<{sources: object[]}>} */
 export async function getSources(sessionId) {
-  if (isLocal()) return (await server()).getSources(sessionId)
-  return request('/sources', { query: { session_id: sessionId } })
+  const data = isLocal() ? await (await server()).getSources(sessionId) : await request('/sources', { query: { session_id: sessionId } })
+  return { sources: (data.sources || []).map(normalizeSource) }
 }
 
 /** @returns {Promise<{nodes: object[], edges: object[]}>} */
