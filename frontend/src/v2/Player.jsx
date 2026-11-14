@@ -8,7 +8,6 @@ import Frame from './Frame.jsx'
 import Shutter from './Shutter.jsx'
 import Logo from './Logo.jsx'
 import LensRing from './LensRing.jsx'
-import Choices from './Choices.jsx'
 import Evidence from './Evidence.jsx'
 import Disagreement from './Disagreement.jsx'
 import AskPill from '../components/AskPill.jsx'
@@ -110,17 +109,6 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
     return () => clearTimeout(t)
   }, [shownId])
   const isMoving = isPulling || isLoading || isSettling
-
-  // Row 21: the chosen row's dot grows into a wash over the frame.
-  const [wash, setWash] = useState(null)
-  const choose = useCallback(
-    (choice, dot) => {
-      const r = dot?.getBoundingClientRect()
-      if (r && !isCalm) setWash({ id: choice.choice_id, x: r.left + r.width / 2, y: r.top + r.height / 2, color: lookOf(choice.perspective).accent })
-      P.doChoose(choice)
-    },
-    [P, isCalm, lookOf],
-  )
 
   // Evidence: which source to open.
   const [evidence, setEvidence] = useState(null)
@@ -273,7 +261,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
         </div>
       </header>
 
-      {/* bottom: notes, disagreement, choices, subtitles; then the ring */}
+      {/* bottom: notes, disagreement, subtitles; then the ring */}
       <motion.div className="v2-lower" style={{ opacity: textOpacity }}>
         {P.isLookingBack && !isPulling && (
           <div className="v2-glass v2-back" role="status">
@@ -297,8 +285,8 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
         )}
         {dis && <Disagreement key={dis.contradiction_id || shown.segment_id} contradiction={dis} sourcesById={P.sourcesById} lookOf={lookOf} onOpenEvidence={(id) => openEvidence(id, shown.claims.find((c) => c.source_id === id))} isCalm={isCalm} />}
         {shown.is_grounded === false && !isPulling && <Ungrounded segment={shown} onRecover={P.recover} />}
-        {showNext &&
-          (shown.is_final ? (
+        {/* choices are not shown as pills: the timeline and the ask bar move the story on */}
+        {showNext && shown.is_final && (
             <div className="v2-glass v2-end">
               <p>this thread ends here.</p>
               <p>hear the same story from another side, or start again.</p>
@@ -308,9 +296,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
                 <Btn variant="ghost" onClick={onExit}>start a new topic</Btn>
               </div>
             </div>
-          ) : (
-            <Choices key={shown.segment_id} choices={shown.is_grounded ? shown.choices : []} lookOf={lookOf} onChoose={choose} isBusy={isLoading} pendingChoiceId={pending?.choiceId} isCalm={isCalm} />
-          ))}
+        )}
 
         <Subtitles
           text={subtitle.status === 'off' ? (shown.is_grounded ? shown.narrative_text || '' : '') : subtitle.text}
@@ -450,20 +436,6 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {wash && (
-          <motion.i
-            key={wash.id}
-            aria-hidden="true"
-            className="v2-wash"
-            style={{ left: wash.x, top: wash.y, backgroundColor: wash.color }}
-            initial={{ scale: 0.5, opacity: 0.5 }}
-            animate={{ scale: 90, opacity: 0 }}
-            transition={{ duration: sec(DURATION.scene), ease: EASING.enter }}
-            onAnimationComplete={() => setWash(null)}
-          />
-        )}
-      </AnimatePresence>
     </main>
   )
 }

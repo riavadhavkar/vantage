@@ -39,11 +39,6 @@
 /* ---------- bottom ---------- */
 .v2-lower { position: absolute; z-index: 2; left: 0; right: 0; bottom: calc(var(--ring-h) + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 12px; padding: 56px max(var(--gutter), env(safe-area-inset-right)) 8px max(var(--gutter), env(safe-area-inset-left)); max-height: calc(100dvh - var(--ring-h) - 250px); overflow-y: auto; background: linear-gradient(0deg, rgb(10 12 15 / 0.94) 0%, rgb(10 12 15 / 0.82) 55%, rgb(10 12 15 / 0) 100%); }
 .v2-lower > * { width: 100%; max-width: 56rem; margin-inline: auto; flex: none; }
-.v2-lower .v2-choices { flex-direction: row; flex-wrap: wrap; justify-content: center; }
-.v2-lower .v2-choice { width: auto; max-width: 28rem; min-height: 48px; padding: 6px 20px 6px 16px; border-radius: 999px; }
-.v2-lower .v2-choice::before { display: none; }
-.v2-lower .v2-choice-label { font-size: 15px; line-height: 20px; }
-.v2-lower .v2-choice-meta { text-transform: lowercase; }
 .v2-lower .v2-btn, .v2-lower .v2-note, .v2-lower .v2-waiting, .v2-lower .v2-back, .v2-lower .v2-end, .v2-lower .v2-dis-flag, .v2-lower .v2-dis-who, .v2-lower .v2-dis-why strong { text-transform: lowercase; }
 .v2-lower .v2-end { text-align: center; }
 .v2-lower .v2-end-actions { justify-content: center; }

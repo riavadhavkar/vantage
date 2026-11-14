@@ -1,4 +1,4 @@
-/* Player: stage, caption card, lens ring, choices. Motion rows refer to design/MOTION.md. */
+/* Player: stage, lens ring, panels. Motion rows refer to design/MOTION.md. */
 .v2-player { position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 100dvh; }
 .v2-player.v2-reveal { animation: v2-iris var(--duration-slow) var(--ease-move) both; }
 
@@ -115,21 +115,8 @@ html[data-motion='off'] .v2-titlecard { display: none; }
 .v2-cov-track { stroke: currentColor; opacity: 0.3; }
 .v2-cov-fill { stroke: var(--accent); stroke-dasharray: 1; transition: stroke-dashoffset var(--duration-scene) var(--ease-move); }
 
-/* ---------- choices (rows 20 to 22) ---------- */
-.v2-choices { display: flex; flex-direction: column; gap: 8px; }
-.v2-choice { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 12px; width: 100%; min-height: 64px; padding: 12px 16px; overflow: hidden; transition: background-color var(--duration-micro) linear, border-color var(--duration-micro) linear, transform var(--duration-micro) var(--ease-enter), opacity var(--duration-quick) linear; }
-.v2-choice::before { content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 2px; background: var(--accent); transform: scaleY(0); transition: transform var(--duration-micro) var(--ease-enter); }
-.v2-choice:hover:not(:disabled), .v2-choice:focus-visible { background: rgb(28 32 38 / 0.88); border-color: rgb(255 255 255 / 0.3); }
-.v2-choice:hover:not(:disabled)::before, .v2-choice:focus-visible::before, .v2-choice.is-pending::before { transform: scaleY(1); }
-.v2-choice:active:not(:disabled) { transform: scale(0.985); }
-.v2-choice:disabled { opacity: 0.45; }
-.v2-choice.is-pending { opacity: 1; border-color: var(--accent); }
-.v2-choice-dot { grid-row: span 2; width: 12px; height: 12px; border-radius: 999px; background: var(--accent); }
-.v2-choice-label { font-size: 17px; line-height: 22px; font-weight: 560; }
-.v2-choice-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; line-height: 16px; color: var(--dim); }
-.v2-choice.is-pending .v2-choice-meta { color: var(--accent); }
-/* row 21: the chosen row's dot grows into a wash that starts the scene change */
-.v2-wash { position: fixed; z-index: 4; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 999px; pointer-events: none; }
+
+
 .v2-end { padding: 16px; }
 .v2-end p { font-size: 17px; line-height: 24px; }
 .v2-end p + p { margin-top: 4px; font-size: 13px; line-height: 19px; color: var(--dim); }
