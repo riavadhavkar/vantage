@@ -101,6 +101,8 @@ def _contradiction_for(state, used_ids, retrieved_ids, narrative=""):
 def run_pipeline(session_id: str, choice_id: Optional[str] = None,
                  question: Optional[str] = None, mode: Mode = Mode.WEB) -> Optional[Segment]:
     state = session_store.get_viewer_state(session_id)
+    from agents.narrator_agent import set_language as _set_lang
+    _set_lang((state or {}).get("language", "en"))
     if state is None:
         return None
 

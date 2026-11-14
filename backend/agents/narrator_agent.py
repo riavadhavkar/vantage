@@ -48,13 +48,29 @@ def build_prompt(topic: str, history: list, action: str, chunks: list, perspecti
             .replace("{{CHOICE_TYPES}}", ", ".join(CHOICE_TYPES)))
 
 
+import contextvars as _cv
+_LANG = _cv.ContextVar("vantage_language", default="en")
+_LANG_NAMES = {"en": "English", "es": "Spanish", "hi": "Hindi", "fr": "French"}
+
+
+def set_language(code):
+    _LANG.set(code if code in _LANG_NAMES else "en")
+
+
+def _generate_json_lang(prompt, *args, **kwargs):
+    code = _LANG.get()
+    if code != "en":
+        prompt = (prompt + f"\n\nLANGUAGE: write title, narrative_text and every choice label in {_LANG_NAMES[code]}. "
+                  "Keep JSON keys, perspective, mood, choice_type, source_ids, slug, scene_prompt and scene_prompts in English.")
+    return gemini_service.generate_json(prompt, *args, **kwargs)
+
 class NarratorAgent:
     def run(self, topic: str, history: list, action: str,
             chunks: Optional[list] = None, perspectives: Optional[List[str]] = None) -> dict:
         """Returns a cleaned dict ready to become a Segment (minus ids and links)."""
         chunks = chunks or []
         perspectives = perspectives or ALL_PERSPECTIVES
-        raw = gemini_service.generate_json(build_prompt(topic, history, action, chunks, perspectives))
+        raw = _generate_json_lang(build_prompt(topic, history, action, chunks, perspectives))
 
         choices, seen_ids = [], set()
         for c in (raw.get("choices") or [])[:3]:

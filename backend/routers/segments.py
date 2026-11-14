@@ -17,6 +17,7 @@ def _error(status: int, code: str, message: str) -> JSONResponse:
 @router.post("/start", response_model=StartResponse)
 def start(body: StartRequest):
     state = session_store.create_session(body.topic)
+    state["language"] = (body.language or "en").lower()
     segment = run_pipeline(state["session_id"])
     return StartResponse(session_id=state["session_id"], segment=segment, link_code=state["link_code"])
 

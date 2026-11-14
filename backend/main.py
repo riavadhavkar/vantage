@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from config import VANTAGE_FRONTEND_ORIGIN
-from routers import segments, sources, photon, media, topics
+from routers import segments, sources, photon, media, topics, translate
 
 app = FastAPI(title="Vantage API")
 
@@ -20,6 +20,7 @@ app.include_router(sources.router, prefix="/api")
 app.include_router(photon.router, prefix="/api")
 app.include_router(media.router, prefix="/api")
 app.include_router(topics.router, prefix="/api")
+app.include_router(translate.router, prefix="/api")
 app.mount("/media", StaticFiles(directory=media.MEDIA_DIR), name="media")
 
 
