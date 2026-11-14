@@ -82,3 +82,7 @@ html[data-lite] .v2-panel-soft { display: none; }
 }
 html[data-motion='off'] .v2-wordmark .v2-wordmark-soft { display: none; }
 html[data-motion='off'] .v2-panel.is-focus, html[data-motion='off'] .v2-panel-art { transform: none; }
+
+/* narration and subtitle language selects, under the topic field */
+.v2-langs { margin-top: 16px; }
+.v2-langs label, .v2-langs p { color: var(--dim); }

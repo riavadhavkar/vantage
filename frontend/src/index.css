@@ -14,7 +14,7 @@
   --color-safelight-ink: #b8321f;
 
   /* One family for everything; mono only for source excerpts and metadata. */
-  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Geist Variable', 'Noto Sans Devanagari', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
   --text-xs: 13px;
@@ -336,4 +336,12 @@ html .leaflet-container {
   .map-marker {
     animation: none;
   }
+}
+
+/* interface chrome only (labels, buttons, tooltips, placeholders, badges); never narration or titles */
+.chrome {
+  text-transform: lowercase;
+}
+.chrome::placeholder {
+  text-transform: lowercase;
 }

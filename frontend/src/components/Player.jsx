@@ -1,20 +1,24 @@
 // OWNER: Person B
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { EASE } from '../lib/motion.js'
 import Stage from './Stage.jsx'
-import NarrativeCard from './NarrativeCard.jsx'
+import Subtitles from './Subtitles.jsx'
+import Ungrounded from './Ungrounded.jsx'
 import ChoiceButtons from './ChoiceButtons.jsx'
-import LensRail from './LensRail.jsx'
+import ContradictionSplit from './ContradictionSplit.jsx'
+import TimelineStrip from './TimelineStrip.jsx'
+import AskPill from './AskPill.jsx'
+import IconButton from './IconButton.jsx'
+import SettingsPopover from './SettingsPopover.jsx'
 import SourcePanel from './SourcePanel.jsx'
 import Sheet from './Sheet.jsx'
 import LoadingState from './LoadingState.jsx'
 import AiBadge from './AiBadge.jsx'
+import { aiKindFor } from '../lib/aiKind.js'
 import DataSourceNote from './DataSourceNote.jsx'
-import SoundToggle from './SoundToggle.jsx'
-import VoiceInputButton from './VoiceInputButton.jsx'
-import AmbientPlayer from './AmbientPlayer.jsx'
-import ContinueOnPhone from './ContinueOnPhone.jsx'
+import { Share2, Network, Map as MapIcon, FileText, Volume2, VolumeX, Play, Pause } from 'lucide-react'
+import useSubtitleText from '../hooks/useSubtitleText.js'
+import { shareStory } from '../lib/share.js'
 import useNarration from '../hooks/useNarration.js'
 import usePerspectivePull from '../hooks/usePerspectivePull.js'
 import useMediaQuery from '../hooks/useMediaQuery.js'
@@ -39,55 +43,17 @@ function graphFromSegments(segments) {
   return { nodes: segments, edges }
 }
 
-function PendingNote({ pending }) {
-  if (!pending) return null
-  const msg = pending.kind === 'ask' ? 'Looking through the sources...' : 'Tracing connections...'
-  return (
-    <LoadingState
-      message={msg}
-      slowMessage="Still writing the next part from the sources. This can take a few seconds."
-      className="mt-6 min-h-11"
-    />
-  )
-}
-
-function IconButton({ label, onClick, children, isPressed, badge }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={isPressed}
-      className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-md px-2 text-sm text-print hover:bg-prussian/60 sm:px-3"
-    >
-      {children}
-      <span className="max-[400px]:sr-only">{label}</span>
-      <AnimatePresence mode="popLayout" initial={false}>
-        {badge != null && (
-          <motion.span
-            key={badge}
-            className="inline-block text-xs text-fog"
-            initial={{ opacity: 0, y: -6, scale: 0.8 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 6 }}
-            transition={{ duration: 0.3, ease: EASE }}
-          >
-            {badge}
-          </motion.span>
-        )}
-      </AnimatePresence>
-    </button>
-  )
-}
-
 /**
  * @param {{ session: ReturnType<import('../hooks/useSession.js').default>, topic: object|null,
- *   isSoundOn: boolean, onToggleSound: () => void, onExit: () => void, dataSource: string }} props
+ *   isSoundOn: boolean, onToggleSound: () => void, language: object, onRestart: (code: string) => void,
+ *   onExit: () => void, dataSource: string }} props
  */
-export default function Player({ session, topic, isSoundOn, onToggleSound, onExit, dataSource }) {
+export default function Player({ session, topic, isSoundOn, onToggleSound, language, onRestart, onExit, dataSource }) {
   const reduce = useReducedMotion()
   const isMobile = useMediaQuery('(max-width: 1023px)')
   const { currentSegment, segments, sessionId, linkCode, choose, ask, isLoading, pending, error, clearError } = session
   const { shown: liveShown, pull, beginPull, cancelPull } = usePerspectivePull(currentSegment, { isReduced: !!reduce })
+  // a graph node can reopen an earlier scene; the live scene returns when a new one arrives
   const [viewedId, setViewedId] = useState(null)
   useEffect(() => setViewedId(null), [currentSegment?.segment_id])
   const shown = (viewedId && (segments || []).find((s) => s.segment_id === viewedId)) || liveShown
@@ -109,15 +75,17 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
   const narration = useNarration(shown, { isSoundOn, shouldAutoplay: pull === 'idle', voiceIndex })
   const [thumbs, setThumbs] = useState({})
   useEffect(() => {
-    if (shown?.segment_id && narration.imageUrl)
-      setThumbs((t) => (t[shown.segment_id] ? t : { ...t, [shown.segment_id]: narration.imageUrl }))
+    if (shown?.segment_id && narration.imageUrl) setThumbs((t) => (t[shown.segment_id] ? t : { ...t, [shown.segment_id]: narration.imageUrl }))
   }, [shown?.segment_id, narration.imageUrl])
-  // Which scene has finished typing. Keyed by scene: with reduced motion the text is instant, and a
-  // plain reset effect here used to run after the card reported "done", so the choices never appeared.
+  // Which scene has finished its subtitles. Keyed by scene so a reset effect cannot run after
+  // the subtitles report "done" and hide the choices.
   const [typedId, setTypedId] = useState(null)
   const shownId = shown?.segment_id
   const setIsTyped = useCallback((done) => setTypedId((id) => (done ? shownId : id === shownId ? null : id)), [shownId])
   const isTyped = typedId != null && typedId === shownId
+  const subtitle = useSubtitleText(shown, language)
+  const [isTranscriptOpen, setIsTranscriptOpen] = useState(false)
+  const [toast, setToast] = useState(null)
 
   useEffect(() => {
     if (!sessionId) return
@@ -238,191 +206,245 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
     return { nodes, edges, currentId }
   }, [segments, graphData, currentSegment])
 
-  const [question, setQuestion] = useState('')
-  const submitQuestion = (e) => {
-    e?.preventDefault()
-    const q = question.trim()
-    if (!q || isLoading) return
-    setQuestion('')
-    doAsk(q)
-  }
+  const onShare = useCallback(async () => {
+    const result = await shareStory({ title: shown?.title ? `${shown.title} | vantage` : 'vantage', url: window.location.href })
+    setToast(result === 'copied' ? 'link copied' : result === 'failed' ? 'could not share. copy the link from the address bar' : null)
+  }, [shown])
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 2600)
+    return () => clearTimeout(t)
+  }, [toast])
 
-  const pullMessage = pending?.perspective ? 'Finding another perspective...' : null
+  const pullMessage = pending?.perspective ? 'finding another perspective...' : null
   const isCurrentShown = shown && currentSegment && shown.segment_id === currentSegment.segment_id
   const showChoices = isTyped && isCurrentShown && pull === 'idle' && !isLoading
   const citedCount = new Set(segments.flatMap((s) => s.source_ids || [])).size
   const hasVoice = !!narration.voiceSource
+  const isAiVoice = narration.voiceSource === 'remote'
+  const aiKind = aiKindFor({ hasImage: narration.imageStatus === 'ready' && !!narration.imageUrl, hasVoice: isAiVoice })
+  const isTranslated = subtitle.status === 'ready'
+  const subtitleNote =
+    subtitle.status === 'loading' ? 'translating...' : subtitle.status === 'failed' ? 'subtitles unavailable' : null
+
+  const togglePanel = (name) => () => {
+    setSourceFocus(null)
+    setPanel((p) => (p === name ? null : name))
+  }
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="mx-auto flex h-14 w-full max-w-[1600px] items-center justify-between gap-3 px-4 sm:px-8">
-        <div className="flex min-w-0 items-baseline gap-4">
-          <button type="button" onClick={onExit} className="text-[20px] font-semibold leading-none tracking-[-0.03em] text-print" aria-label="Vantage. Start a new topic">
-            Vantage
-          </button>
-          <p className="hidden truncate text-sm text-fog sm:block">{topic?.title}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <DataSourceNote source={dataSource} className="hidden md:flex" />
-          <button type="button" onClick={onExit} className="min-h-11 rounded-md px-2 text-sm text-print hover:bg-developer">
-            New topic
-          </button>
-        </div>
-      </header>
+    <div className="relative h-dvh min-h-[560px] overflow-hidden bg-prussian">
+      <Stage
+        segment={shown}
+        grade={grade}
+        imageUrl={narration.imageUrl}
+        imageUrls={narration.imageUrls}
+        imageStatus={narration.imageStatus}
+        pull={pull}
+        pullMessage={pullMessage}
+        sourcesById={sourcesById}
+        onOpenSource={openSource}
+      />
 
-      <div className="mx-auto w-full max-w-[1600px] flex-1 lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
-        <motion.aside
-          className="hidden px-8 pt-4 lg:block"
-          initial={{ opacity: 0, x: -16 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
-        >
-          <div className="sticky top-6">
-            <LensRail perspectives={perspectives} current={shown?.perspective} grades={grades} heardCounts={heardCounts} onSelect={selectLens} isBusy={isLoading} />
-            <ContinueOnPhone linkCode={linkCode} className="mt-8" />
-          </div>
-        </motion.aside>
-
-        <main className="pb-44 sm:px-8 lg:pr-12 lg:pl-4 lg:pb-32">
-          <div className="stage-wrap">
-            <Stage
-              segment={shown}
-              grade={grade}
-              imageUrl={narration.imageUrl}
-              imageUrls={narration.imageUrls}
-              imageStatus={narration.imageStatus}
-              pull={pull}
-              pullMessage={pullMessage}
-              sourcesById={sourcesById}
-              onOpenSource={openSource}
-            />
-          </div>
-
-          <div className="mt-3 px-4 sm:px-8 lg:hidden">
-            <LensRail layout="strip" perspectives={perspectives} current={shown?.perspective} grades={grades} heardCounts={heardCounts} onSelect={selectLens} isBusy={isLoading} />
-          </div>
-
-          <div className="mt-6 px-4 sm:mt-8 sm:px-8">
-            {error && (
-              <div role="alert" className="mb-6 flex max-w-[64ch] flex-wrap items-center gap-x-4 gap-y-2 border-l-2 border-safelight py-1 pl-4">
-                <p className="text-sm text-print">{messageFor(error)}</p>
-                {error.code === 'session_not_found' ? (
-                  <button type="button" onClick={onExit} className="min-h-11 text-sm text-print underline underline-offset-4">Start again</button>
-                ) : (
-                  <button type="button" onClick={() => { clearError(); lastAction.current?.() }} className="min-h-11 text-sm text-print underline underline-offset-4">
-                    Try again
-                  </button>
+      {/* top HUD: wordmark and date | ask pill and title | icons and ai badge */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-4 pt-3 sm:px-8 sm:pt-5">
+        <div className="grid grid-cols-[1fr_auto] items-start gap-x-3 gap-y-3 lg:grid-cols-[1fr_minmax(0,36rem)_1fr]">
+          <div className="pointer-events-auto min-w-0">
+            <button type="button" onClick={onExit} aria-label="vantage. start a new topic" className="chrome -ml-1 flex min-h-11 items-center rounded-md px-1 text-[22px] font-semibold leading-none tracking-[-0.03em] text-white">
+              vantage
+            </button>
+            <div className="relative -mt-1 min-h-6">
+              <AnimatePresence mode="popLayout" initial={false}>
+                {shown?.date_label && (
+                  <motion.p
+                    key={shown.date_label}
+                    className="text-[15px] font-bold leading-6 text-white [text-shadow:0_1px_3px_rgb(0_0_0/0.8)]"
+                    initial={{ opacity: 0, y: reduce ? 0 : 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: reduce ? 0 : -14 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {shown.date_label}
+                  </motion.p>
                 )}
+              </AnimatePresence>
+            </div>
+            <DataSourceNote source={dataSource} className="mt-1 max-lg:hidden" />
+          </div>
+
+          <div className="pointer-events-auto col-span-2 row-start-2 min-w-0 lg:col-span-1 lg:col-start-2 lg:row-start-1">
+            <AskPill perspectives={perspectives} onSubmit={doAsk} isLoading={isLoading} />
+            {shown?.title && (
+              <h2 key={shown.segment_id} className="mt-3 text-center text-[22px] font-semibold leading-[28px] tracking-[-0.02em] text-balance text-white [text-shadow:0_1px_4px_rgb(0_0_0/0.85)] sm:text-[28px] sm:leading-[34px]">
+                {shown.title}
+              </h2>
+            )}
+            <DataSourceNote source={dataSource} className="mt-2 justify-center lg:hidden" />
+            {aiKind && (
+              <div className="mt-2 flex justify-center lg:hidden">
+                <AiBadge kind={aiKind} />
               </div>
             )}
+          </div>
 
-            {narration.audioStatus === 'failed' && !narration.voiceSource && shown?.is_grounded && (
-              <p className="mb-4 text-xs text-fog">Narration audio is unavailable for this scene. Captions only.</p>
+          <div className="pointer-events-auto col-start-2 row-start-1 flex flex-col items-end gap-2 lg:col-start-3">
+            <div className="flex items-center gap-1 sm:gap-2" role="toolbar" aria-label="story tools">
+              <IconButton label="share" onClick={onShare}>
+                <Share2 aria-hidden="true" size={19} strokeWidth={1.75} />
+              </IconButton>
+              <IconButton label="story connections" onClick={togglePanel('graph')} isPressed={panel === 'graph'}>
+                <Network aria-hidden="true" size={19} strokeWidth={1.75} />
+              </IconButton>
+              <IconButton label="map" onClick={togglePanel('map')} isPressed={panel === 'map'}>
+                <MapIcon aria-hidden="true" size={19} strokeWidth={1.75} />
+              </IconButton>
+              <IconButton label="sources" onClick={togglePanel('sources')} isPressed={panel === 'sources'} badge={citedCount || null}>
+                <FileText aria-hidden="true" size={19} strokeWidth={1.75} />
+              </IconButton>
+              <div className="flex items-center">
+                <IconButton tipAlign="end" label={isSoundOn ? 'sound on' : 'sound off'} onClick={onToggleSound}>
+                  {isSoundOn ? <Volume2 aria-hidden="true" size={19} strokeWidth={1.75} /> : <VolumeX aria-hidden="true" size={19} strokeWidth={1.75} />}
+                </IconButton>
+                <SettingsPopover language={language} onRestart={onRestart} mood={shown?.mood} isAmbientOn={isAmbientOn} onToggleAmbient={() => setIsAmbientOn((v) => !v)} linkCode={linkCode} />
+              </div>
+            </div>
+            {aiKind && (
+              <div className="hidden max-w-[20rem] justify-end lg:flex">
+                <AiBadge kind={aiKind} />
+              </div>
             )}
-
-            <NarrativeCard
-              key={shown?.segment_id}
-              segment={shown}
-              isActive={pull === 'idle'}
-              sourcesById={sourcesById}
-              onOpenSource={openSource}
-              onTypedChange={setIsTyped}
-              onRecover={recover}
-            />
-
-            <div className="mt-8 max-w-[64ch]">
-              {pending && !pending.perspective ? (
-                <PendingNote pending={pending} />
-              ) : shown?.is_final && showChoices ? (
-                <div className="border-t border-print/12 pt-5">
-                  <p className="text-[17px] leading-[27px] text-print">This thread ends here.</p>
-                  <p className="mt-1 text-sm text-fog">Hear the same story from another side, or trace how it connects.</p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <button type="button" onClick={recover} className="min-h-11 rounded-md border border-print/30 px-4 text-sm text-print hover:bg-developer">
-                      Try another point of view
-                    </button>
-                    <button type="button" onClick={() => setPanel('graph')} className="min-h-11 rounded-md border border-print/30 px-4 text-sm text-print hover:bg-developer">
-                      See how it connects
-                    </button>
-                    <button type="button" onClick={onExit} className="min-h-11 rounded-md px-4 text-sm text-print underline underline-offset-4">
-                      Start a new topic
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <ChoiceButtons
-                  choices={shown?.is_grounded ? shown?.choices : []}
-                  onChoose={doChoose}
-                  isVisible={showChoices}
-                  grades={grades}
-                  isDisabled={isLoading}
-                  pendingChoiceId={pending?.choiceId}
-                />
-              )}
-            </div>
-            <ContinueOnPhone linkCode={linkCode} className="mt-10 max-w-[64ch] lg:hidden" />
-          </div>
-        </main>
-      </div>
-
-      {/* control strip: graph, map, sources, ask, voice; narration and sound always reachable */}
-      <motion.div
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-print/10 bg-developer/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm"
-      >
-        <div className="mx-auto flex max-w-[1600px] flex-col gap-1 px-2 py-2 sm:px-6 lg:flex-row lg:items-center lg:gap-4">
-          <form onSubmit={submitQuestion} className="order-1 flex flex-1 items-center gap-1 lg:order-2">
-            <label htmlFor="ask-input" className="sr-only">
-              Ask a question about this moment
-            </label>
-            <input
-              id="ask-input"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="Ask about this moment"
-              autoComplete="off"
-              className="min-h-11 min-w-0 flex-1 rounded-md border border-print/15 bg-prussian px-3 text-sm text-print placeholder:text-fog focus:border-print/50 focus:outline-none"
-            />
-            <VoiceInputButton onTranscript={(t) => setQuestion(t)} isDisabled={isLoading} />
-            <button type="submit" disabled={!question.trim() || isLoading} className="min-h-11 rounded-md px-3 text-sm font-medium text-print hover:bg-prussian/60 disabled:opacity-50">
-              Ask
-            </button>
-          </form>
-
-          <div className="order-2 flex items-center justify-between gap-1 lg:order-1 lg:justify-start">
-            <div className="flex items-center">
-              <IconButton label="Graph" onClick={() => setPanel(panel === 'graph' ? null : 'graph')} isPressed={panel === 'graph'}>
-                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.3">
-                  <rect x="1.5" y="3" width="5" height="4" /><rect x="11.5" y="2" width="5" height="4" /><rect x="8" y="12" width="5" height="4" />
-                  <path d="M6.5 5h5M5 7l4 5" />
-                </svg>
-              </IconButton>
-              <IconButton label="Map" onClick={() => setPanel(panel === 'map' ? null : 'map')} isPressed={panel === 'map'}>
-                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.3">
-                  <path d="M1.5 4l5-2 5 2 5-2v12l-5 2-5-2-5 2z" /><path d="M6.5 2v12M11.5 4v12" />
-                </svg>
-              </IconButton>
-              <IconButton label="Sources" onClick={() => { setSourceFocus(null); setPanel('sources') }} isPressed={panel === 'sources'} badge={citedCount || null}>
-                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.3">
-                  <path d="M4 1.5h7l3 3v12H4z" /><path d="M6.5 8h5M6.5 11h5M6.5 14h3" />
-                </svg>
-              </IconButton>
-            </div>
-            <div className="flex items-center lg:hidden">
-              <NarrationControls narration={narration} hasVoice={hasVoice} />
-              <SoundToggle isOn={isSoundOn} onToggle={onToggleSound} isCompact />
-            </div>
-          </div>
-
-          <div className="order-3 hidden items-center gap-1 lg:flex">
-            <NarrationControls narration={narration} hasVoice={hasVoice} />
-            <SoundToggle isOn={isSoundOn} onToggle={onToggleSound} />
-            <AmbientPlayer mood={shown?.mood} isOn={isAmbientOn} onToggle={() => setIsAmbientOn((v) => !v)} />
+            {narration.imageStatus === 'loading' && shown?.is_grounded && <p className="chrome rounded-full bg-prussian/85 px-3 py-1 text-xs text-print">developing the illustration...</p>}
+            {toast && (
+              <p role="status" className="chrome rounded-full bg-print px-3 py-1 text-xs font-medium text-prussian">
+                {toast}
+              </p>
+            )}
           </div>
         </div>
-      </motion.div>
+      </div>
+
+      {/* bottom: notes and choices, subtitles, then the timeline */}
+      <div className="absolute inset-x-0 bottom-0 z-20 flex flex-col">
+        <div className="flex max-h-[58dvh] flex-col gap-3 overflow-y-auto pt-3 pb-2">
+          {error && (
+            <div role="alert" className="mx-auto flex max-w-[56ch] flex-wrap items-center justify-center gap-x-4 gap-y-1 rounded-md border border-safelight/60 bg-prussian/90 px-4 py-2">
+              <p className="text-sm text-print">{messageFor(error)}</p>
+              {error.code === 'session_not_found' ? (
+                <button type="button" onClick={onExit} className="chrome min-h-11 text-sm text-print underline underline-offset-4">
+                  start again
+                </button>
+              ) : (
+                <button type="button" onClick={() => { clearError(); lastAction.current?.() }} className="chrome min-h-11 text-sm text-print underline underline-offset-4">
+                  try again
+                </button>
+              )}
+            </div>
+          )}
+
+          {pending && !pending.perspective && (
+            <LoadingState
+              message={pending.kind === 'ask' ? 'looking through the sources...' : pending.kind === 'start' ? 'opening the archive...' : 'tracing connections...'}
+              slowMessage="still writing the next part from the sources. this can take a few seconds."
+              className="chrome mx-auto rounded-full bg-prussian/85 px-4 py-1 !text-print"
+            />
+          )}
+
+          {shown?.contradiction && isTyped && pull === 'idle' && (
+            <div className="mx-auto w-full max-w-4xl px-4">
+              <ContradictionSplit contradiction={shown.contradiction} sourcesById={sourcesById} onOpenSource={openSource} />
+            </div>
+          )}
+
+          {shown && !shown.is_grounded && pull === 'idle' && <Ungrounded segment={shown} onRecover={recover} />}
+
+          {shown?.is_final && showChoices ? (
+            <div className="mx-auto max-w-[56ch] rounded-md bg-prussian/90 px-5 py-4 text-center">
+              <p className="chrome text-base text-print">this thread ends here.</p>
+              <p className="chrome mt-1 text-sm text-fog">hear the same story from another side, or trace how it connects.</p>
+              <div className="mt-3 flex flex-wrap justify-center gap-2">
+                <button type="button" onClick={recover} className="chrome min-h-11 rounded-full border border-print/40 px-4 text-sm text-print hover:bg-developer">
+                  try another point of view
+                </button>
+                <button type="button" onClick={() => setPanel('graph')} className="chrome min-h-11 rounded-full border border-print/40 px-4 text-sm text-print hover:bg-developer">
+                  see how it connects
+                </button>
+                <button type="button" onClick={onExit} className="chrome min-h-11 px-4 text-sm text-print underline underline-offset-4">
+                  start a new topic
+                </button>
+              </div>
+            </div>
+          ) : (
+            <ChoiceButtons choices={shown?.is_grounded ? shown?.choices : []} onChoose={doChoose} isVisible={showChoices} grades={grades} isDisabled={isLoading} pendingChoiceId={pending?.choiceId} />
+          )}
+
+          <Subtitles
+            text={subtitle.status === 'off' ? (shown?.is_grounded ? shown.narrative_text || '' : '') : subtitle.text}
+            lang={subtitle.lang}
+            durationMs={narration.audioDurationMs}
+            resetKey={shown?.segment_id || ''}
+            isPlaying={narration.isPlaying}
+            hasFinished={narration.hasFinished}
+            isVisible={subtitle.status !== 'off' && !!shown?.is_grounded}
+            isActive={pull === 'idle'}
+            onDoneChange={setIsTyped}
+            onOpen={() => setIsTranscriptOpen(true)}
+            note={subtitleNote}
+          />
+
+          <div className="flex min-h-11 items-center justify-center gap-3 px-4">
+            {narration.voiceSource === 'remote' || narration.voiceSource === 'device' ? (
+              <button
+                type="button"
+                onClick={narration.isPlaying ? narration.pause : narration.play}
+                aria-label={narration.isPlaying ? 'pause narration' : 'play narration'}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-print/30 bg-prussian/80 text-print hover:bg-developer"
+              >
+                {narration.isPlaying ? <Pause aria-hidden="true" size={18} strokeWidth={1.75} /> : <Play aria-hidden="true" size={18} strokeWidth={1.75} />}
+              </button>
+            ) : hasVoice ? (
+              <span className="chrome text-xs text-print/85">preparing the voice...</span>
+            ) : null}
+            {narration.voiceSource === 'device' && <span className="chrome text-xs text-print/85">device voice</span>}
+            {narration.audioStatus === 'failed' && !narration.voiceSource && shown?.is_grounded && (
+              <span className="chrome text-xs text-print/85">narration audio is unavailable for this scene. subtitles only.</span>
+            )}
+          </div>
+        </div>
+
+        <TimelineStrip perspectives={perspectives} current={shown?.perspective} grades={grades} heardCounts={heardCounts} onSelect={selectLens} isBusy={isLoading} />
+      </div>
+
+      <Sheet title="transcript" isOpen={isTranscriptOpen} onClose={() => setIsTranscriptOpen(false)} canExpand={false}>
+        <div className="h-full overflow-y-auto px-4 py-6 sm:px-8">
+          <div className="mx-auto max-w-[64ch]">
+            <h3 className="text-lg font-semibold text-print">{shown?.title}</h3>
+            {subtitle.status !== 'off' && (
+              <p lang={subtitle.lang} className="mt-3 text-[19px] leading-[32px] text-print">
+                {subtitle.text}
+              </p>
+            )}
+            {isTranslated && (
+              <>
+                <h4 className="chrome mt-6 text-xs text-fog">original narration</h4>
+                <p lang={language.narrationLanguage} className="mt-1 text-[17px] leading-[28px] text-print/90">
+                  {shown?.narrative_text}
+                </p>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setIsTranscriptOpen(false)
+                setSourceFocus(null)
+                setPanel('sources')
+              }}
+              className="chrome mt-6 min-h-11 text-sm text-print underline underline-offset-4"
+            >
+              how this was grounded
+            </button>
+          </div>
+        </div>
+      </Sheet>
 
       <SourcePanel
         sources={sources}
@@ -434,60 +456,31 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
         isLoading={sourcesState === 'loading'}
         error={sourcesState === 'error'}
         isMobile={isMobile}
+        current={shown}
+        onFocusSource={openSource}
       />
 
-      <Sheet title="How the story connects" isOpen={panel === 'graph'} onClose={closePanel}>
+      <Sheet title="how the story connects" isOpen={panel === 'graph'} onClose={closePanel}>
         {graphState === 'loading' && !graphData ? (
-          <LoadingState message="Tracing connections..." slowMessage="Still tracing connections. This can take a few seconds." className="p-6" />
+          <LoadingState message="tracing connections..." slowMessage="still tracing connections. this can take a few seconds." className="chrome p-6" />
         ) : (
-          <Suspense fallback={<LoadingState message="Tracing connections..." className="p-6" />}>
-            <KnowledgeGraph nodes={graph.nodes} edges={graph.edges} currentSegmentId={graph.currentId} grades={grades} perspectives={perspectives} thumbs={thumbs} onSelectNode={(id) => { setViewedId(id === currentSegment?.segment_id ? null : id); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />
+          <Suspense fallback={<LoadingState message="tracing connections..." className="chrome p-6" />}>
+            <KnowledgeGraph nodes={graph.nodes} edges={graph.edges} currentSegmentId={graph.currentId} grades={grades} perspectives={perspectives} thumbs={thumbs} onSelectNode={(id) => { setViewedId(id === currentSegment?.segment_id ? null : id); closePanel() }} />
             {graphState === 'loading' && (
-              <p className="absolute top-3 left-4 text-xs text-fog sm:left-8" role="status">Updating connections...</p>
+              <p className="chrome absolute top-3 left-4 text-xs text-fog sm:left-8" role="status">updating connections...</p>
             )}
             {graphState === 'error' && (
-              <p className="absolute top-3 left-4 text-xs text-fog sm:left-8" role="status">Showing the scenes seen so far. The full graph could not load.</p>
+              <p className="chrome absolute top-3 left-4 text-xs text-fog sm:left-8" role="status">showing the scenes seen so far. the full graph could not load.</p>
             )}
           </Suspense>
         )}
       </Sheet>
 
-      <Sheet title={shown?.location?.label || 'Where this happened'} isOpen={panel === 'map'} onClose={closePanel}>
-        <Suspense fallback={<LoadingState message="Unrolling the map..." className="p-6" />}>
+      <Sheet title={shown?.location?.label || 'where this happened'} isOpen={panel === 'map'} onClose={closePanel}>
+        <Suspense fallback={<LoadingState message="unrolling the map..." className="chrome p-6" />}>
           <StoryMap location={shown?.location} travelFrom={shown?.travel_from} isOffline={dataSource !== 'live' && dataSource !== 'mock'} />
         </Suspense>
       </Sheet>
-    </div>
-  )
-}
-
-function NarrationControls({ narration, hasVoice }) {
-  if (!hasVoice) return null
-  const { isPlaying, play, pause, voiceSource } = narration
-  const isReady = voiceSource === 'remote' || voiceSource === 'device'
-  return (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={isPlaying ? pause : play}
-        disabled={!isReady}
-        aria-label={isPlaying ? 'Pause narration' : 'Play narration'}
-        className="inline-flex h-11 w-11 items-center justify-center rounded-full text-print hover:bg-prussian/60 disabled:opacity-50"
-      >
-        {isPlaying ? (
-          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="3" y="2" width="3.5" height="12" /><rect x="9.5" y="2" width="3.5" height="12" /></svg>
-        ) : (
-          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6z" /></svg>
-        )}
-      </button>
-      {isReady ? (
-        <span className="flex items-center gap-2">
-          <AiBadge kind="voice" />
-          {voiceSource === 'device' && <span className="text-xs text-fog max-sm:hidden">Device voice</span>}
-        </span>
-      ) : (
-        <span className="text-xs text-fog max-sm:hidden">Preparing the voice...</span>
-      )}
     </div>
   )
 }

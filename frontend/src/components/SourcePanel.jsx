@@ -8,6 +8,40 @@ import LoadingState from './LoadingState.jsx'
 import { EASE_FOCUS, FALLBACK_GRADE } from '../constants/theme.js'
 import { staggerParent, staggerChild } from '../lib/motion.js'
 
+/** How the current segment was grounded: each claim and the source behind it. */
+function Grounding({ segment, sourcesById, onFocusSource }) {
+  if (!segment) return null
+  const claims = segment.claims || []
+  const ids = [...new Set([...(segment.source_ids || []), ...claims.map((c) => c.source_id)])]
+  return (
+    <section aria-labelledby="grounding-h" className="border-b border-prussian/15 py-5">
+      <h3 id="grounding-h" className="chrome text-base font-semibold">
+        how this was grounded
+      </h3>
+      {!segment.is_grounded ? (
+        <p className="chrome mt-2 text-sm">this part could not be grounded in the sources, so it is not narrated.</p>
+      ) : (
+        <>
+          <p className="chrome mt-1 text-xs text-prussian/80">
+            {ids.length} {ids.length === 1 ? 'source' : 'sources'} back this part of the story
+          </p>
+          <ul className="mt-2 divide-y divide-prussian/10">
+            {(claims.length ? claims : ids.map((id) => ({ claim_id: id, source_id: id, text: null }))).map((c) => (
+              <li key={c.claim_id} className="flex items-start justify-between gap-4 py-2">
+                <p className="text-sm">{c.text || sourcesById[c.source_id]?.title || 'A cited source'}</p>
+                <button type="button" onClick={() => onFocusSource(c.source_id, c.text ? c : null)} className="chrome min-h-11 shrink-0 text-sm font-medium underline underline-offset-4">
+                  view source
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {segment.grounding_notes && <p className="mt-2 text-xs text-prussian/85">{segment.grounding_notes}</p>}
+    </section>
+  )
+}
+
 function SourceSheet({ source, grade, informed, isFocused, highlightClaim }) {
   const ref = useRef(null)
   useEffect(() => {
@@ -68,7 +102,7 @@ function SourceSheet({ source, grade, informed, isFocused, highlightClaim }) {
  * @param {{ sources: object[], isOpen: boolean, onToggle: () => void, focus: {sourceId: string, claim?: object}|null,
  *   segments: object[], grades: object, isLoading: boolean, isMobile: boolean }} props
  */
-export default function SourcePanel({ sources = [], isOpen, onToggle, focus, segments = [], grades = {}, isLoading, isMobile, error }) {
+export default function SourcePanel({ sources = [], isOpen, onToggle, focus, segments = [], grades = {}, isLoading, isMobile, error, current, onFocusSource }) {
   const reduce = useReducedMotion()
   const closeRef = useRef(null)
 
@@ -109,7 +143,7 @@ export default function SourcePanel({ sources = [], isOpen, onToggle, focus, seg
             key="panel"
             role="dialog"
             aria-modal="true"
-            aria-label="Sources"
+            aria-label="sources"
             className={`on-paper fixed z-50 flex flex-col bg-fiber text-prussian ${
               isMobile ? 'inset-x-0 bottom-0 top-10 rounded-t-[2px]' : 'top-0 right-0 bottom-0 w-[440px] max-w-full'
             }`}
@@ -120,19 +154,20 @@ export default function SourcePanel({ sources = [], isOpen, onToggle, focus, seg
           >
             <header className="flex items-center justify-between border-b border-prussian/15 px-5 py-3">
               <div>
-                <h2 className="text-[22px] font-semibold leading-[28px] tracking-[-0.02em]">Sources</h2>
-                <p className="text-xs text-prussian/80">Evidence, not narration. Excerpts are set as typed.</p>
+                <h2 className="chrome text-[22px] font-semibold leading-[28px] tracking-[-0.02em]">sources</h2>
+                <p className="chrome text-xs text-prussian/80">evidence, not narration. excerpts are set as typed.</p>
               </div>
               <button
                 ref={closeRef}
                 type="button"
                 onClick={onToggle}
-                className="min-h-11 min-w-11 rounded-md px-3 text-sm font-medium text-prussian hover:bg-prussian/10"
+                className="chrome min-h-11 min-w-11 rounded-md px-3 text-sm font-medium text-prussian hover:bg-prussian/10"
               >
-                Close
+                close
               </button>
             </header>
             <div className="flex-1 overflow-y-auto px-5 pb-10">
+              <Grounding segment={current} sourcesById={Object.fromEntries(sources.map((x) => [x.source_id, x]))} onFocusSource={onFocusSource} />
               {isLoading && sources.length === 0 ? (
                 <LoadingState tone="paper" message="Pulling the files..." slowMessage="Still pulling the files. This can take a few seconds." className="py-6" />
               ) : error && sources.length === 0 ? (

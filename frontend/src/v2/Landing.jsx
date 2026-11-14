@@ -10,6 +10,7 @@ import { messageFor } from '../api/errors.js'
 import { DURATION, EASING } from '../constants/theme.js'
 import { ms, sec, useCalmMotion } from '../lib/motionMode.js'
 import { lookFor } from './looks.js'
+import LanguageSelects from '../components/LanguageSelects.jsx'
 import { Btn, DataBadge, IconBtn, Waiting } from './ui.jsx'
 import './landing.css'
 
@@ -36,7 +37,7 @@ function featuredFrom(bundle) {
   }
 }
 
-export default function Landing({ onStart, isStarting, error, dataSource, isSoundOn, onToggleSound }) {
+export default function Landing({ onStart, isStarting, error, dataSource, isSoundOn, onToggleSound, language }) {
   const isCalm = useCalmMotion()
   const topics = useMemo(() => SAMPLE_BUNDLES.map(featuredFrom), [])
   const [topicIndex, setTopicIndex] = useState(0)
@@ -150,6 +151,17 @@ export default function Landing({ onStart, isStarting, error, dataSource, isSoun
               {!isStarting && <ArrowRight aria-hidden="true" size={18} />}
             </Btn>
           </div>
+          {language && (
+            <LanguageSelects
+              className="v2-langs"
+              languages={language.languages}
+              narration={language.narrationLanguage}
+              subtitles={language.subtitleLanguage}
+              onNarration={language.setNarrationLanguage}
+              onSubtitles={language.setSubtitleLanguage}
+              isOffline={language.isOffline}
+            />
+          )}
           <ul className="v2-topics" aria-label="Stories with sources">
             {topics.map((t, i) => (
               <li key={t.id}>

@@ -16,6 +16,7 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
   const [imageUrls, setImageUrls] = useState([])
   const [imageStatus, setImageStatus] = useState('idle') // idle | loading | ready | failed
   const [audioUrl, setAudioUrl] = useState(null)
+  const [audioDurationMs, setAudioDurationMs] = useState(null)
   const [audioStatus, setAudioStatus] = useState('idle') // idle | loading | ready | failed
   const [isPlaying, setIsPlaying] = useState(false)
   const [hasFinished, setHasFinished] = useState(false)
@@ -37,6 +38,7 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
     setHasFinished(false)
     setImageUrl(null)
     setAudioUrl(null)
+    setAudioDurationMs(null)
 
     if (!segment.is_grounded) {
       setImageStatus('idle')
@@ -76,6 +78,7 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
 
     if (segment.audio_url) {
       setAudioUrl(api.absolute(segment.audio_url))
+      setAudioDurationMs(segment.audio_duration_ms ?? null)
       setAudioStatus('ready')
     } else if (segment.narrative_text) {
       setAudioStatus('loading')
@@ -84,6 +87,7 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
         .then((d) => {
           if (currentId.current !== id) return
           setAudioUrl(d.audio_url)
+          setAudioDurationMs(d.audio_duration_ms ?? null)
           setAudioStatus(d.audio_url ? 'ready' : 'failed')
         })
         .catch(() => currentId.current === id && setAudioStatus('failed'))
@@ -106,6 +110,8 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
       setHasFinished(true)
     }
     const onError = () => setAudioStatus('failed')
+    const onMeta = () => Number.isFinite(audio.duration) && setAudioDurationMs((d) => d ?? Math.round(audio.duration * 1000))
+    audio.addEventListener('loadedmetadata', onMeta)
     audio.addEventListener('play', onPlay)
     audio.addEventListener('pause', onPause)
     audio.addEventListener('ended', onEnded)
@@ -116,6 +122,7 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
       audio.removeEventListener('pause', onPause)
       audio.removeEventListener('ended', onEnded)
       audio.removeEventListener('error', onError)
+      audio.removeEventListener('loadedmetadata', onMeta)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioUrl])
@@ -211,5 +218,5 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
   }, [isDeviceVoice])
 
   const voiceSource = audioStatus === 'ready' ? 'remote' : isDeviceVoice ? 'device' : audioStatus === 'loading' ? 'loading' : null
-  return { audioUrl, imageUrl, imageUrls, imageStatus, audioStatus, voiceSource, isPlaying, play, pause, hasFinished }
+  return { audioUrl, audioDurationMs, imageUrl, imageUrls, imageStatus, audioStatus, voiceSource, isPlaying, play, pause, hasFinished }
 }

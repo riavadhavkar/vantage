@@ -18,6 +18,8 @@ let dataSource = USE_MOCKS ? 'mock' : WANTS_DEMO ? 'demo' : 'live'
 let localServer = null
 
 export const getDataSource = () => dataSource
+/** True when translation and the live language list are off the table (no network). */
+export const isOfflineData = () => dataSource === 'demo' || dataSource === 'offline'
 
 async function loadDemoBundles() {
   try {
@@ -64,11 +66,12 @@ export async function resolveDataSource() {
   return dataSource
 }
 
-async function request(path, { method = 'GET', body, query, timeoutMs = 45000, isForm = false } = {}) {
+async function request(path, { method = 'GET', body, query, timeoutMs = 45000, isForm = false, signal: outer } = {}) {
   const url = new URL(API_URL + path)
   if (query) for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v)
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+  if (outer) outer.addEventListener('abort', () => ctrl.abort(), { once: true })
   let res
   try {
     res = await fetch(url, {
@@ -105,10 +108,35 @@ export async function getTopic(sessionId) {
   return request('/topic', sessionId ? { query: { session_id: sessionId } } : {})
 }
 
-/** @returns {Promise<{session_id: string, segment: object}>} */
-export async function startSession(topic) {
-  const data = isLocal() ? await (await server()).startSession(topic) : await request('/start', { method: 'POST', body: { topic } })
+/** @param {string} topic @param {string} [language] narration language code, fixed when the session starts */
+export async function startSession(topic, language) {
+  const data = isLocal()
+    ? await (await server()).startSession(topic, language)
+    : await request('/start', { method: 'POST', body: language ? { topic, language } : { topic } })
   return { ...data, segment: normalizeSegment(data.segment) }
+}
+
+/** Languages shown when the list cannot be fetched (and always in demo or offline mode). */
+export const FALLBACK_LANGUAGES = Object.freeze([
+  { code: 'en', name: 'English' },
+  { code: 'es', name: 'Spanish' },
+  { code: 'hi', name: 'Hindi' },
+  { code: 'fr', name: 'French' },
+])
+
+/** @returns {Promise<{languages: {code: string, name: string}[]}>} */
+export async function getLanguages() {
+  if (dataSource === 'demo' || dataSource === 'offline') return { languages: [...FALLBACK_LANGUAGES] }
+  const data = isLocal() ? await (await server()).getLanguages() : await request('/languages', { timeoutMs: 5000 })
+  const list = (data?.languages || []).filter((l) => l?.code && l?.name)
+  return { languages: list.length ? list : [...FALLBACK_LANGUAGES] }
+}
+
+/** Subtitles in another language. Never used in demo or offline mode (no network). @returns {Promise<{text: string}>} */
+export async function translateText(text, target, { signal } = {}) {
+  if (dataSource === 'demo' || dataSource === 'offline') throw new ApiError('network', 'Translation is unavailable offline')
+  if (isLocal()) return (await server()).translateText(text, target)
+  return request('/translate', { method: 'POST', body: { text, target }, timeoutMs: 30000, signal })
 }
 
 /** @returns {Promise<{segment: object}>} */

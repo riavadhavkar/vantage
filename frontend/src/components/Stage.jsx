@@ -1,23 +1,25 @@
 // OWNER: Person B
-// The cinematic frame: graded illustration (or a drawn scene), soft vignette,
-// title, and paper source pins. The perspective pull closes the iris over it.
-import {useEffect, useMemo, useState} from 'react'
+// The full-bleed stage: illustration (or a drawn scene), soft vignette, top and bottom scrims
+// for the HUD, and paper source pins. Title, date, icons and subtitles are drawn by the Player
+// over it. The perspective pull closes the iris over it.
+import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { sceneDataUrl, sceneKindFor, hashString } from '../lib/scene.js'
 import { DEVELOP_MS, EASE_FOCUS } from '../constants/theme.js'
 import GradedImage from './GradedImage.jsx'
 import GradeLayers from './GradeLayers.jsx'
 import Iris from './Iris.jsx'
-import { EASE, pop, staggerParent } from '../lib/motion.js'
+import { pop, staggerParent } from '../lib/motion.js'
 import SourceTag from './SourceTag.jsx'
 
+// kept in the middle band so pins never sit under the top HUD or the subtitles
 const PIN_SLOTS = [
-  [14, 20],
-  [40, 13],
-  [64, 24],
-  [24, 42],
-  [52, 40],
-  [76, 12],
+  [14, 42],
+  [40, 38],
+  [64, 46],
+  [24, 54],
+  [52, 50],
+  [76, 40],
 ]
 
 function pinsFor(segment, sourcesById) {
@@ -42,10 +44,12 @@ function pinsFor(segment, sourcesById) {
   })
 }
 
-const SHOT_MS = 4000
+const SHOT_MS_MIN = 3000
+const SHOT_MS_MAX = 8000
 
 export default function Stage({ segment, grade, imageUrl, imageUrls, imageStatus, pull, pullMessage, sourcesById, onOpenSource }) {
   const reduce = useReducedMotion()
+  // several shots per scene, paced to the narration (about 2.6 words a second)
   const shots = useMemo(() => {
     const list = (imageUrls || []).filter(Boolean)
     return list.length ? list : imageUrl ? [imageUrl] : []
@@ -53,11 +57,10 @@ export default function Stage({ segment, grade, imageUrl, imageUrls, imageStatus
   const shotMs = useMemo(() => {
     const words = (segment?.narrative_text || '').split(/\s+/).filter(Boolean).length
     const planned = Math.max(segment?.scene_prompts?.length || shots.length || 1, 1)
-    const totalMs = (words / 2.6) * 1000
-    return Math.max(3000, Math.min(8000, Math.round(totalMs / planned)))
+    return Math.max(SHOT_MS_MIN, Math.min(SHOT_MS_MAX, Math.round((words / 2.6) * 1000 / planned)))
   }, [segment, shots.length])
   const [shotIdx, setShotIdx] = useState(0)
-  useEffect(() => { setShotIdx(0) }, [segment?.segment_id])
+  useEffect(() => setShotIdx(0), [segment?.segment_id])
   useEffect(() => {
     if (reduce || shots.length < 2) return undefined
     const t = setInterval(() => setShotIdx((i) => (i + 1) % shots.length), shotMs)
@@ -75,7 +78,7 @@ export default function Stage({ segment, grade, imageUrl, imageUrls, imageStatus
   const showPins = segment?.is_grounded && pull === 'idle'
 
   return (
-    <div className="stage relative w-full overflow-hidden bg-prussian sm:rounded-xl">
+    <div className="absolute inset-0 overflow-hidden bg-prussian">
       <AnimatePresence initial={false}>
         {segment && (
           <motion.div
@@ -109,13 +112,7 @@ export default function Stage({ segment, grade, imageUrl, imageUrls, imageStatus
                     exit={{ opacity: 0 }}
                     transition={{ duration: reduce ? 0.2 : 1.4, ease: EASE_FOCUS }}
                   >
-                    <GradedImage
-                      src={currentShot}
-                  grade={grade}
-                  alt={segment.scene_prompt ? `Illustration: ${segment.title}` : ''}
-                  shouldPan={!reduce}
-                  badgeClassName="right-3 top-3"
-                />
+                    <GradedImage src={currentShot} grade={grade} alt={segment.scene_prompt ? `Illustration: ${segment.title}` : ''} shouldPan={!reduce} />
                   </motion.div>
                 </AnimatePresence>
               </motion.div>
@@ -126,27 +123,9 @@ export default function Stage({ segment, grade, imageUrl, imageUrls, imageStatus
 
       <div className="vignette pointer-events-none absolute inset-0" />
 
-      {/* title scrim */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-prussian/90 via-prussian/40 to-transparent" />
-      {segment && (
-        <motion.div
-          key={`title-${segment.segment_id}`}
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.15, ease: EASE }}
-          className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-4 px-4 pb-4 sm:px-8 sm:pb-7"
-        >
-          <h2 className="text-[26px] font-semibold leading-[30px] tracking-[-0.025em] text-balance text-print sm:text-[34px] sm:leading-[40px] lg:text-[40px] lg:leading-[46px]">
-            {segment.title}
-          </h2>
-          {segment.date_label && <p className="mb-1 shrink-0 text-right text-xs text-print/85 sm:text-sm">{segment.date_label}</p>}
-        </motion.div>
-      )}
-
-      {/* media status, quiet */}
-      {segment?.is_grounded && imageStatus === 'loading' && (
-        <p className="absolute top-3 right-3 z-10 rounded-md bg-prussian/70 px-2 py-1 text-xs text-fog">Developing the illustration...</p>
-      )}
+      {/* scrims: legible HUD at the top, legible subtitles at the bottom */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[46%] bg-gradient-to-b from-prussian/90 via-prussian/70 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-prussian/95 via-prussian/75 to-transparent" />
 
       {showPins && (
         <motion.ul

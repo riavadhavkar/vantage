@@ -11,6 +11,7 @@ import LoadingState from './LoadingState.jsx'
 import DataSourceNote from './DataSourceNote.jsx'
 import SoundToggle from './SoundToggle.jsx'
 import ApertureGlyph from './ApertureGlyph.jsx'
+import LanguageSelects from './LanguageSelects.jsx'
 import { SAMPLE_BUNDLES } from '../mocks/index.js'
 import { catalogFrom } from '../lib/catalog.js'
 import { examplesFrom } from '../lib/seamExamples.js'
@@ -72,7 +73,7 @@ function SearchBox({ onSubmit, isStarting }) {
  * @param {{ onStart: (topic: string) => void, topic: object|null, isStarting: boolean,
  *   error: object|null, isSoundOn: boolean, onToggleSound: () => void, dataSource: string }} props
  */
-export default function LandingScreen({ onStart, isStarting, error, isSoundOn, onToggleSound, dataSource }) {
+export default function LandingScreen({ onStart, isStarting, error, isSoundOn, onToggleSound, dataSource, language }) {
   const reduce = useReducedMotion()
   const catalog = useMemo(() => catalogFrom(SAMPLE_BUNDLES), [])
   const disagreements = useMemo(() => examplesFrom(SAMPLE_BUNDLES), [])
@@ -197,6 +198,18 @@ export default function LandingScreen({ onStart, isStarting, error, isSoundOn, o
               Where sources disagree
             </motion.a>
           </div>
+
+          {language && (
+            <LanguageSelects
+              className="mt-5 max-w-[34rem]"
+              languages={language.languages}
+              narration={language.narrationLanguage}
+              subtitles={language.subtitleLanguage}
+              onNarration={language.setNarrationLanguage}
+              onSubtitles={language.setSubtitleLanguage}
+              isOffline={language.isOffline}
+            />
+          )}
 
           <div className="mt-4 min-h-6">
             {isStarting ? (

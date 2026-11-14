@@ -8,7 +8,7 @@ import Landing from './Landing.jsx'
 import Player from './Player.jsx'
 import { useCalmMotion } from '../lib/motionMode.js'
 
-export default function V2App({ isPlayer, session, topic, onStart, onExit, isSoundOn, onToggleSound, dataSource }) {
+export default function V2App({ isPlayer, session, topic, onStart, onExit, isSoundOn, onToggleSound, dataSource, language, onRestart }) {
   const isCalm = useCalmMotion()
   const [view, setView] = useState(isPlayer ? 'player' : 'landing')
 
@@ -27,9 +27,9 @@ export default function V2App({ isPlayer, session, topic, onStart, onExit, isSou
   return (
     <div className="v2">
       {view === 'player' && session.currentSegment ? (
-        <Player session={session} topic={topic} isSoundOn={isSoundOn} onToggleSound={onToggleSound} onExit={onExit} dataSource={dataSource} shouldReveal={!document.startViewTransition} />
+        <Player session={session} topic={topic} isSoundOn={isSoundOn} onToggleSound={onToggleSound} onExit={onExit} dataSource={dataSource} language={language} onRestart={onRestart} shouldReveal={!document.startViewTransition} />
       ) : (
-        <Landing onStart={onStart} isStarting={session.isLoading} error={session.error} isSoundOn={isSoundOn} onToggleSound={onToggleSound} dataSource={dataSource} />
+        <Landing onStart={onStart} isStarting={session.isLoading} error={session.error} isSoundOn={isSoundOn} onToggleSound={onToggleSound} dataSource={dataSource} language={language} />
       )}
     </div>
   )

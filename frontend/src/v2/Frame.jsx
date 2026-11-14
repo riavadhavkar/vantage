@@ -1,6 +1,6 @@
 // The stage: one full-bleed frame. A drawn scene is there at once (graded as a duotone);
 // when the AI illustration arrives it develops in over it, in color with a faint perspective
-// tint and its "AI-generated illustration" badge. Focus pulls crossfade to a copy that was
+// tint (the "ai generated" badge is drawn by the player HUD). Focus pulls crossfade to a copy that was
 // blurred once; the blur itself is never animated.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from 'motion/react'
@@ -8,7 +8,6 @@ import { gradedSceneUrl, sceneOptsFor } from './gradedScene.js'
 import { prepareSoft, softUrl } from './softImage.js'
 import { DURATION, EASING, SIGNATURE } from '../constants/theme.js'
 import { sec } from '../lib/motionMode.js'
-import { AiBadge } from './ui.jsx'
 
 /** The faint perspective tint over a color illustration, split down the middle for a contradiction. */
 function Tint({ look, splitLook }) {
@@ -213,11 +212,8 @@ export default function Frame({ segment, look, splitLook = null, imageUrl, image
       <motion.i aria-hidden="true" className="v2-softfill" style={{ opacity: softness }} />
       <i aria-hidden="true" className="v2-seam" />
       <i aria-hidden="true" className="v2-shade" />
-      {hasImage ? (
-        <AiBadge kind="image" className="v2-stage-badge" />
-      ) : (
-        segment?.is_grounded && imageStatus === 'loading' && <p className="v2-stage-badge v2-stage-wait" role="status">Developing the illustration</p>
-      )}
+      {/* the "ai generated" label is drawn by the player HUD, from the same image and voice state */}
+      {!hasImage && segment?.is_grounded && imageStatus === 'loading' && <p className="v2-stage-badge v2-stage-wait" role="status">developing the illustration</p>}
       {children}
     </div>
   )
