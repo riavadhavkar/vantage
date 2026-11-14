@@ -104,8 +104,12 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
 
   const voiceIndex = Math.max(0, perspectives.findIndex((p) => p.perspective_id === shown?.perspective))
   const narration = useNarration(shown, { isSoundOn, shouldAutoplay: pull === 'idle', voiceIndex })
-  const [isTyped, setIsTyped] = useState(false)
-  useEffect(() => setIsTyped(false), [shown?.segment_id])
+  // Which scene has finished typing. Keyed by scene: with reduced motion the text is instant, and a
+  // plain reset effect here used to run after the card reported "done", so the choices never appeared.
+  const [typedId, setTypedId] = useState(null)
+  const shownId = shown?.segment_id
+  const setIsTyped = useCallback((done) => setTypedId((id) => (done ? shownId : id === shownId ? null : id)), [shownId])
+  const isTyped = typedId != null && typedId === shownId
 
   useEffect(() => {
     if (!sessionId) return
