@@ -60,7 +60,7 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
           setImageStatus(d.image_url ? 'ready' : 'failed')
         })
         .catch(() => currentId.current === id && setImageStatus('failed'))
-      const extras = (segment.scene_prompts || []).filter((p) => p && p !== segment.scene_prompt).slice(0, 2)
+      const extras = (segment.scene_prompts || []).filter((p) => p && p !== segment.scene_prompt).slice(0, 4)
       extras.forEach((p, i) => {
         api
           .generateImage({ segment_id: `${id}_shot${i + 2}`, scene_prompt: p })
