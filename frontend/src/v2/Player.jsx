@@ -16,6 +16,7 @@ import Subtitles from '../components/Subtitles.jsx'
 import Ungrounded from '../components/Ungrounded.jsx'
 import SettingsPopover from '../components/SettingsPopover.jsx'
 import useSubtitleText from '../hooks/useSubtitleText.js'
+import useToast from '../hooks/useToast.js'
 import { aiKindFor } from '../lib/aiKind.js'
 import { messageFor } from '../api/errors.js'
 import { DURATION, EASING } from '../constants/theme.js'
@@ -88,6 +89,13 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
   const setIsTyped = useCallback((done) => setTypedId((id) => (done ? shownId : id === shownId ? null : id)), [shownId])
   const isTyped = typedId != null && typedId === shownId
   const subtitle = useSubtitleText(shown, language)
+  const toast = useToast()
+  // A translation that fails says so once, as a toast; the original text stays on screen.
+  const failKey = subtitle.status === 'failed' ? `${shown?.segment_id}|${language.subtitleLanguage}` : null
+  useEffect(() => {
+    if (failKey) toast.push(`subtitles in ${language.nameOf(language.subtitleLanguage)} are unavailable right now. showing the original.`, { id: 'subtitles' })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [failKey])
   const [isTranscriptOpen, setIsTranscriptOpen] = useState(false)
   const closeTranscript = useCallback(() => setIsTranscriptOpen(false), [])
   const textOpacity = useTransform(pull.soft, (s) => 1 - 0.65 * s)
@@ -218,7 +226,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
   const narration = P.narration
   const aiKind = aiKindFor({ hasImage: narration.imageStatus === 'ready' && !!narration.imageUrl, hasVoice: narration.voiceSource === 'remote' })
   const hasPlayableVoice = narration.voiceSource === 'remote' || narration.voiceSource === 'device'
-  const subtitleNote = subtitle.status === 'loading' ? 'translating...' : subtitle.status === 'failed' ? 'subtitles unavailable' : null
+  const subtitleNote = subtitle.status === 'loading' ? 'translating...' : null
   const isTranslated = subtitle.status === 'ready'
 
   return (

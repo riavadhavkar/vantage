@@ -235,6 +235,7 @@ export default function Landing({ onStart, isStarting, error, dataSource, langua
                 <button
                   type="button"
                   className={`v2-lpill ${active === i ? 'is-active' : ''} ${done[i] ? 'is-done' : ''}`}
+                  aria-label={`step ${i + 1}, ${long}`}
                   aria-current={active === i ? 'step' : undefined}
                   aria-expanded={active === i}
                   aria-controls={active === i ? panelId : undefined}
