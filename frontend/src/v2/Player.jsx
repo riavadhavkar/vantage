@@ -2,7 +2,7 @@
 // decides who is telling it. Data and actions come from usePlayer (same calls as classic).
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useTransform } from 'motion/react'
-import { Aperture, FileText, Map as MapIcon, Maximize2, Minimize2, Share2, Volume2, VolumeX, Waypoints } from 'lucide-react'
+import { Aperture, FileText, Map as MapIcon, Maximize2, Minimize2, Search, Share2, Volume2, VolumeX, Waypoints } from 'lucide-react'
 import usePlayer from './usePlayer.js'
 import Frame from './Frame.jsx'
 import Captions from './Captions.jsx'
@@ -16,13 +16,17 @@ import AmbientPlayer from '../components/AmbientPlayer.jsx'
 import { messageFor } from '../api/errors.js'
 import { DURATION, EASING, SPRING } from '../constants/theme.js'
 import { sec, spring } from '../lib/motionMode.js'
-import { Btn, DataBadge, IconBtn, Sheet, Skeleton, Waiting } from './ui.jsx'
+import { Btn, DataBadge, IconBtn, Kbd, Sheet, Skeleton, Waiting } from './ui.jsx'
+import { sourceLabel } from './labels.js'
+import { CHOICE_TYPE_LABEL } from '../constants/labels.js'
 import './player.css'
 
 // The graph and the map are the existing components, loaded on demand, in the new sheet.
 const KnowledgeGraph = lazy(() => import('../components/KnowledgeGraph.jsx'))
 const StoryMap = lazy(() => import('../components/StoryMap.jsx'))
 const ShareCard = lazy(() => import('./ShareCard.jsx'))
+const Palette = lazy(() => import('./Palette.jsx'))
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 
 export default function Player({ session, topic, isSoundOn, onToggleSound, onExit, dataSource, shouldReveal = false }) {
   const P = usePlayer({ session, topic, isSoundOn })
@@ -109,12 +113,62 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
     P.doAsk(q)
   }
 
+  // Cmd+K / Ctrl+K
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false)
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setIsPaletteOpen((v) => !v)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+  const closePalette = useCallback(() => setIsPaletteOpen(false), [])
+
   if (!shown) return null
   const showNext = isTyped && P.isCurrentShown && !isPulling
   // A contradiction splits the frame: each half takes the grade of the account on that side.
   const dis = showNext && shown.is_grounded ? shown.contradiction : null
   const sideLook = (side) => lookOf(P.sourcesById[side.source_id]?.perspective)
   const waitingView = pending?.perspective && isPulling ? lookOf(pending.perspective).label : null
+  const paletteItems = !isPaletteOpen
+    ? []
+    : [
+        ...(isLoading || isPulling ? [] : P.perspectives.filter((p) => p.perspective_id !== shown.perspective)).map((p) => ({
+          id: `p-${p.perspective_id}`,
+          group: 'Switch to',
+          label: p.label,
+          color: lookOf(p.perspective_id).accent,
+          hint: P.heard[p.perspective_id] ? `heard ${P.heard[p.perspective_id]}` : 'not heard yet',
+          run: () => P.selectPerspective(p.perspective_id),
+        })),
+        ...(showNext && !isLoading && shown.is_grounded && !shown.is_final ? shown.choices : []).map((c) => ({
+          id: `c-${c.choice_id}`,
+          group: 'Go to',
+          label: c.label,
+          color: lookOf(c.perspective).accent,
+          hint: (CHOICE_TYPE_LABEL[c.choice_type] || '').toLowerCase(),
+          run: () => P.doChoose(c),
+        })),
+        { id: 't-sources', group: 'Open', label: 'How this was grounded', hint: 'sources', run: () => openEvidence() },
+        { id: 't-graph', group: 'Open', label: 'How the story connects', hint: 'graph', run: () => setPanel('graph') },
+        { id: 't-map', group: 'Open', label: 'Where this happened', hint: 'map', run: () => setPanel('map') },
+        ...(shown.is_grounded ? [{ id: 't-share', group: 'Open', label: 'Share this moment', hint: 'image', run: () => setIsSharing(true) }] : []),
+        ...P.sources
+          .filter((src) => P.segments.some((seg) => seg.source_ids?.includes(src.source_id) || seg.claims?.some((c) => c.source_id === src.source_id)))
+          .map((src) => ({
+            id: `s-${src.source_id}`,
+            group: 'Source',
+            label: src.title,
+            hint: sourceLabel(src).toLowerCase(),
+            run: () => openEvidence(src.source_id, shown.claims.find((c) => c.source_id === src.source_id)),
+          })),
+        { id: 't-sound', group: 'Sound', label: isSoundOn ? 'Turn sound off' : 'Turn sound on', run: onToggleSound },
+        { id: 't-exit', group: 'Story', label: 'Start a new topic', run: onExit },
+      ]
+
   // The ring turns as soon as a view is asked for and keeps its target until the frame has caught up,
   // so it travels once: from the request to the moment the new scene is sharp.
   const known = (id) => (id && P.perspectives.some((p) => p.perspective_id === id) ? id : null)
@@ -141,6 +195,11 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
         <p className="v2-bar-topic">{P.topic?.title}</p>
         <span className="v2-bar-gap" />
         <DataBadge source={dataSource} />
+        <button type="button" className="v2-jump" onClick={() => setIsPaletteOpen(true)} aria-keyshortcuts={isMac ? 'Meta+K' : 'Control+K'}>
+          <Search aria-hidden="true" size={14} strokeWidth={1.8} />
+          Jump to
+          <Kbd>{isMac ? '⌘K' : 'Ctrl K'}</Kbd>
+        </button>
         <IconBtn label="How the story connects" icon={Waypoints} isPressed={panel === 'graph'} onClick={() => setPanel('graph')} />
         <IconBtn label="Where this happened" icon={MapIcon} isPressed={panel === 'map'} onClick={() => setPanel('map')} />
         {shown.is_grounded && <IconBtn label="Share this moment" icon={Share2} isPressed={isSharing} onClick={() => setIsSharing(true)} />}
@@ -272,6 +331,14 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
           {ghost.label}
         </motion.span>
       )}
+
+      <AnimatePresence>
+        {isPaletteOpen && (
+          <Suspense fallback={null}>
+            <Palette key="palette" items={paletteItems} onClose={closePalette} />
+          </Suspense>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {isSharing && (
