@@ -19,7 +19,6 @@
 .v2-tools .v2-icon { background: rgb(10 12 15 / 0.82); border: 1px solid var(--line); }
 .v2-tools .v2-icon:hover:not(:disabled) { background: rgb(28 32 38 / 0.95); }
 .v2-tools .v2-icon[aria-pressed='true'] { background: rgb(40 45 52 / 0.95); border-color: rgb(255 255 255 / 0.4); }
-.v2-tools .v2-chevron { min-width: 32px; padding: 0; }
 .v2-hud .v2-badge, .v2-hud .v2-databadge { text-transform: lowercase; }
 .v2-hud .v2-badge { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgb(10 12 15 / 0.95); font-size: 13px; line-height: 18px; animation: none; }
 .v2-hud .v2-hud-badge-narrow, .v2-hud .v2-hud-databadge-narrow { display: none; }
@@ -65,3 +64,7 @@
 
 /* the ask pill shows focus on the pill itself (ring), not on the input inside it */
 .v2 .v2-hud-center form input:focus-visible { outline: none; animation: none; }
+
+/* the language popover */
+.v2-langpop { position: relative; }
+.v2-langpop-panel { position: absolute; top: calc(100% + 8px); right: 0; z-index: 50; width: min(20rem, calc(100vw - 32px)); padding: 16px; border-radius: 14px; border: 1px solid rgb(255 255 255 / 0.3); background: #0a0c0f; box-shadow: 0 16px 40px rgb(0 0 0 / 0.5); }

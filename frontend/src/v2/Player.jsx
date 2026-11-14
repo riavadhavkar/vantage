@@ -13,7 +13,7 @@ import Disagreement from './Disagreement.jsx'
 import AskPill from '../components/AskPill.jsx'
 import Subtitles from '../components/Subtitles.jsx'
 import Ungrounded from '../components/Ungrounded.jsx'
-import SettingsPopover from '../components/SettingsPopover.jsx'
+import LanguagePopover from './LanguagePopover.jsx'
 import useSubtitleText from '../hooks/useSubtitleText.js'
 import useToast from '../hooks/useToast.js'
 import { aiKindFor } from '../lib/aiKind.js'
@@ -52,7 +52,7 @@ function useDecoded(url) {
   return url ? state[url] : undefined
 }
 
-export default function Player({ session, topic, isSoundOn, onToggleSound, language, onRestart, onExit, dataSource, shouldReveal = false }) {
+export default function Player({ session, topic, isSoundOn, onToggleSound, language, onExit, dataSource, shouldReveal = false }) {
   // isHeld comes from the illustration gate below (the previous render's value, kept in state)
   const [isHeld, setIsHeld] = useState(false)
   const P = usePlayer({ session, topic, isSoundOn, isHeld })
@@ -89,6 +89,14 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
   const isTyped = typedId != null && typedId === shownId
   const subtitle = useSubtitleText(shown, language)
   const toast = useToast()
+  // Narration language: applied in place, with a toast (the swap itself is in useVoicedSegment).
+  const changeNarration = useCallback(
+    (code) => {
+      language.setNarrationLanguage(code)
+      toast.push(`switching narration to ${language.nameOf(code)}...`, { id: 'narration' })
+    },
+    [language, toast],
+  )
   // A translation that fails says so once, as a toast; the original text stays on screen.
   const failKey = subtitle.status === 'failed' ? `${shown?.segment_id}|${language.subtitleLanguage}` : null
   useEffect(() => {
@@ -254,7 +262,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
             <IconBtn label="map" icon={MapIcon} isPressed={panel === 'map'} onClick={() => setPanel('map')} />
             <IconBtn label="sources" icon={FileText} badge={P.citedCount || null} isPressed={!!evidence} onClick={() => openEvidence()} />
             <IconBtn label={isSoundOn ? 'sound on' : 'sound off'} icon={isSoundOn ? Volume2 : VolumeX} onClick={onToggleSound} tip="left" />
-            <SettingsPopover variant="v2" language={language} onRestart={onRestart} />
+            <LanguagePopover language={language} onNarrationChange={changeNarration} />
           </div>
           {aiKind && <AiBadge kind={aiKind} className="v2-hud-badge" />}
         </div>
