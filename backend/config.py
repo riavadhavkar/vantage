@@ -17,14 +17,14 @@ MAX_CHUNKS = 5
 
 # Fill real ElevenLabs voice IDs. Keys must match enums.Perspective values.
 VOICE_BY_PERSPECTIVE = {
-    "narrator": "",
-    "historian": "",
-    "american": "",
-    "british": "",
-    "townspeople": "",
-    "crew": "",
-    "first_class": "",
-    "steerage": "",
+    "narrator": "JBFqnCBsd6RMkjVDRZzb",      # George: warm, captivating storyteller
+    "historian": "XrExE9yKIg1WjnnlVkGX",     # Matilda: knowledgeable, professional
+    "american": "nPczCjzI2devNBz1zQrb",      # Brian: deep, resonant
+    "british": "onwK4e9ZLuTAKqWW03F9",       # Daniel: steady broadcaster
+    "townspeople": "EXAVITQu4vr4xnSDxMaL",   # Sarah: mature, reassuring
+    "crew": "pqHfZKP75CvOlQylNhV4",          # Bill: wise, mature, balanced
+    "first_class": "pFZP5JQG7iQjIQuC4Bku",   # Lily: velvety, confident
+    "steerage": "SAz9YHcvj6GT2YYXdXww",      # River: relaxed, neutral
 }
 
 # Gemini models (override in .env if one fails)
@@ -33,8 +33,9 @@ GEMINI_FALLBACK_TEXT_MODEL = os.getenv("GEMINI_FALLBACK_TEXT_MODEL", "gemini-3.8
 GEMINI_IMAGE_MODEL = os.getenv("GEMINI_IMAGE_MODEL", "gemini-3.1-flash-image")
 GEMINI_EMBED_MODEL = os.getenv("GEMINI_EMBED_MODEL", "gemini-embedding-2")
 IMAGE_STYLE_PREFIX = (
-    "Loose charcoal sketch, rough expressive strokes, warm muted sepia tones, "
-    "editorial illustration, no text, no lettering: "
+    "Cinematic painted illustration in rich, vivid color, dramatic lighting with warm golden "
+    "highlights and deep blues, detailed historical setting, like film concept art, "
+    "no text, no lettering: "
 )
 
 XAI_API_KEY = os.getenv("XAI_API_KEY", "")
