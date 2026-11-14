@@ -73,3 +73,26 @@ Append only. Newest entries at the bottom.
 
 - Merged main with `data/documents.csv`, `edges.csv` and the fetch scripts. All 31 mock sources (15 Titanic, 16 Princeton) match the committed CSV by doc id, URL, source type and perspective. Build and lint pass. No frontend change needed.
 - Still open for Person C: the four non-enum `source_type` values, and T08 Beesley tagged `first_class`.
+
+## 2026-11-13 23:45, Person B, /api/image with xAI
+
+**What changed**
+
+- Merged main (Person A: `gemini_service`, `xai_service`, config for Gemini and xAI models).
+- `backend/routers/media.py`: `POST /api/image {segment_id, scene_prompt}` calls `xai_service.generate_image()` (PNG bytes), writes the file to `backend/.media_cache/images/<segment>-<prompt hash>.png` and returns `{image_url: "/api/media/image/<file>.png"}`. `GET /api/media/image/{name}` serves it. Errors use the contract shape: 503 `image_failed` without `XAI_API_KEY`, 502 when xAI returns nothing, 400 for an empty prompt.
+- Frontend image timeout raised from 60 s to 100 s to cover the 90 s xAI timeout.
+
+**Decisions and why**
+
+- Cache by segment id plus a prompt hash, with a per-file lock, so React StrictMode double requests and replays cost one generation.
+- Serve images from the media router instead of mounting static files, so `main.py` (Person A's) stays untouched.
+- `.media_cache/` writes its own `.gitignore`; generated images never get committed. The root `.env` is created locally and stays gitignored.
+
+**Tested**
+
+- TestClient with xAI stubbed: success, cache hit (one xAI call), file served as `image/png`, path traversal rejected (404), xAI failure, missing key, empty prompt. Not yet tested against the live xAI API (needs the key in `.env`).
+
+**Notes for Person A**
+
+- `.env.example` and `config.py` each define `XAI_API_KEY` and `XAI_IMAGE_MODEL` twice (harmless, but worth cleaning).
+- `IMAGE_STYLE_PREFIX` asks for sepia tones; the frontend re-grades every image per perspective, so color in the source image is ignored on screen.

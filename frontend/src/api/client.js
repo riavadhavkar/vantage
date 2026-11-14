@@ -148,7 +148,7 @@ export async function generateAudio({ segment_id, text, voice_id }) {
 /** @returns {Promise<{image_url: string}>} */
 export async function generateImage({ segment_id, scene_prompt }) {
   if (isLocal()) return (await server()).generateImage({ segment_id, scene_prompt })
-  const data = await request('/image', { method: 'POST', body: { segment_id, scene_prompt }, timeoutMs: 60000 })
+  const data = await request('/image', { method: 'POST', body: { segment_id, scene_prompt }, timeoutMs: 100000 })
   return { ...data, image_url: absolute(data.image_url) }
 }
 
