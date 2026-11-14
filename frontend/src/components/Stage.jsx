@@ -42,7 +42,7 @@ function pinsFor(segment, sourcesById) {
   })
 }
 
-const SHOT_MS = 5000
+const SHOT_MS = 4000
 
 export default function Stage({ segment, grade, imageUrl, imageUrls, imageStatus, pull, pullMessage, sourcesById, onOpenSource }) {
   const reduce = useReducedMotion()
