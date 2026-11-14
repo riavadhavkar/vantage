@@ -84,6 +84,12 @@ html[data-motion='off'] *::after {
   color-scheme: dark;
 }
 
+/* The new UI's stage color, set before its chunk loads so there is no flash of the old background. */
+html[data-ui='v2'],
+html[data-ui='v2'] body {
+  background: #0a0c0f;
+}
+
 html,
 body {
   background: var(--color-prussian);
@@ -239,10 +245,15 @@ body {
   background: #1a3d5c;
 }
 
-/* Leaflet */
-.leaflet-container {
+/* Leaflet. Its own stylesheet loads later with the map chunk, so these need the extra weight. */
+html .leaflet-container {
   background: var(--color-prussian);
   font-family: var(--font-sans);
+}
+/* OpenStreetMap tiles are light. Invert them once to a dark, neutral map so the marker,
+   the travel line and the label stay readable on the dark stage. Static filter, never animated. */
+.leaflet-tile-pane {
+  filter: grayscale(1) invert(1) brightness(0.92) contrast(0.92);
 }
 .leaflet-control-attribution {
   background: rgb(10 30 48 / 0.8) !important;

@@ -6,8 +6,10 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { COLORS } from '../constants/theme.js'
 
-const TILE_URL = 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png'
-const ATTRIBUTION = '&copy; OpenStreetMap contributors &copy; CARTO'
+// Free OpenStreetMap tiles (no key). They are light, so src/index.css darkens the tile layer to
+// match the stage; markers and labels sit above it and keep their own colors.
+const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 
 function DrawnChart({ location, travelFrom }) {
   const pts = [travelFrom, location].filter(Boolean)
@@ -57,7 +59,7 @@ export default function StoryMap({ location, travelFrom, isOffline }) {
   useEffect(() => {
     if (useChart || !location || !el.current) return
     const map = L.map(el.current, { zoomControl: true, attributionControl: true, scrollWheelZoom: false })
-    const tiles = L.tileLayer(TILE_URL, { attribution: ATTRIBUTION, subdomains: 'abcd', maxZoom: 12 })
+    const tiles = L.tileLayer(TILE_URL, { attribution: ATTRIBUTION, subdomains: 'abc', maxZoom: 12 })
     let errors = 0
     tiles.on('tileerror', () => {
       errors += 1
@@ -73,9 +75,16 @@ export default function StoryMap({ location, travelFrom, isOffline }) {
       L.circleMarker(from, { radius: 4, color: COLORS.fog, weight: 1, fillOpacity: 0 }).addTo(map)
       map.fitBounds([from, here], { padding: [60, 60], maxZoom: 9 })
     } else {
-      map.setView(here, 7)
+      // Wide enough that a place at sea still shows a coastline for context.
+      map.setView(here, 5)
     }
-    return () => map.remove()
+    // The sheet changes height (full view, phone rotation). Leaflet must be told, or new area stays empty.
+    const resize = new ResizeObserver(() => map.invalidateSize())
+    resize.observe(el.current)
+    return () => {
+      resize.disconnect()
+      map.remove()
+    }
   }, [location, travelFrom, useChart])
 
   if (!location) {
