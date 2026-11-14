@@ -1,16 +1,29 @@
 // OWNER: Person B
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, MotionConfig, motion, useReducedMotion } from 'motion/react'
 import LandingScreen from './components/LandingScreen.jsx'
 import Player from './components/Player.jsx'
 import useSession from './hooks/useSession.js'
+import useLanguageSettings from './hooks/useLanguageSettings.js'
 import { getTopic, resolveDataSource, getDataSource } from './api/client.js'
 
 export default function App() {
   const [dataSource, setDataSource] = useState(getDataSource())
   const [topic, setTopic] = useState(null)
   const [view, setView] = useState('landing')
-  const [isSoundOn, setIsSoundOn] = useState(true)
+  const [isSoundOn, setIsSoundOn] = useState(() => {
+    try {
+      return localStorage.getItem('vantage.sound') !== 'off'
+    } catch {
+      return true
+    }
+  })
+  const lastTopic = useRef(null)
+  const lang = useLanguageSettings()
+  const isOfflineData = dataSource === 'demo' || dataSource === 'offline'
+  // Offline, the cached story is English: narration cannot change and subtitles cannot translate.
+  const narrationLanguage = isOfflineData ? 'en' : lang.narrationLanguage
+  const language = { ...lang, narrationLanguage, isOffline: isOfflineData }
   const session = useSession()
   const reduce = useReducedMotion()
   const { startSession, reset } = session
@@ -29,9 +42,21 @@ export default function App() {
     }
   }, [])
 
+  const toggleSound = useCallback(() => {
+    setIsSoundOn((v) => {
+      try {
+        localStorage.setItem('vantage.sound', v ? 'off' : 'on')
+      } catch {
+        // storage can be blocked
+      }
+      return !v
+    })
+  }, [])
+
   const onStart = useCallback(
     async (text) => {
-      const data = await startSession(text)
+      lastTopic.current = text
+      const data = await startSession(text, narrationLanguage)
       if (!data) return
       try {
         setTopic(await getTopic(data.session_id))
@@ -41,7 +66,17 @@ export default function App() {
       window.scrollTo(0, 0)
       setView('player')
     },
-    [startSession],
+    [startSession, narrationLanguage],
+  )
+
+  // The language is fixed when a session starts, so a new narration language starts the story over.
+  const onRestart = useCallback(
+    async (code) => {
+      if (!lastTopic.current) return
+      lang.setNarrationLanguage(code)
+      await startSession(lastTopic.current, code)
+    },
+    [startSession, lang],
   )
 
   const onExit = useCallback(() => {
@@ -71,7 +106,9 @@ export default function App() {
               session={session}
               topic={topic}
               isSoundOn={isSoundOn}
-              onToggleSound={() => setIsSoundOn((v) => !v)}
+              onToggleSound={toggleSound}
+              language={language}
+              onRestart={onRestart}
               onExit={onExit}
               dataSource={dataSource}
             />
@@ -84,7 +121,8 @@ export default function App() {
               isStarting={session.isLoading}
               error={session.error}
               isSoundOn={isSoundOn}
-              onToggleSound={() => setIsSoundOn((v) => !v)}
+              onToggleSound={toggleSound}
+              language={language}
               dataSource={dataSource}
             />
           </motion.div>
