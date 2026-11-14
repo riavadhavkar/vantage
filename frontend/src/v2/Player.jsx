@@ -2,7 +2,7 @@
 // decides who is telling it. Data and actions come from usePlayer (same calls as classic).
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useTransform } from 'motion/react'
-import { Aperture, FileText, Map as MapIcon, Maximize2, Minimize2, Volume2, VolumeX, Waypoints } from 'lucide-react'
+import { Aperture, FileText, Map as MapIcon, Maximize2, Minimize2, Share2, Volume2, VolumeX, Waypoints } from 'lucide-react'
 import usePlayer from './usePlayer.js'
 import Frame from './Frame.jsx'
 import Captions from './Captions.jsx'
@@ -22,6 +22,7 @@ import './player.css'
 // The graph and the map are the existing components, loaded on demand, in the new sheet.
 const KnowledgeGraph = lazy(() => import('../components/KnowledgeGraph.jsx'))
 const StoryMap = lazy(() => import('../components/StoryMap.jsx'))
+const ShareCard = lazy(() => import('./ShareCard.jsx'))
 
 export default function Player({ session, topic, isSoundOn, onToggleSound, onExit, dataSource, shouldReveal = false }) {
   const P = usePlayer({ session, topic, isSoundOn })
@@ -83,6 +84,21 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
   const closePanel = useCallback(() => (setPanel(null), setIsFull(false)), [])
   const classicGrades = useMemo(() => Object.fromEntries(Object.entries(P.looks).map(([id, l]) => [id, l.classic])), [P.looks])
   const [isAmbientOn, setIsAmbientOn] = useState(false)
+  const [isSharing, setIsSharing] = useState(false)
+  const closeShare = useCallback(() => setIsSharing(false), [])
+  const shareStats = useMemo(
+    () => [
+      { label: 'points of view heard', value: Object.keys(P.heard).length },
+      { label: 'sources cited', value: P.citedCount },
+      { label: 'disagreements seen', value: P.segments.filter((x) => x.contradiction).length },
+    ],
+    [P.heard, P.citedCount, P.segments],
+  )
+  const shareSummary = useMemo(() => {
+    const [h, c, d] = shareStats.map((x) => x.value)
+    const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
+    return `Heard ${h} of ${plural(P.perspectives.length, 'point of view', 'points of view')}  ·  ${plural(c, 'source', 'sources')} cited${d ? `  ·  ${plural(d, 'disagreement', 'disagreements')}` : ''}`
+  }, [shareStats, P.perspectives.length])
 
   const [question, setQuestion] = useState('')
   const submitQuestion = (e) => {
@@ -106,7 +122,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
 
   return (
     <main className={`v2-player ${shouldReveal && !isCalm ? 'v2-reveal' : ''} ${isMoving ? 'is-moving' : ''}`} style={{ '--accent': look.accent }}>
-      <Frame segment={shown} look={dis ? sideLook(dis.side_a) : look} splitLook={dis ? sideLook(dis.side_b) : null} imageUrl={P.narration.imageUrl} imageUrls={P.narration.imageUrls} imageStatus={P.narration.imageStatus} soft={pull.soft} isPulling={isPulling} isCalm={isCalm} isPaused={!!evidence || !!panel} isUngrounded={!shown.is_grounded}>
+      <Frame segment={shown} look={dis ? sideLook(dis.side_a) : look} splitLook={dis ? sideLook(dis.side_b) : null} imageUrl={P.narration.imageUrl} imageUrls={P.narration.imageUrls} imageStatus={P.narration.imageStatus} soft={pull.soft} isPulling={isPulling} isCalm={isCalm} isPaused={!!evidence || !!panel || isSharing} isUngrounded={!shown.is_grounded}>
         {shown.date_label && shown.is_grounded && !isPulling && (
           <p key={shown.segment_id} className="v2-titlecard" aria-hidden="true"><span>{shown.date_label}</span></p>
         )}
@@ -127,6 +143,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
         <DataBadge source={dataSource} />
         <IconBtn label="How the story connects" icon={Waypoints} isPressed={panel === 'graph'} onClick={() => setPanel('graph')} />
         <IconBtn label="Where this happened" icon={MapIcon} isPressed={panel === 'map'} onClick={() => setPanel('map')} />
+        {shown.is_grounded && <IconBtn label="Share this moment" icon={Share2} isPressed={isSharing} onClick={() => setIsSharing(true)} />}
         <IconBtn label="Sources" icon={FileText} badge={P.citedCount || null} isPressed={!!evidence} onClick={() => openEvidence()} />
         <span className="v2-ambient"><AmbientPlayer mood={shown.mood} isOn={isAmbientOn} onToggle={() => setIsAmbientOn((v) => !v)} /></span>
         <IconBtn label={isSoundOn ? 'Sound on' : 'Sound off'} icon={isSoundOn ? Volume2 : VolumeX} isPressed={isSoundOn} onClick={onToggleSound} tip="left" />
@@ -255,6 +272,14 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
           {ghost.label}
         </motion.span>
       )}
+
+      <AnimatePresence>
+        {isSharing && (
+          <Suspense fallback={null}>
+            <ShareCard key="share" segment={shown} look={look} topicTitle={P.topic?.title || ''} sourcesById={P.sourcesById} stats={shareStats} summary={shareSummary} dataSource={dataSource} onClose={closeShare} />
+          </Suspense>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {wash && (
