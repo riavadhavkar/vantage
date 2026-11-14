@@ -207,3 +207,11 @@ Other revisions from the review:
 - `src/constants/enums.js` and `backend/enums.py` are both empty shared-contract files. I'll fill `enums.js` with the enums from the brief verbatim; Person A should mirror them in `enums.py`.
 - `demo/demo_path.json` is `[]`. Demo mode will need Person C's path and cached media.
 - The contract has no on-screen coordinates for claims, so pin placement is deterministic and decorative in position, meaningful in content. If we want pins over specific parts of a scene, that would need a new optional field.
+
+## 9. Changes during the build
+
+- Topics in the team data have four perspectives, not three. The lens rail lists all of them; the landing hero uses the first three grades.
+- Removed the stage label "Drawn scene. The illustration could not load." (decoration that covered pins; a drawing is not AI and needs no label). Loading still says "Developing the illustration...".
+- Narration column now shares its left edge with the stage title (32px inset on tablet and up), per the alignment rule in section 3.
+- Begin stays enabled; an empty submit focuses the field instead of showing a dead grey button.
+- During the perspective pull the outgoing narration stays on screen at 40% instead of clearing.
