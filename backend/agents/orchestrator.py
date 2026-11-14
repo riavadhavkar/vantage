@@ -8,7 +8,8 @@ from schemas import Segment, Choice, Location
 from state import session_store
 from config import VOICE_BY_PERSPECTIVE
 from agents.narrator_agent import NarratorAgent
-from agents.mock_segments import MOCK_SEGMENTS
+from agents.mock_segments import MOCK_BY_TOPIC
+from knowledge.catalog import resolve_topic
 
 _narrator = NarratorAgent()
 
@@ -43,7 +44,8 @@ def _unique_id(state: dict, slug: str) -> str:
 
 
 def _mock(state: dict) -> dict:
-    data = dict(MOCK_SEGMENTS[len(state["seen_segment_ids"]) % len(MOCK_SEGMENTS)])
+    mocks = MOCK_BY_TOPIC.get(resolve_topic(state["topic"]) or "titanic")
+    data = dict(mocks[len(state["seen_segment_ids"]) % len(mocks)])
     data["segment_id"] = _unique_id(state, data.pop("segment_id").removeprefix("seg_"))
     return data
 
