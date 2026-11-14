@@ -76,9 +76,9 @@ html[data-lite] .v2-panel-soft { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .v2-lframe, .v2-panel, .v2-wordmark-sharp, .v2-start > * > * { animation: none; }
-  .v2-wordmark-soft { display: none; }
+  .v2-wordmark .v2-wordmark-soft { display: none; }
   .v2-panel.is-focus { transform: none; }
   .v2-panel-art { transform: none; }
 }
-html[data-motion='off'] .v2-wordmark-soft { display: none; }
+html[data-motion='off'] .v2-wordmark .v2-wordmark-soft { display: none; }
 html[data-motion='off'] .v2-panel.is-focus, html[data-motion='off'] .v2-panel-art { transform: none; }

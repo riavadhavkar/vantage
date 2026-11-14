@@ -126,7 +126,10 @@ function SheetBody({ onClose, title, subtitle, tone, children, headerExtra, clas
     const onKey = (e) => {
       if (e.key === 'Escape') return onClose()
       if (e.key !== 'Tab' || !panel.current) return
-      const items = panel.current.querySelectorAll('button:not([disabled]), a[href], input, [tabindex]:not([tabindex="-1"])')
+      // only what can actually take focus right now (rows inside a closed <details> cannot)
+      const items = [...panel.current.querySelectorAll('button:not([disabled]), a[href], input, summary, [tabindex]:not([tabindex="-1"])')].filter(
+        (el) => (el.tagName === 'SUMMARY' || !el.closest('details:not([open])')) && (el.checkVisibility ? el.checkVisibility() : el.getClientRects().length > 0),
+      )
       if (!items.length) return
       const [first, last] = [items[0], items[items.length - 1]]
       if (e.shiftKey && document.activeElement === first) (e.preventDefault(), last.focus())
