@@ -17,7 +17,7 @@
 .v2-graph .react-flow__edge-path { animation: v2-edge-draw var(--duration-scene) var(--ease-move) backwards; animation-delay: var(--draw-delay, 0ms); }
 @keyframes v2-edge-draw { from { stroke-dasharray: 2000; stroke-dashoffset: 2000; } to { stroke-dasharray: 2000; stroke-dashoffset: 0; } }
 .v2-graph .react-flow__arrowhead polyline, .v2-graph marker path { fill: var(--text); }
-.v2-graph-legend { position: absolute; left: 12px; bottom: 12px; display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 6px; background: rgb(10 12 15 / 0.85); font-size: 12px; line-height: 16px; color: var(--dim); pointer-events: none; }
+.v2-graph-legend { position: absolute; right: 12px; bottom: 12px; text-transform: lowercase; display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 6px; background: rgb(10 12 15 / 0.85); font-size: 12px; line-height: 16px; color: var(--dim); pointer-events: none; }
 .v2-graph-legend li { display: flex; align-items: center; gap: 8px; }
 .v2 .react-flow__controls-button { background: var(--raised); border-color: var(--line); fill: var(--text); }
 .v2 .react-flow__controls-button:hover { background: #20242a; }
