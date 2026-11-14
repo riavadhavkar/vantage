@@ -90,6 +90,23 @@ def run(topic_key: str, topic_title: str, history: list, action: str, query: str
             return "No documented disagreements for these sources."
         return "\n".join(f"{e['from_doc']} vs {e['to_doc']}: {e.get('note', '')}" for e in edges)
 
+    verify_calls = []
+
+    def verify_claim(claim: str) -> str:
+        """Check one factual claim against the source library. Returns the most relevant
+        passages with their source ids so you can confirm or reject the claim."""
+        verify_calls.append(claim)
+        trace.append(f"verify_claim({claim[:60]!r})")
+        if len(verify_calls) > 5:
+            return "Verification limit reached. Remove any claim you could not confirm."
+        found = retriever.search(topic_key, claim, None, list(seen_chunk_ids), k=3)
+        collected.extend(found)
+        if not found:
+            return "No supporting passages found. Remove this claim."
+        return "\n\n".join(
+            f"[{c['source_id']}] {c.get('title')}: " + " ".join(c["text"].split())[:600]
+            for c in found)
+
     persp = ", ".join(perspectives)
     researcher = {
         "name": "researcher",
@@ -107,8 +124,10 @@ def run(topic_key: str, topic_title: str, history: list, action: str, query: str
                        "Give it the facts with source ids, the perspective and what the viewer did.",
         "system_prompt": (
             "You are a calm documentary narrator. Write 3 to 5 sentences, 60 to 110 words, "
-            "concrete people, places and dates, no lists, no markdown, no em dashes. Use only the "
-            "facts given. When sources disagree, say so plainly. Return just the narration."),
+            "in the third person, concrete people, places and dates, no lists, no markdown, no em dashes. "
+            "Use only the facts given. Never invent first-person accounts, dialogue, quotes, or events. "
+            "If the facts are thin, say the record is thin. When sources disagree, say so plainly. "
+            "Return just the narration."),
         "tools": [],
     }
     fact_checker = {
@@ -116,10 +135,11 @@ def run(topic_key: str, topic_title: str, history: list, action: str, query: str
         "description": "Checks a draft narration against the sources and flags unsupported claims "
                        "and documented disagreements. Give it the draft and the source ids used.",
         "system_prompt": (
-            "You verify documentary narration. Use search_sources to confirm claims and "
-            "find_contradictions on the source ids. Reply with: VERIFIED or a list of claims to "
-            "remove or soften, plus any documented disagreement worth mentioning."),
-        "tools": [search_sources, find_contradictions],
+            "You verify documentary narration. Call verify_claim on the two or three most specific "
+            "claims (names, numbers, who did what). Call find_contradictions only with real source ids "
+            "that appeared in passages, like T01 or D03. Reply with: VERIFIED, or a list of claims "
+            "to remove because no passage supports them, plus any documented disagreement worth mentioning."),
+        "tools": [verify_claim, find_contradictions],
     }
 
     director_prompt = (
@@ -135,7 +155,8 @@ def run(topic_key: str, topic_title: str, history: list, action: str, query: str
         f"choice_type must be one of: {', '.join(CHOICE_TYPES)}. Give 2 or 3 choices, "
         "at least one perspective_shift. source_ids are the ids you actually used. "
         "The final narrative_text must be 3 to 5 sentences and at most 110 words, with no em dashes and no cliches. "
-        "Name officers and roles exactly as the sources do.")
+        "Name officers and roles exactly as the sources do. "
+        "Never output first-person narration or invented quotes. Remove every claim the fact_checker could not verify.")
 
     agent = create_deep_agent(
         model=_model(),
