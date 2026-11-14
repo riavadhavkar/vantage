@@ -11,7 +11,12 @@ import { canSpeak, speak, voiceForIndex } from '../lib/speech.js'
  * When server audio is unavailable, falls back to the device's speech synthesis.
  * @param {{ isSoundOn: boolean, shouldAutoplay: boolean, voiceIndex: number }} opts
  */
-export default function useNarration(segment, { isSoundOn = true, shouldAutoplay = true, voiceIndex = 0 } = {}) {
+/**
+ * holdAudio: do not ask for audio yet (the narration text is still being translated).
+ * When the text of the same scene changes (a narration language swap), the current voice keeps
+ * playing until the new audio is ready, which then picks up at the same point in the scene.
+ */
+export default function useNarration(segment, { isSoundOn = true, shouldAutoplay = true, voiceIndex = 0, holdAudio = false } = {}) {
   const [imageUrl, setImageUrl] = useState(null)
   const [imageUrls, setImageUrls] = useState([])
   const [imageStatus, setImageStatus] = useState('idle') // idle | loading | ready | failed
@@ -79,26 +84,52 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
       setImageStatus('failed')
     }
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [segmentId])
+
+  // Audio, on its own clock: per scene, and again when the scene's text changes language.
+  const text = segment?.is_grounded ? segment.narrative_text || '' : ''
+  const audioKey = segment ? `${segment.segment_id}|${holdAudio ? 'hold' : text}` : null
+  const voicedFor = useRef(null) // the scene whose audio is currently loaded
+  const resumeAt = useRef(null) // where to pick up after a swap (fraction of the scene)
+  useEffect(() => {
+    if (!segment) return
+    const id = segment.segment_id
+    if (!segment.is_grounded) return setAudioStatus('idle')
+    const isSwap = voicedFor.current === id
+    const audio = getNarrationAudio()
+    resumeAt.current = isSwap && audio && audio.duration > 0 && !audio.ended ? audio.currentTime / audio.duration : null
+    if (holdAudio) {
+      if (!isSwap) setAudioStatus('loading')
+      return
+    }
+    if (!isSwap) voicedFor.current = null
     if (segment.audio_url) {
+      voicedFor.current = id
       setAudioUrl(api.absolute(segment.audio_url))
       setAudioDurationMs(segment.audio_duration_ms ?? null)
       setAudioStatus('ready')
-    } else if (segment.narrative_text) {
-      setAudioStatus('loading')
+    } else if (text) {
+      if (!isSwap) setAudioStatus('loading')
+      let isLive = true
       api
-        .generateAudio({ segment_id: id, text: segment.narrative_text, voice_id: segment.voice_id })
+        .generateAudio({ segment_id: id, text, voice_id: segment.voice_id })
         .then((d) => {
-          if (currentId.current !== id) return
-          setAudioUrl(d.audio_url)
+          if (!isLive || currentId.current !== id) return
+          voicedFor.current = id
           setAudioDurationMs(d.audio_duration_ms ?? null)
+          setAudioUrl(d.audio_url)
           setAudioStatus(d.audio_url ? 'ready' : 'failed')
         })
-        .catch(() => currentId.current === id && setAudioStatus('failed'))
+        .catch(() => isLive && currentId.current === id && !isSwap && setAudioStatus('failed'))
+      return () => {
+        isLive = false
+      }
     } else {
       setAudioStatus('failed')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [segmentId])
+  }, [audioKey])
 
   // Wire the shared element to this segment's audio.
   useEffect(() => {
@@ -113,7 +144,15 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
       setHasFinished(true)
     }
     const onError = () => setAudioStatus('failed')
-    const onMeta = () => Number.isFinite(audio.duration) && setAudioDurationMs((d) => d ?? Math.round(audio.duration * 1000))
+    const onMeta = () => {
+      if (!Number.isFinite(audio.duration)) return
+      setAudioDurationMs((d) => d ?? Math.round(audio.duration * 1000))
+      // after a language swap, carry on from the same point in the scene
+      if (resumeAt.current != null) {
+        audio.currentTime = resumeAt.current * audio.duration
+        resumeAt.current = null
+      }
+    }
     audio.addEventListener('loadedmetadata', onMeta)
     audio.addEventListener('play', onPlay)
     audio.addEventListener('pause', onPause)

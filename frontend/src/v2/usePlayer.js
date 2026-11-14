@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useNarration from '../hooks/useNarration.js'
 import usePull from './usePull.js'
+import useVoicedSegment from './useVoicedSegment.js'
 import { getSources, getGraph } from '../api/client.js'
 import { deriveTopic } from '../api/normalize.js'
 import { looksForTopic, NEUTRAL_LOOK } from './looks.js'
@@ -29,7 +30,7 @@ const tick = () => {
   }
 }
 
-export default function usePlayer({ session, topic, isSoundOn, isHeld = false }) {
+export default function usePlayer({ session, topic, isSoundOn, isHeld = false, language }) {
   const isCalm = useCalmMotion()
   const { currentSegment, segments, sessionId, choose, ask, isLoading, pending, error, clearError } = session
   // Before a new scene swaps in under the blur, have its graded drawing and its soft copy ready.
@@ -59,8 +60,10 @@ export default function usePlayer({ session, topic, isSoundOn, isHeld = false })
   const lookOf = useCallback((id) => looks[id] || NEUTRAL_LOOK, [looks])
 
   const voiceIndex = Math.max(0, perspectives.findIndex((p) => p.perspective_id === shown?.perspective))
+  // The scene as it is narrated: the same scene, in the chosen narration language.
+  const voice = useVoicedSegment(shown, language)
   // isHeld: the shutter is waiting for this scene's illustration, so the voice waits too.
-  const narration = useNarration(shown, { isSoundOn, shouldAutoplay: pull.phase === 'idle' && !isHeld, voiceIndex })
+  const narration = useNarration(voice.segment, { isSoundOn, shouldAutoplay: pull.phase === 'idle' && !isHeld, voiceIndex, holdAudio: voice.isHeld })
   // The first illustration each scene showed, for the graph's thumbnails.
   const [thumbs, setThumbs] = useState({})
   const shownKey = shown?.segment_id
@@ -202,6 +205,7 @@ export default function usePlayer({ session, topic, isSoundOn, isHeld = false })
     look,
     lookOf,
     narration,
+    voice,
     sources,
     sourcesById,
     sourcesState,

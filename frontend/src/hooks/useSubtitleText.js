@@ -6,8 +6,12 @@ import { translateText, isOfflineData } from '../api/client.js'
 
 const cache = new Map() // `${segment_id}|${target}` -> translated text
 
-/** @returns {{ text: string, lang: string, status: 'off'|'original'|'loading'|'ready'|'failed'|'offline' }} */
-export default function useSubtitleText(segment, { narrationLanguage, subtitleLanguage }) {
+/**
+ * segment: the scene as narrated (possibly a voiced translation); narrationLanguage: its language.
+ * source: the session's own text and language, reused when the viewer reads in that language.
+ * @returns {{ text: string, lang: string, status: 'off'|'original'|'loading'|'ready'|'failed'|'offline' }}
+ */
+export default function useSubtitleText(segment, { narrationLanguage, subtitleLanguage, source = null }) {
   const original = segment?.is_grounded ? segment.narrative_text || '' : ''
   const id = segment?.segment_id
   const target = subtitleLanguage === 'same' ? narrationLanguage : subtitleLanguage
@@ -16,8 +20,9 @@ export default function useSubtitleText(segment, { narrationLanguage, subtitleLa
   const key = `${id}|${target}`
   const [result, setResult] = useState({ key: null, status: 'idle', text: '' })
 
+  const fromSource = !!source?.text && source.lang === target
   useEffect(() => {
-    if (!needsTranslation || offline) return
+    if (!needsTranslation || offline || fromSource) return
     if (cache.has(key)) return
     const ctrl = new AbortController()
     let isLive = true
@@ -32,9 +37,10 @@ export default function useSubtitleText(segment, { narrationLanguage, subtitleLa
       isLive = false
       ctrl.abort()
     }
-  }, [key, needsTranslation, offline, original, target])
+  }, [key, needsTranslation, offline, original, target, fromSource])
 
   if (subtitleLanguage === 'off') return { text: '', lang: narrationLanguage, status: 'off' }
+  if (needsTranslation && source?.text && source.lang === target) return { text: source.text, lang: target, status: 'ready' }
   if (!needsTranslation) return { text: original, lang: narrationLanguage, status: 'original' }
   if (offline) return { text: original, lang: narrationLanguage, status: 'offline' }
   if (cache.has(key)) return { text: cache.get(key), lang: target, status: 'ready' }

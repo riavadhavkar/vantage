@@ -1,6 +1,6 @@
 // The new player: a full-bleed stage with the story on glass over it, and a lens ring that
 // decides who is telling it. Data and actions come from usePlayer (same calls as classic).
-import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useTransform } from 'motion/react'
 import { FileText, Map as MapIcon, Maximize2, Minimize2, Pause, Play, Share2, Volume2, VolumeX, Waypoints } from 'lucide-react'
 import usePlayer from './usePlayer.js'
@@ -55,7 +55,7 @@ function useDecoded(url) {
 export default function Player({ session, topic, isSoundOn, onToggleSound, language, onExit, dataSource, shouldReveal = false }) {
   // isHeld comes from the illustration gate below (the previous render's value, kept in state)
   const [isHeld, setIsHeld] = useState(false)
-  const P = usePlayer({ session, topic, isSoundOn, isHeld })
+  const P = usePlayer({ session, topic, isSoundOn, isHeld, language })
   const { shown, pull, look, lookOf, isCalm, isLoading, pending } = P
   const isPulling = pull.phase !== 'idle'
 
@@ -87,16 +87,35 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
   const shownId = shown?.segment_id
   const setIsTyped = useCallback((done) => setTypedId((id) => (done ? shownId : id === shownId ? null : id)), [shownId])
   const isTyped = typedId != null && typedId === shownId
-  const subtitle = useSubtitleText(shown, language)
+  const voice = P.voice
+  const subtitle = useSubtitleText(voice.segment, {
+    narrationLanguage: voice.lang,
+    subtitleLanguage: language.subtitleLanguage,
+    source: shown?.is_grounded ? { text: shown.narrative_text || '', lang: language.sessionLanguage } : null,
+  })
   const toast = useToast()
   // Narration language: applied in place, with a toast (the swap itself is in useVoicedSegment).
+  const switching = useRef(null) // { code, audioUrl } while a narration change is being prepared
   const changeNarration = useCallback(
     (code) => {
+      switching.current = { code, audioUrl: P.narration.audioUrl }
       language.setNarrationLanguage(code)
       toast.push(`switching narration to ${language.nameOf(code)}...`, { id: 'narration' })
     },
-    [language, toast],
+    [language, toast, P.narration.audioUrl],
   )
+  // Confirmed once the new words are in and their voice has arrived (or there is no voice to wait for).
+  useEffect(() => {
+    const s = switching.current
+    if (!s) return
+    if (voice.status === 'failed') {
+      toast.push(`narration in ${language.nameOf(s.code)} is unavailable right now. continuing in ${language.nameOf(voice.lang)}.`, { id: 'narration' })
+      switching.current = null
+    } else if (voice.lang === s.code && (P.narration.audioUrl !== s.audioUrl || P.narration.audioStatus === 'failed' || !s.audioUrl)) {
+      toast.push(`narration is now in ${language.nameOf(s.code)}`, { id: 'narration' })
+      switching.current = null
+    }
+  }, [voice.status, voice.lang, P.narration.audioUrl, P.narration.audioStatus, language, toast])
   // A translation that fails says so once, as a toast; the original text stays on screen.
   const failKey = subtitle.status === 'failed' ? `${shown?.segment_id}|${language.subtitleLanguage}` : null
   useEffect(() => {
@@ -247,8 +266,8 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
         <div className="v2-hud-center">
           <AskPill perspectives={P.perspectives} onSubmit={P.doAsk} isLoading={isLoading} />
           {shown.title && (
-            <h2 key={shown.segment_id} className="v2-hud-title">
-              {shown.title}
+            <h2 key={shown.segment_id} className="v2-hud-title" lang={voice.lang}>
+              {voice.segment?.title || shown.title}
             </h2>
           )}
           <DataBadge source={dataSource} className="v2-hud-databadge-narrow" />
@@ -306,14 +325,14 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
         )}
 
         <Subtitles
-          text={subtitle.status === 'off' ? (shown.is_grounded ? shown.narrative_text || '' : '') : subtitle.text}
+          text={subtitle.status === 'off' ? (shown.is_grounded ? voice.segment?.narrative_text || '' : '') : subtitle.text}
           lang={subtitle.lang}
           durationMs={narration.audioDurationMs}
           resetKey={shown.segment_id}
           isPlaying={narration.isPlaying}
           hasFinished={narration.hasFinished}
           isVisible={subtitle.status !== 'off' && !!shown.is_grounded}
-          isActive={!isPulling && !waitsForImage}
+          isActive={!isPulling && !waitsForImage && !voice.isHeld}
           onDoneChange={setIsTyped}
           onOpen={() => setIsTranscriptOpen(true)}
           note={subtitleNote}
@@ -348,8 +367,8 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
           {subtitle.status !== 'off' && <p lang={subtitle.lang} className="v2-transcript-main">{subtitle.text}</p>}
           {isTranslated && (
             <>
-              <h4>original narration</h4>
-              <p lang={language.narrationLanguage}>{shown.narrative_text}</p>
+              <h4>narration</h4>
+              <p lang={voice.lang}>{voice.segment?.narrative_text}</p>
             </>
           )}
           <Btn variant="quiet" onClick={() => { setIsTranscriptOpen(false); openEvidence() }}>how this was grounded</Btn>
