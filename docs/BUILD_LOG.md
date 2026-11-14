@@ -96,3 +96,30 @@ Append only. Newest entries at the bottom.
 
 - `.env.example` and `config.py` each define `XAI_API_KEY` and `XAI_IMAGE_MODEL` twice (harmless, but worth cleaning).
 - `IMAGE_STYLE_PREFIX` asks for sepia tones; the frontend re-grades every image per perspective, so color in the source image is ignored on screen.
+
+## 2026-11-13 23:18, Person B, Batch 1: media made real and safe (T0 to T3)
+
+**T0 orientation**
+- Branch `b/graph-ui`, merged main (Person A's Gemini narrator, #5). No `CLAUDE.md` in the repo.
+- `.env` is gitignored. Found the xAI key pasted into the tracked `.env.example` (uncommitted). Moved it into `.env` and restored `.env.example` to the committed version. Scanned tracked files and full history: no key in any commit.
+- Segments are not stored server-side (session state keeps ids only), so media endpoints cannot yet look up the real scene prompt. Handoff written: `docs/handoffs/segment_store.md`.
+
+**T1 real xAI images**
+- Two real calls: about 12 s each, about 0.5 MB PNG. A prompt about the sinking itself was not refused; the result shows distant figures, nothing graphic. Images come back portrait, so the prompt now asks for a wide 16:9 composition. A refusal returns `image_failed` and the stage keeps the drawn scene (tested earlier).
+
+**T2 hardening (`backend/routers/media.py`, `services/xai_service.py`)**
+- `segment_id` must match `seg_<slug>`; file names are derived server-side; file routes reject anything else.
+- Server-side prompt builder: locked team style prefix, cleaned and capped scene (400 chars), wide composition, safety constraints (places, objects, documents, maps, silhouettes; no identifiable real people, no graphic violence, no text).
+- Uses `session_store.find_segment()` when it exists, so the server's own scene and text win over client text.
+- Limits: `VANTAGE_MAX_MEDIA_CALLS` (default 300 external calls), per IP (20 images or 40 TTS per 10 min), per session (15 or 30, active once segments are stored). Cache hits are free.
+- `VANTAGE_DEMO_MODE=1` serves `demo/cache/<segment_id>.png|.mp3` only and never calls a provider.
+- 19 pytest tests in `backend/tests/test_media.py`; httpx is replaced by a guard that fails any network call. All pass. Run from `backend/`: `python -m pytest tests -q`.
+
+**T3 narration that always works**
+- (a) Frontend: when server audio is unavailable, the device's speech synthesis reads the segment sentence by sentence (avoids Chrome's 15 s cutoff), a different local English voice per perspective, offline. Play, pause and sound off work; captions stay on; "AI narration" badge visible at every width (it was hidden on phones before, now fixed). Unlocked by the Begin gesture for iOS.
+- (b) `/api/tts` with ElevenLabs (`services/elevenlabs_service.py`): stock voices only, voice must be in the server allowlist (`VOICE_BY_PERSPECTIVE` values), hash cache, duration from the constant bitrate, `tts_failed` on every error, same limits as images. Not run against the real API: `ELEVENLABS_API_KEY` is empty.
+- (c) Voice mapping blocked on the ElevenLabs key. `python -m services.elevenlabs_service` (from `backend/`) lists stock voices once the key is in `.env`.
+
+**Next**
+- Ria: add `ELEVENLABS_API_KEY` to `.env`, then approve a voice table. Rotate the xAI key if it was ever shared outside this machine.
+- Batch R (modern restyle) after approval.

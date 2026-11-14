@@ -2,14 +2,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as api from '../api/client.js'
 import { getNarrationAudio } from '../lib/audio.js'
+import { canSpeak, speak, voiceForIndex } from '../lib/speech.js'
 
 /**
  * Requests narration audio and the illustration in parallel. Text shows immediately;
  * audio and image arrive when ready. The voice is always segment.voice_id.
  * @param {object|null} segment
- * @param {{ isSoundOn: boolean, shouldAutoplay: boolean }} opts
+ * When server audio is unavailable, falls back to the device's speech synthesis.
+ * @param {{ isSoundOn: boolean, shouldAutoplay: boolean, voiceIndex: number }} opts
  */
-export default function useNarration(segment, { isSoundOn = true, shouldAutoplay = true } = {}) {
+export default function useNarration(segment, { isSoundOn = true, shouldAutoplay = true, voiceIndex = 0 } = {}) {
   const [imageUrl, setImageUrl] = useState(null)
   const [imageStatus, setImageStatus] = useState('idle') // idle | loading | ready | failed
   const [audioUrl, setAudioUrl] = useState(null)
@@ -17,6 +19,8 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
   const [isPlaying, setIsPlaying] = useState(false)
   const [hasFinished, setHasFinished] = useState(false)
   const currentId = useRef(null)
+  const speech = useRef(null)
+  const [speechState, setSpeechState] = useState('idle') // idle | speaking | paused | done
   const segmentId = segment?.segment_id ?? null
 
   useEffect(() => {
@@ -25,6 +29,9 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
     currentId.current = id
     const audio = getNarrationAudio()
     audio?.pause()
+    speech.current?.cancel()
+    speech.current = null
+    setSpeechState('idle')
     setIsPlaying(false)
     setHasFinished(false)
     setImageUrl(null)
@@ -110,15 +117,78 @@ export default function useNarration(segment, { isSoundOn = true, shouldAutoplay
     audio.play().catch(() => setIsPlaying(false))
   }, [audioUrl, shouldAutoplay, hasFinished])
 
+  // Device voice fallback: only when the server could not give us audio.
+  const isDeviceVoice = audioStatus === 'failed' && !!segment?.is_grounded && !!segment?.narrative_text && canSpeak()
+
+  const startSpeech = useCallback(() => {
+    if (!segment) return
+    speech.current?.cancel()
+    setHasFinished(false)
+    speech.current = speak(segment.narrative_text, {
+      voice: voiceForIndex(voiceIndex),
+      onStart: () => {
+        setSpeechState('speaking')
+        setIsPlaying(true)
+      },
+      onEnd: () => {
+        setSpeechState('done')
+        setIsPlaying(false)
+        setHasFinished(true)
+      },
+      onError: () => {
+        setSpeechState('done')
+        setIsPlaying(false)
+      },
+    })
+  }, [segment, voiceIndex])
+
+  useEffect(() => {
+    if (!isDeviceVoice || !shouldAutoplay || !isSoundOn || speechState !== 'idle') return
+    startSpeech()
+  }, [isDeviceVoice, shouldAutoplay, isSoundOn, speechState, startSpeech])
+
+  // Sound off pauses the device voice; sound on resumes it.
+  useEffect(() => {
+    if (!speech.current) return
+    if (!isSoundOn && speechState === 'speaking') {
+      speech.current.pause()
+      setSpeechState('paused')
+      setIsPlaying(false)
+    } else if (isSoundOn && speechState === 'paused') {
+      speech.current.resume()
+      setSpeechState('speaking')
+      setIsPlaying(true)
+    }
+  }, [isSoundOn, speechState])
+
+  useEffect(() => () => speech.current?.cancel(), [])
+
   const play = useCallback(() => {
+    if (isDeviceVoice) {
+      if (speechState === 'paused') {
+        speech.current?.resume()
+        setSpeechState('speaking')
+        setIsPlaying(true)
+      } else if (speechState !== 'speaking') startSpeech()
+      return
+    }
     const audio = getNarrationAudio()
     if (!audio || !audioUrl) return
     if (audio.ended) audio.currentTime = 0
     setHasFinished(false)
     audio.play().catch(() => {})
-  }, [audioUrl])
+  }, [audioUrl, isDeviceVoice, speechState, startSpeech])
 
-  const pause = useCallback(() => getNarrationAudio()?.pause(), [])
+  const pause = useCallback(() => {
+    if (isDeviceVoice) {
+      speech.current?.pause()
+      setSpeechState('paused')
+      setIsPlaying(false)
+      return
+    }
+    getNarrationAudio()?.pause()
+  }, [isDeviceVoice])
 
-  return { audioUrl, imageUrl, imageStatus, audioStatus, isPlaying, play, pause, hasFinished }
+  const voiceSource = audioStatus === 'ready' ? 'remote' : isDeviceVoice ? 'device' : audioStatus === 'loading' ? 'loading' : null
+  return { audioUrl, imageUrl, imageStatus, audioStatus, voiceSource, isPlaying, play, pause, hasFinished }
 }

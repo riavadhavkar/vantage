@@ -1,5 +1,7 @@
 // OWNER: Person B
 // One shared narration element, unlocked by the Begin gesture so later segments can play.
+import { unlockSpeech } from './speech.js'
+
 let narration = null
 const SILENCE =
   'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='
@@ -14,6 +16,7 @@ export function getNarrationAudio() {
 
 /** Call inside a click handler (Begin). Safe to call more than once. */
 export function unlockAudio() {
+  unlockSpeech()
   const el = getNarrationAudio()
   if (!el || el.dataset.unlocked) return
   el.dataset.unlocked = '1'

@@ -78,7 +78,8 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
   const perspectives = useMemo(() => effectiveTopic.perspectives || [], [effectiveTopic])
   const grade = (shown && grades[shown.perspective]) || FALLBACK_GRADE
 
-  const narration = useNarration(shown, { isSoundOn, shouldAutoplay: pull === 'idle' })
+  const voiceIndex = Math.max(0, perspectives.findIndex((p) => p.perspective_id === shown?.perspective))
+  const narration = useNarration(shown, { isSoundOn, shouldAutoplay: pull === 'idle', voiceIndex })
   const [isTyped, setIsTyped] = useState(false)
   useEffect(() => setIsTyped(false), [shown?.segment_id])
 
@@ -166,7 +167,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
   const isCurrentShown = shown && currentSegment && shown.segment_id === currentSegment.segment_id
   const showChoices = isTyped && isCurrentShown && pull === 'idle' && !isLoading
   const citedCount = new Set(segments.flatMap((s) => s.source_ids || [])).size
-  const hasVoice = narration.audioStatus === 'ready' || narration.audioStatus === 'loading'
+  const hasVoice = !!narration.voiceSource
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -224,7 +225,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
               </div>
             )}
 
-            {narration.audioStatus === 'failed' && shown?.is_grounded && (
+            {narration.audioStatus === 'failed' && !narration.voiceSource && shown?.is_grounded && (
               <p className="mb-4 text-xs text-fog">Narration audio is unavailable for this scene. Captions only.</p>
             )}
 
@@ -355,8 +356,8 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
 
 function NarrationControls({ narration, hasVoice }) {
   if (!hasVoice) return null
-  const { isPlaying, play, pause, audioStatus } = narration
-  const isReady = audioStatus === 'ready'
+  const { isPlaying, play, pause, voiceSource } = narration
+  const isReady = voiceSource === 'remote' || voiceSource === 'device'
   return (
     <div className="flex items-center gap-2">
       <button
@@ -372,7 +373,14 @@ function NarrationControls({ narration, hasVoice }) {
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6z" /></svg>
         )}
       </button>
-      {isReady ? <AiBadge kind="voice" className="max-sm:hidden" /> : <span className="text-xs text-fog max-sm:hidden">Preparing the voice...</span>}
+      {isReady ? (
+        <span className="flex items-center gap-2">
+          <AiBadge kind="voice" />
+          {voiceSource === 'device' && <span className="text-xs text-fog max-sm:hidden">Device voice</span>}
+        </span>
+      ) : (
+        <span className="text-xs text-fog max-sm:hidden">Preparing the voice...</span>
+      )}
     </div>
   )
 }
