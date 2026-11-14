@@ -178,3 +178,50 @@ Build started 10:10 (Ria said to start early), an hour ahead of the planned 11:1
 **Next**
 
 Second critique pass on Tier 1 screens, then Tier 2: share card, Cmd+K palette, graph motion, map motion.
+
+## 2026-11-14 11:50 EST. UI redesign, phase 3: hourly entry 2, Tier 2 built and verified (Person B)
+
+**Built since the last entry (one commit each, lint and build passing)**
+
+- Share card: a 1080 by 1350 PNG drawn on a canvas, develops like a photograph, counts roll up. Export tested at 1440 and 390 (a file was downloaded both times).
+- Cmd+K palette: tested by keyboard only (filter, switch view, open the map by typing "map", Escape).
+- Graph motion in a v2 copy of the graph (nodes grow in, edges draw, camera glides out, current node breathes twice).
+- Map motion in a v2 copy of the map: the marker travels only when a scene has `travel_from`. Tested on the drawn chart and on live tiles.
+- From main (merged twice more, one conflict in the classic player resolved by keeping both changes): shots paced to the narration, graph nodes that reopen an earlier scene, real thumbnails in the graph.
+
+**Bugs found by the second critique pass and the verification script, all fixed**
+
+- The "Jump to" button was styled by a stylesheet that loads only with the palette, so it rendered unstyled and crowded the phone bar.
+- Focus could leave an open sheet through a closed details block.
+- With reduced motion the blurred copy of the wordmark stayed on top of the sharp one.
+- On tablets the ring's faded edges let scrolling text show through.
+- Graph node buttons could not be clicked (React Flow disables pointer events on nodes that cannot be dragged).
+
+**How I verified it**
+
+- `v2-flow.mjs --runs 5`: the demo path passed 10 of 10 times (5 at 1440, 5 at 390), no console errors, no network calls. Also passes with `?motion=off` and with the OS reduced-motion setting.
+- `v2-states.mjs`: 13 of 13 scenarios at 1440, and all pass at 390.
+- `v2-verify.mjs`: keyboard only, touch targets (all at least 44 px at 390), reduced motion, loops paused, layout shift 0.011 and 0.007 on the production build.
+- `fps.mjs`, final numbers in MOTION.md. The perspective switch is inside the budget. Three desktop cases are not: landing load (two long frames at first paint), a choice in the same view (6 frames over 33 ms), opening the share card (one 133 ms frame).
+- Classic: `scripts/screenshots.mjs` runs clean after every merge; choices appear with and without reduced motion.
+
+**Decisions made alone, and why**
+
+- A graph thumbnail that is an AI illustration gets a small sparkle badge and a legend line in v2. main shows those thumbnails in classic with no label; the trust rule says every generated image is labeled, so I kept it in v2 and left classic for Ria to decide.
+- While looking back at an earlier scene, the ring and the choices are off until you return. Choosing from an old scene would send an old choice to the session.
+- The share card draws the scene, not the illustration, so a cross-origin image cannot break the export.
+- I did not chase the remaining desktop frame misses further: they are single frames or short runs outside the signature, and the two fixes that remain (deferring the PNG draw to a worker, preloading the next drawn scene) are riskier than the gain this late.
+
+**Not verified**
+
+- Real voices and real images in v2: the backend never answered on :8000, so no live checks were made.
+- Safari, Firefox, a real phone, a screen reader.
+
+**Needs Ria**
+
+- Run the backend and open `/?ui=v2` once to hear the real voices and see the real illustrations.
+- The decisions listed in `frontend/design/HANDOFF.md`.
+
+**Next**
+
+Handoff is written. Waiting for review. No cutover without approval.
