@@ -22,16 +22,16 @@ export default class ErrorBoundary extends Component {
       <main className="flex min-h-dvh items-center px-6">
         <div className="mx-auto max-w-md">
           <div aria-hidden="true" className="mb-6 h-px w-16 bg-safelight" />
-          <h1 className="text-[28px] font-semibold leading-[34px] tracking-[-0.02em] text-print">This page stopped working.</h1>
+          <h1 className="text-[28px] font-semibold leading-[34px] tracking-[-0.02em] text-print">this page stopped working.</h1>
           <p className="mt-4 text-[17px] leading-[27px] text-fog">
-            Nothing was lost on our side. Start again and the story will reload.
+            nothing was lost on our side. start again and the story will reload.
           </p>
           <button
             type="button"
             onClick={() => window.location.assign(window.location.pathname + window.location.search)}
             className="mt-8 min-h-11 rounded-md bg-print px-5 text-base font-medium text-prussian hover:bg-white"
           >
-            Start again
+            start again
           </button>
         </div>
       </main>

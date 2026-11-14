@@ -8,7 +8,7 @@
 .v2-hud { position: absolute; z-index: 3; top: 0; left: 0; right: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 36rem) minmax(0, 1fr); align-items: start; gap: 12px 16px; padding: 12px max(var(--gutter), env(safe-area-inset-right)) 0 max(var(--gutter), env(safe-area-inset-left)); }
 .v2-hud::before { content: ''; position: absolute; inset: 0 0 -90px; z-index: -1; pointer-events: none; background: linear-gradient(180deg, rgb(10 12 15 / 0.92) 0%, rgb(10 12 15 / 0.78) 55%, rgb(10 12 15 / 0) 100%); }
 .v2-hud-left { min-width: 0; }
-.v2-wordmark-btn { text-transform: lowercase; font-size: 22px; line-height: 1; margin-left: -4px; padding: 0 4px; }
+.v2-wordmark-btn { display: inline-flex; align-items: center; gap: 8px; text-transform: lowercase; font-size: 22px; line-height: 1; margin-left: -4px; padding: 0 4px; }
 .v2-date-roll { position: relative; min-height: 24px; }
 .v2-date-text { font-size: 15px; line-height: 24px; font-weight: 700; color: var(--text); }
 .v2-hud-databadge { margin-top: 4px; }
@@ -19,7 +19,6 @@
 .v2-tools .v2-icon { background: rgb(10 12 15 / 0.82); border: 1px solid var(--line); }
 .v2-tools .v2-icon:hover:not(:disabled) { background: rgb(28 32 38 / 0.95); }
 .v2-tools .v2-icon[aria-pressed='true'] { background: rgb(40 45 52 / 0.95); border-color: rgb(255 255 255 / 0.4); }
-.v2-tools .v2-chevron { min-width: 32px; padding: 0; }
 .v2-hud .v2-badge, .v2-hud .v2-databadge { text-transform: lowercase; }
 .v2-hud .v2-badge { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgb(10 12 15 / 0.95); font-size: 13px; line-height: 18px; animation: none; }
 .v2-hud .v2-hud-badge-narrow, .v2-hud .v2-hud-databadge-narrow { display: none; }
@@ -33,17 +32,16 @@
 }
 @media (max-width: 520px) {
   .v2-wordmark-btn { font-size: 20px; }
+}
+/* small phones: the six controls need the row, so the mark stands alone (its name stays the button's label) */
+@media (max-width: 430px) {
+  .v2-wordmark-text { display: none; }
   .v2-tools { gap: 2px; }
 }
 
 /* ---------- bottom ---------- */
 .v2-lower { position: absolute; z-index: 2; left: 0; right: 0; bottom: calc(var(--ring-h) + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 12px; padding: 56px max(var(--gutter), env(safe-area-inset-right)) 8px max(var(--gutter), env(safe-area-inset-left)); max-height: calc(100dvh - var(--ring-h) - 250px); overflow-y: auto; background: linear-gradient(0deg, rgb(10 12 15 / 0.94) 0%, rgb(10 12 15 / 0.82) 55%, rgb(10 12 15 / 0) 100%); }
 .v2-lower > * { width: 100%; max-width: 56rem; margin-inline: auto; flex: none; }
-.v2-lower .v2-choices { flex-direction: row; flex-wrap: wrap; justify-content: center; }
-.v2-lower .v2-choice { width: auto; max-width: 28rem; min-height: 48px; padding: 6px 20px 6px 16px; border-radius: 999px; }
-.v2-lower .v2-choice::before { display: none; }
-.v2-lower .v2-choice-label { font-size: 15px; line-height: 20px; }
-.v2-lower .v2-choice-meta { text-transform: lowercase; }
 .v2-lower .v2-btn, .v2-lower .v2-note, .v2-lower .v2-waiting, .v2-lower .v2-back, .v2-lower .v2-end, .v2-lower .v2-dis-flag, .v2-lower .v2-dis-who, .v2-lower .v2-dis-why strong { text-transform: lowercase; }
 .v2-lower .v2-end { text-align: center; }
 .v2-lower .v2-end-actions { justify-content: center; }
@@ -70,3 +68,7 @@
 
 /* the ask pill shows focus on the pill itself (ring), not on the input inside it */
 .v2 .v2-hud-center form input:focus-visible { outline: none; animation: none; }
+
+/* the language popover */
+.v2-langpop { position: relative; }
+.v2-langpop-panel { position: absolute; top: calc(100% + 8px); right: 0; z-index: 50; width: min(20rem, calc(100vw - 32px)); padding: 16px; border-radius: 14px; border: 1px solid rgb(255 255 255 / 0.3); background: #0a0c0f; box-shadow: 0 16px 40px rgb(0 0 0 / 0.5); }

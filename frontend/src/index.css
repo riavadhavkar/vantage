@@ -120,10 +120,6 @@ body {
   outline-color: var(--color-prussian);
 }
 
-.vignette {
-  background: radial-gradient(120% 90% at 50% 45%, transparent 65%, rgb(10 30 48 / 0.45) 100%);
-}
-
 /* Duotone: grayscale print under two blend layers (multiply = highlight end, lighten = shadow end). */
 .print-gray {
   filter: grayscale(1) contrast(1.08);
@@ -145,20 +141,8 @@ body {
   opacity: 0.35;
 }
 
-.sr-only-live {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
 .text-balance {
   text-wrap: balance;
-}
-.text-pretty {
-  text-wrap: pretty;
 }
 
 /* Slow pan and zoom so a scene reads as moving footage. It sits on the wrapper around the
@@ -178,15 +162,6 @@ body {
   will-change: transform;
 }
 
-@keyframes caret {
-  50% {
-    opacity: 0;
-  }
-}
-.caret {
-  animation: caret 1s steps(1) infinite;
-}
-
 @keyframes pulse-ring {
   0% {
     box-shadow: 0 0 0 0 rgb(238 240 234 / 0.55);
@@ -194,9 +169,6 @@ body {
   100% {
     box-shadow: 0 0 0 10px rgb(238 240 234 / 0);
   }
-}
-.pulse-twice {
-  animation: pulse-ring 1.1s ease-out 2;
 }
 
 @keyframes record {
@@ -210,8 +182,6 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .ken-burns,
-  .caret,
-  .pulse-twice,
   .recording-dot {
     animation: none !important;
   }
@@ -227,12 +197,6 @@ body {
 .react-flow {
   --xy-background-color: transparent;
   --xy-background-color-default: transparent;
-}
-.react-flow__attribution {
-  background: transparent !important;
-}
-.react-flow__attribution a {
-  color: var(--color-fog) !important;
 }
 .react-flow__controls-button {
   background: var(--color-developer);
@@ -264,53 +228,6 @@ html .leaflet-container {
   color: var(--color-print) !important;
 }
 
-@keyframes loading-bar {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(200%);
-  }
-}
-.loading-bar {
-  animation: loading-bar 1.4s var(--ease-focus) infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .loading-bar {
-    animation: none;
-    width: 100%;
-    opacity: 0.6;
-  }
-}
-
-
-.stage {
-  height: min(58vh, 56.25cqw);
-  min-height: 220px;
-}
-.stage-wrap {
-  container-type: inline-size;
-}
-@media (max-width: 640px) {
-  .stage {
-    height: min(58vh, 72cqw);
-  }
-}
-
-@keyframes node-grow {
-  from {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-.graph-node-grow {
-  animation: node-grow 300ms var(--ease-focus) both;
-  transform-origin: 50% 40%;
-}
 .map-marker {
   display: block;
   width: 16px;
@@ -332,7 +249,6 @@ html .leaflet-container {
   display: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .graph-node-grow,
   .map-marker {
     animation: none;
   }

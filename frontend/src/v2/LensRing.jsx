@@ -33,7 +33,7 @@ export default function LensRing({ perspectives, activeId, waitingId = null, hea
     <div
       className="v2-ring"
       role="radiogroup"
-      aria-label="Point of view"
+      aria-label="point of view"
       aria-busy={isBusy}
       onKeyDown={(e) => {
         if (isBusy) return
@@ -74,7 +74,7 @@ export default function LensRing({ perspectives, activeId, waitingId = null, hea
                 </svg>
                 {p.label}
               </span>
-              <span className="v2-mark-sub">{isWaiting ? 'Finding this view' : isOn ? 'In focus' : count ? `Heard ${count}` : 'Not heard yet'}</span>
+              <span className="v2-mark-sub">{isWaiting ? 'finding this view' : isOn ? 'in focus' : count ? `heard ${count}` : 'not heard yet'}</span>
             </button>
           )
         })}

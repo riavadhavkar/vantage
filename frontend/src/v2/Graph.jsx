@@ -18,11 +18,11 @@ const DIM = '#C6CDD5'
 const SIGNAL = '#FF6A4D'
 // Line style carries the meaning (solid, arrow, dotted, thin, dashed); color only backs it up.
 const EDGE_STYLE = {
-  caused_by: { label: 'Caused by', style: { stroke: TEXT, strokeOpacity: 0.6, strokeWidth: 1.5 } },
-  happened_next: { label: 'Happened next', style: { stroke: TEXT, strokeOpacity: 0.6, strokeWidth: 1.5 }, arrow: true },
-  same_event: { label: 'Same event, another view', style: { stroke: TEXT, strokeOpacity: 0.6, strokeWidth: 1.5, strokeDasharray: '1 5', strokeLinecap: 'round' } },
-  deeper_context: { label: 'Deeper context', style: { stroke: DIM, strokeOpacity: 0.7, strokeWidth: 1 } },
-  opposing_view: { label: 'Opposing view', style: { stroke: SIGNAL, strokeWidth: 1.5, strokeDasharray: '6 4' } },
+  caused_by: { label: 'caused by', style: { stroke: TEXT, strokeOpacity: 0.6, strokeWidth: 1.5 } },
+  happened_next: { label: 'happened next', style: { stroke: TEXT, strokeOpacity: 0.6, strokeWidth: 1.5 }, arrow: true },
+  same_event: { label: 'same event, another view', style: { stroke: TEXT, strokeOpacity: 0.6, strokeWidth: 1.5, strokeDasharray: '1 5', strokeLinecap: 'round' } },
+  deeper_context: { label: 'deeper context', style: { stroke: DIM, strokeOpacity: 0.7, strokeWidth: 1 } },
+  opposing_view: { label: 'opposing view', style: { stroke: SIGNAL, strokeWidth: 1.5, strokeDasharray: '6 4' } },
 }
 
 const SceneNode = memo(function SceneNode({ data }) {
@@ -34,9 +34,9 @@ const SceneNode = memo(function SceneNode({ data }) {
       <span className={`v2-node-thumb ${isCurrent ? 'is-current' : ''}`}>
         <img src={thumb} alt="" className={real ? 'print-color' : ''} />
         {real && (
-          <span className="v2-node-ai" title="AI-generated illustration">
+          <span className="v2-node-ai" title="ai-generated illustration">
             <Sparkles aria-hidden="true" size={10} strokeWidth={2.2} />
-            <span className="v2-sr">AI-generated illustration</span>
+            <span className="v2-sr">ai-generated illustration</span>
           </span>
         )}
       </span>
@@ -132,13 +132,14 @@ export default function Graph({ nodes, edges, currentSegmentId, looks = {}, pers
         elementsSelectable={false}
         nodesFocusable={false}
         colorMode="dark"
+        proOptions={{ hideAttribution: true }}
         style={{ background: 'transparent' }}
       >
         <Background color="rgba(243,245,246,0.06)" gap={24} size={1} />
         <Controls showInteractive={false} position="top-right" />
         <Camera firstId={nodes[0]?.segment_id} currentId={currentSegmentId} count={nodes.length} isCalm={isCalm} />
       </ReactFlow>
-      <ul aria-label="Legend" className="v2-graph-legend">
+      <ul aria-label="legend" className="v2-graph-legend">
         {Object.entries(EDGE_STYLE).map(([key, st]) => (
           <li key={key}>
             <svg aria-hidden="true" width="28" height="6">
@@ -150,7 +151,7 @@ export default function Graph({ nodes, edges, currentSegmentId, looks = {}, pers
         {Object.keys(thumbs).length > 0 && (
           <li>
             <span className="v2-node-ai is-legend"><Sparkles aria-hidden="true" size={10} strokeWidth={2.2} /></span>
-            AI-generated illustration
+            ai-generated illustration
           </li>
         )}
       </ul>

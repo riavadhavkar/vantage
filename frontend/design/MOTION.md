@@ -137,7 +137,7 @@ The icon (unequal sign), the words "Sources disagree" and the letters A and B ca
 | 35 | Error and offline notes | Fade in with a 4 px rise. No shake. Job: feedback | `panel`, `ease-enter` | Visible | One element |
 | 36 | Buttons, on press | Scale to 0.97 and back. Job: feedback | `micro` | None | Transform |
 | 37 | Focus ring | Ring grows from 0 to its 3 px offset. Job: feedback | `micro`, `ease-enter` | Instant | Outline offset |
-| 38 | Toggles (sound, ambient, pause) | Icon crossfades, thumb slides. Job: feedback | `micro` | Instant | Opacity, translate |
+| 38 | Toggles (sound, pause) | Icon crossfades, thumb slides. Job: feedback | `micro` | Instant | Opacity, translate |
 | 39 | Tooltips | Fade and 4 px rise after a 400 ms hover; instant on keyboard focus. Job: feedback | `micro` | Instant | One element |
 | 40 | Sheets (evidence, graph, map) | Slide in on a spring, scrim fades. Job: continuity | `spring`; scrim `quick` | Fade, `quick` | Transform on one layer |
 

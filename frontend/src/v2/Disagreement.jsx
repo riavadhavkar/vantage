@@ -35,7 +35,7 @@ export default function Disagreement({ contradiction, sourcesById, lookOf, onOpe
   return (
     <motion.section
       className="v2-glass v2-dis"
-      aria-label="Sources disagree"
+      aria-label="sources disagree"
       initial={isCalm ? { opacity: 0 } : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: sec(isCalm ? DURATION.quick : DURATION.panel), ease: EASING.enter }}
@@ -52,7 +52,7 @@ export default function Disagreement({ contradiction, sourcesById, lookOf, onOpe
       </div>
       {explanation && (
         <motion.p className="v2-dis-why" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: sec(DURATION.panel), delay: sec(isCalm ? 0 : meet + DURATION.scene / 2), ease: EASING.enter }}>
-          <strong>Why they differ. </strong>
+          <strong>why they differ. </strong>
           {explanation}
         </motion.p>
       )}

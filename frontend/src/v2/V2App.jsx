@@ -1,4 +1,4 @@
-// Root of the new UI (?ui=v2). Same session, same callbacks, same data as the classic screens.
+// Root of the interface: the landing page or the player, under one toast stack.
 import '@fontsource-variable/archivo/wdth.css'
 import '@fontsource-variable/newsreader/opsz.css'
 import './v2.css'
@@ -6,9 +6,10 @@ import { useEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
 import Landing from './Landing.jsx'
 import Player from './Player.jsx'
+import Toaster from '../components/Toaster.jsx'
 import { useCalmMotion } from '../lib/motionMode.js'
 
-export default function V2App({ isPlayer, session, topic, onStart, onExit, isSoundOn, onToggleSound, dataSource, language, onRestart }) {
+export default function V2App({ isPlayer, session, topic, onStart, onExit, isSoundOn, onToggleSound, dataSource, language }) {
   const isCalm = useCalmMotion()
   const [view, setView] = useState(isPlayer ? 'player' : 'landing')
 
@@ -26,11 +27,13 @@ export default function V2App({ isPlayer, session, topic, onStart, onExit, isSou
 
   return (
     <div className="v2">
-      {view === 'player' && session.currentSegment ? (
-        <Player session={session} topic={topic} isSoundOn={isSoundOn} onToggleSound={onToggleSound} onExit={onExit} dataSource={dataSource} language={language} onRestart={onRestart} shouldReveal={!document.startViewTransition} />
-      ) : (
-        <Landing onStart={onStart} isStarting={session.isLoading} error={session.error} isSoundOn={isSoundOn} onToggleSound={onToggleSound} dataSource={dataSource} language={language} />
-      )}
+      <Toaster>
+        {view === 'player' && session.currentSegment ? (
+          <Player session={session} topic={topic} isSoundOn={isSoundOn} onToggleSound={onToggleSound} onExit={onExit} dataSource={dataSource} language={language} shouldReveal={!document.startViewTransition} />
+        ) : (
+          <Landing onStart={onStart} isStarting={session.isLoading} error={session.error} dataSource={dataSource} language={language} />
+        )}
+      </Toaster>
     </div>
   )
 }
