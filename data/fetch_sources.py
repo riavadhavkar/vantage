@@ -6,6 +6,8 @@ Usage (on your laptop, not a server):
     python fetch_sources.py                 # all docs
     python fetch_sources.py --priority P1   # core sources first (both topics)
     python fetch_sources.py --topic princeton --priority P1   # Princeton core only
+    python fetch_sources.py --only D35,D36                     # specific docs
+After any partial run, run rebuild_manifest.py so manifest.json lists every doc.
 
 Every chunk should carry the doc's `topic` in its ChromaDB metadata, and
 retrieval should filter on it, so a Titanic question never pulls Princeton text.
@@ -72,6 +74,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--priority", choices=["P1", "P2"], default=None)
     ap.add_argument("--topic", choices=["princeton", "titanic"], default=None)
+    ap.add_argument("--only", default=None, help="comma-separated doc ids, e.g. D35,D36")
     args = ap.parse_args()
     os.makedirs(OUT, exist_ok=True)
 
@@ -81,10 +84,16 @@ def main():
         rows = [r for r in rows if r["priority"] == args.priority]
     if args.topic:
         rows = [r for r in rows if r["topic"] == args.topic]
+    if args.only:
+        wanted = {d.strip() for d in args.only.split(",")}
+        rows = [r for r in rows if r["doc_id"] in wanted]
 
     manifest, failed = {}, []
     for row in rows:
         did = row["doc_id"]
+        if row["fetch_method"] == "link":
+            print(f"LINK {did}  video: watch it, then write your own 2-3 sentence summary into {OUT}/{did}.txt")
+            continue
         try:
             text = clean(fetch(row))
             if len(text) < 300:
