@@ -68,7 +68,18 @@ export function createMockServer({ bundles, isDemo = false, mediaBase = '' }) {
       return clone(lastBundle.topic)
     },
 
-    async startSession(topic) {
+    async getLanguages() {
+      await delay(150)
+      return { languages: [{ code: 'en', name: 'English' }, { code: 'es', name: 'Spanish' }, { code: 'hi', name: 'Hindi' }, { code: 'fr', name: 'French' }] }
+    },
+
+    // Never invents real content: the output is plainly marked as a sample.
+    async translateText(text, target) {
+      await delay(500)
+      return { text: `SAMPLE [${target}]: ${text}`, target }
+    },
+
+    async startSession(topic, language = 'en') {
       await delay(900)
       const bundle = matchBundle(topic)
       if (!bundle) {
@@ -78,7 +89,7 @@ export function createMockServer({ bundles, isDemo = false, mediaBase = '' }) {
       }
       lastBundle = bundle
       const session_id = `${isDemo ? 'demo' : 'mock'}-${Date.now().toString(36)}-${++counter}`
-      const session = { session_id, bundle, visited: [], asks: 0 }
+      const session = { session_id, bundle, visited: [], asks: 0, language }
       sessions.set(session_id, session)
       const first = bundle.segments.find((s) => s.segment_id === bundle.start_segment_id) || bundle.segments[0]
       // A phone can only join a session that lives on the server, so the cached demo has no code.
