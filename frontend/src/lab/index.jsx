@@ -11,10 +11,13 @@ export const DIRECTIONS = [
   { id: 'stories', name: 'Stories', line: 'Full-screen cards. Tap to advance, swipe to change sides.', load: () => import('./stories/Stories.jsx') },
 ]
 
+// Review tools that are not directions.
+const TOOLS = [{ id: 'motion', name: 'Motion bench', load: () => import('./MotionBench.jsx') }]
+
 const LabIndex = lazy(() => import('./LabIndex.jsx'))
 
 export function mount(rootEl, id) {
-  const dir = DIRECTIONS.find((d) => d.id === id)
+  const dir = [...DIRECTIONS, ...TOOLS].find((d) => d.id === id)
   const Page = dir ? lazy(dir.load) : LabIndex
   document.documentElement.dataset.lab = dir ? dir.id : 'index'
   document.title = dir ? `${dir.name} · Vantage lab` : 'Vantage design lab'

@@ -81,7 +81,7 @@ export default function LabIndex() {
           </section>
         ))}
       </div>
-      <footer className="lab-foot">Sample content from the bundled mock story. No network calls. Briefs, wireframes and scores are in frontend/design/DIRECTIONS.md.</footer>
+      <footer className="lab-foot">Sample content from the bundled mock story. No network calls. Briefs, wireframes and scores are in frontend/design/DIRECTIONS.md. <a href="/lab/motion">Motion bench</a> shows the duration and easing tokens.</footer>
     </main>
   )
 }

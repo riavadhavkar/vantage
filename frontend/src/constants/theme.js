@@ -27,6 +27,19 @@ export const PULL_OPEN_MS = 260
 export const DEVELOP_MS = 1200
 export const EASE_FOCUS = [0.2, 0.7, 0.1, 1]
 
+/* ---------- motion tokens (new UI). Mirrored in src/index.css @theme; scaled by ?motion= in src/lib/motionMode.js ---------- */
+
+/** One duration scale for everything. micro: press and hover. quick: small reveals. panel: sheets and rows.
+ *  scene: stage-level changes. slow: one-off arrivals (landing load, image develop). */
+export const DURATION = Object.freeze({ micro: 120, quick: 200, panel: 320, scene: 600, slow: 900 })
+/** The perspective switch: soften, swap under the blur, sharpen. 700 ms in total, one easing. */
+export const SIGNATURE = Object.freeze({ soften: 260, swap: 180, sharpen: 260 })
+/** enter: things arriving (ease-out). move: things travelling between two places (ease-in-out). exit: things leaving. */
+export const EASING = Object.freeze({ enter: [0.2, 0.7, 0.1, 1], move: [0.65, 0, 0.2, 1], exit: [0.5, 0, 0.8, 0.4] })
+/** Physical movement (the lens ring, sheets, shared elements). Near critical damping: it settles, it does not bounce. */
+export const SPRING = Object.freeze({ type: 'spring', stiffness: 260, damping: 28, mass: 0.9 })
+export const STAGGER_STEP_MS = 60
+
 /* ---------- color math (sRGB <-> OKLCH, WCAG contrast) ---------- */
 
 const clamp01 = (v) => Math.min(1, Math.max(0, v))
