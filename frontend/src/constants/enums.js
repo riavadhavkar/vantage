@@ -1,12 +1,18 @@
 // Mirrors backend/enums.py EXACTLY. Change both together.
 export const PERSPECTIVE = Object.freeze({
   NARRATOR: "narrator",
-  BRITISH_RAJ: "british_raj",
-  CONGRESS_LEADERSHIP: "congress_leadership",
-  MUSLIM_LEAGUE: "muslim_league",
-  SIKH_COMMUNITY: "sikh_community",
-  REFUGEE: "refugee",
   HISTORIAN: "historian",
+  AMERICAN: "american",
+  BRITISH: "british",
+  TOWNSPEOPLE: "townspeople",
+  CREW: "crew",
+  FIRST_CLASS: "first_class",
+  STEERAGE: "steerage",
+});
+
+export const PERSPECTIVES_BY_TOPIC = Object.freeze({
+  princeton: ["narrator", "historian", "american", "british", "townspeople"],
+  titanic: ["narrator", "historian", "crew", "first_class", "steerage"],
 });
 
 export const MOOD = Object.freeze({
@@ -36,6 +42,8 @@ export const CHOICE_TYPE = Object.freeze({
 export const SOURCE_TYPE = Object.freeze({
   PRIMARY: "primary",
   SECONDARY: "secondary",
+  SECONDARY_WITH_PRIMARY: "secondary_with_primary",
+  INTERPRETIVE_FIRST_PERSON: "interpretive_first_person",
   ORAL_HISTORY: "oral_history",
   NEWS: "news",
   ENCYCLOPEDIA: "encyclopedia",
