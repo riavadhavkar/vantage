@@ -10,6 +10,12 @@ import { sceneKindFor } from '../lib/scene.js'
 import { unlockAudio } from '../lib/audio.js'
 import { messageFor } from '../api/errors.js'
 
+const EXAMPLE_TOPICS = (import.meta.env.VITE_VANTAGE_EXAMPLE_TOPICS || '')
+  .split(',')
+  .map((t) => t.trim())
+  .filter(Boolean)
+  .slice(0, 3)
+
 /**
  * @param {{ onStart: (topic: string) => void, topic: object|null, isStarting: boolean,
  *   error: object|null, isSoundOn: boolean, onToggleSound: () => void, dataSource: string }} props
@@ -24,9 +30,10 @@ export default function LandingScreen({ onStart, topic, isStarting, error, isSou
     return colors.map(gradeFor)
   }, [topic])
 
+  // From GET /api/topic when it exists; otherwise from VITE_VANTAGE_EXAMPLE_TOPICS (config, not code).
   const examples = useMemo(() => {
-    if (!topic) return []
-    return [...new Set([topic.title, ...(topic.aliases || [])])].slice(0, 3)
+    if (topic) return [...new Set([topic.title, ...(topic.aliases || [])])].slice(0, 3)
+    return EXAMPLE_TOPICS
   }, [topic])
 
   const begin = (text) => {
@@ -63,7 +70,7 @@ export default function LandingScreen({ onStart, topic, isStarting, error, isSou
 
       <div className="mt-8 grid gap-8 md:mt-10 md:grid-cols-12 md:gap-6">
         <motion.div className="md:col-span-6" {...fadeIn(0)}>
-          <h1 className="font-display text-[32px] leading-[36px] text-balance text-print sm:text-[44px] sm:leading-[48px] lg:text-[52px] lg:leading-[56px]">
+          <h1 className="text-[30px] font-semibold leading-[36px] tracking-[-0.025em] text-balance text-print sm:text-[40px] sm:leading-[46px] lg:text-[48px] lg:leading-[54px]">
             <span className="sr-only">Vantage. </span>
             See what happened from every side, and check every claim against its source.
           </h1>
@@ -87,13 +94,13 @@ export default function LandingScreen({ onStart, topic, isStarting, error, isSou
               onChange={(e) => setValue(e.target.value)}
               placeholder="Type a topic"
               autoComplete="off"
-              className="min-h-12 flex-1 rounded-[2px] border border-print/20 bg-developer px-4 text-base text-print placeholder:text-fog focus:border-print/60 focus:outline-none"
+              className="min-h-12 flex-1 rounded-md border border-print/20 bg-developer px-4 text-base text-print placeholder:text-fog focus:border-print/60 focus:outline-none"
               aria-describedby={error ? 'start-error' : undefined}
             />
             <button
               type="submit"
               disabled={isStarting}
-              className="min-h-12 rounded-[2px] bg-print px-6 text-base font-semibold text-prussian hover:bg-white disabled:cursor-not-allowed disabled:opacity-55"
+              className="min-h-12 rounded-full bg-print px-7 text-base font-semibold text-prussian hover:bg-white disabled:cursor-not-allowed disabled:opacity-55"
             >
               Begin
             </button>
@@ -101,7 +108,11 @@ export default function LandingScreen({ onStart, topic, isStarting, error, isSou
 
           <div className="mt-4 min-h-11">
             {isStarting ? (
-              <LoadingState message="Opening the archive..." className="min-h-11" />
+              <LoadingState
+                message="Opening the archive..."
+                slowMessage="Still reading the sources. The first scene can take a few seconds."
+                className="min-h-11"
+              />
             ) : error ? (
               <div id="start-error" role="alert">
                 <p className="flex items-start gap-2 text-sm text-print">

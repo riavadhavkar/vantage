@@ -55,7 +55,7 @@ export default function VoiceInputButton({ onTranscript, isDisabled }) {
       } disabled:opacity-50`}
     >
       {isRecording ? (
-        <span className="recording-dot block h-3 w-3 rounded-[2px] bg-safelight" />
+        <span className="recording-dot block h-3 w-3 rounded-md bg-safelight" />
       ) : (
         <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4">
           <rect x="6.5" y="2" width="5" height="9" rx="2.5" />

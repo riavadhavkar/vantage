@@ -1,5 +1,5 @@
 // OWNER: Person B
-// The cinematic frame: graded illustration (or a drawn scene), grain, vignette,
+// The cinematic frame: graded illustration (or a drawn scene), soft vignette,
 // title, and paper source pins. The perspective pull closes the iris over it.
 import { useMemo } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
@@ -54,7 +54,7 @@ export default function Stage({ segment, grade, imageUrl, imageStatus, pull, pul
   const showPins = segment?.is_grounded && pull === 'idle'
 
   return (
-    <div className="stage relative w-full overflow-hidden bg-prussian sm:rounded-[2px]">
+    <div className="stage relative w-full overflow-hidden bg-prussian sm:rounded-xl">
       <AnimatePresence initial={false}>
         {segment && (
           <motion.div
@@ -93,13 +93,12 @@ export default function Stage({ segment, grade, imageUrl, imageStatus, pull, pul
       </AnimatePresence>
 
       <div className="vignette pointer-events-none absolute inset-0" />
-      <div className="grain pointer-events-none absolute inset-0" />
 
       {/* title scrim */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-prussian/90 via-prussian/40 to-transparent" />
       {segment && (
         <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-4 px-4 pb-4 sm:px-8 sm:pb-7">
-          <h2 className="font-display text-[28px] leading-[32px] text-balance text-print sm:text-[40px] sm:leading-[44px] lg:text-[48px] lg:leading-[52px]">
+          <h2 className="text-[26px] font-semibold leading-[30px] tracking-[-0.025em] text-balance text-print sm:text-[34px] sm:leading-[40px] lg:text-[40px] lg:leading-[46px]">
             {segment.title}
           </h2>
           {segment.date_label && <p className="mb-1 shrink-0 text-right text-xs text-print/85 sm:text-sm">{segment.date_label}</p>}
@@ -108,7 +107,7 @@ export default function Stage({ segment, grade, imageUrl, imageStatus, pull, pul
 
       {/* media status, quiet */}
       {segment?.is_grounded && imageStatus === 'loading' && (
-        <p className="absolute top-3 right-3 z-10 rounded-[2px] bg-prussian/70 px-2 py-1 text-xs text-fog">Developing the illustration...</p>
+        <p className="absolute top-3 right-3 z-10 rounded-md bg-prussian/70 px-2 py-1 text-xs text-fog">Developing the illustration...</p>
       )}
 
       {showPins && (

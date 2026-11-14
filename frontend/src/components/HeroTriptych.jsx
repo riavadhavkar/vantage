@@ -64,7 +64,7 @@ export default function HeroTriptych({ grades, sceneSeed, sceneKind, isIntroDone
         return (
           <motion.div
             key={i}
-            className="grain relative h-full flex-1 overflow-hidden"
+            className="relative h-full flex-1 overflow-hidden rounded-lg"
             initial={reduce ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1.2, delay: reduce ? 0 : (i * STAGGER_MS) / 1000, ease: EASE_FOCUS }}

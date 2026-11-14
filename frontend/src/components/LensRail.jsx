@@ -23,7 +23,7 @@ export default function LensRail({ perspectives = [], current, grades, heardCoun
                 disabled={isBusy && !isCurrent}
                 aria-current={isCurrent ? 'true' : undefined}
                 title={p.description || undefined}
-                className={`flex min-h-11 w-full items-center gap-3 rounded-[2px] px-2 py-2 text-left disabled:cursor-wait ${
+                className={`flex min-h-11 w-full items-center gap-3 rounded-md px-2 py-2 text-left disabled:cursor-wait ${
                   isCurrent ? 'bg-developer' : 'hover:bg-developer/60'
                 }`}
               >

@@ -59,12 +59,12 @@ function Ungrounded({ segment, onRecover }) {
   return (
     <div role="status" className="max-w-[64ch]">
       <div aria-hidden="true" className="mb-4 h-px w-16 bg-safelight" />
-      <p className="font-serif text-[18px] leading-[30px] text-print sm:text-[21px] sm:leading-[34px]">
+      <p className="text-[17px] leading-[27px] text-print sm:text-[19px] sm:leading-[30px]">
         We could not ground this part in the sources, so we are not narrating it.
       </p>
       {segment.grounding_notes && <p className="mt-3 text-sm text-fog">{segment.grounding_notes}</p>}
       {onRecover && (
-        <button type="button" onClick={onRecover} className="mt-5 min-h-11 rounded-[2px] border border-print/30 px-4 text-sm text-print hover:bg-developer">
+        <button type="button" onClick={onRecover} className="mt-5 min-h-11 rounded-md border border-print/30 px-4 text-sm text-print hover:bg-developer">
           Try another point of view
         </button>
       )}
@@ -100,7 +100,7 @@ export default function NarrativeCard({ segment, isActive, sourcesById = {}, onO
       <p
         aria-hidden="true"
         onClick={complete}
-        className={`cursor-text font-serif text-[18px] leading-[30px] text-pretty text-print transition-opacity duration-200 sm:text-[21px] sm:leading-[34px] ${isActive ? '' : 'opacity-40'}`}
+        className={`cursor-text text-[17px] leading-[27px] text-pretty text-print transition-opacity duration-200 sm:text-[19px] sm:leading-[30px] ${isActive ? '' : 'opacity-40'}`}
       >
         {shown}
         {!isDone && (

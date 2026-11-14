@@ -11,7 +11,7 @@ export default function SourceTag({ source, onOpen, className = '', label }) {
       onClick={onOpen}
       aria-label={`${text}. ${title}`}
       title={source?.title}
-      className={`on-paper inline-flex min-h-7 items-center rounded-[2px] border border-prussian/15 bg-fiber px-2 font-sans text-xs font-medium text-prussian hover:bg-white ${className}`}
+      className={`on-paper inline-flex min-h-7 items-center rounded-md border border-prussian/15 bg-fiber px-2 font-sans text-xs font-medium text-prussian hover:bg-white ${className}`}
     >
       {text}
     </button>

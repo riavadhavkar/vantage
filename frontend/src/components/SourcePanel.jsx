@@ -14,20 +14,20 @@ function SourceSheet({ source, grade, informed, isFocused, highlightClaim }) {
   }, [isFocused])
   return (
     <li ref={ref} className={`scroll-mt-4 border-t border-prussian/15 py-6 first:border-t-0 first:pt-2 ${isFocused ? '' : ''}`}>
-      <p className="text-xs text-prussian/80">
+      <p className="font-mono text-[12px] leading-[18px] text-prussian/80">
         {SOURCE_TYPE_LABEL[source.source_type] || 'Source'}
         {grade?.label ? ` · ${grade.label}` : ''}
       </p>
       <h3 className="mt-1 text-base font-semibold text-prussian">{source.title}</h3>
       {source.excerpt && (
-        <blockquote className="mt-3 font-doc text-[15px] leading-[24px] text-prussian">
+        <blockquote className="mt-3 font-mono text-[14px] leading-[23px] text-prussian">
           <mark className="box-decoration-clone px-0.5 text-prussian" style={{ backgroundColor: isFocused ? grade.mark : 'transparent', boxShadow: isFocused ? 'none' : `inset 0 -0.35em 0 ${grade.mark}` }}>
             {source.excerpt}
           </mark>
         </blockquote>
       )}
       {isFocused && highlightClaim && (
-        <p className="mt-3 font-doc text-[13px] leading-[20px] text-prussian/85">Cited for: {highlightClaim.text}</p>
+        <p className="mt-3 font-mono text-[13px] leading-[20px] text-prussian/85">Cited for: {highlightClaim.text}</p>
       )}
       <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs text-prussian/85">
         {source.attribution && (
@@ -119,27 +119,28 @@ export default function SourcePanel({ sources = [], isOpen, onToggle, focus, seg
           >
             <header className="flex items-center justify-between border-b border-prussian/15 px-5 py-3">
               <div>
-                <h2 className="font-display text-[28px] leading-[32px]">Sources</h2>
+                <h2 className="text-[22px] font-semibold leading-[28px] tracking-[-0.02em]">Sources</h2>
                 <p className="text-xs text-prussian/80">Evidence, not narration. Excerpts are set as typed.</p>
               </div>
               <button
                 ref={closeRef}
                 type="button"
                 onClick={onToggle}
-                className="min-h-11 min-w-11 rounded-[2px] px-3 text-sm font-medium text-prussian hover:bg-prussian/10"
+                className="min-h-11 min-w-11 rounded-md px-3 text-sm font-medium text-prussian hover:bg-prussian/10"
               >
                 Close
               </button>
             </header>
             <div className="flex-1 overflow-y-auto px-5 pb-10">
               {isLoading && sources.length === 0 ? (
-                <LoadingState tone="paper" message="Pulling the files..." className="py-6" />
+                <LoadingState tone="paper" message="Pulling the files..." slowMessage="Still pulling the files. This can take a few seconds." className="py-6" />
               ) : error && sources.length === 0 ? (
                 <p className="py-6 text-sm">The sources could not load. Close this panel and try again.</p>
               ) : sources.length === 0 ? (
                 <p className="py-6 text-sm">No sources yet. They appear here as the story cites them.</p>
               ) : (
                 <>
+                  {isLoading && <LoadingState tone="paper" message="Checking for new sources..." className="pt-4" />}
                   <ul>
                     {visible.map((s) => (
                       <SourceSheet
