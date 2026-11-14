@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useTransform } from 'motion/react'
 import { FileText, Map as MapIcon, Maximize2, Minimize2, Pause, Play, Share2, Volume2, VolumeX, Waypoints } from 'lucide-react'
 import usePlayer from './usePlayer.js'
 import Frame from './Frame.jsx'
+import Shutter from './Shutter.jsx'
 import LensRing from './LensRing.jsx'
 import Choices from './Choices.jsx'
 import Evidence from './Evidence.jsx'
@@ -189,11 +190,9 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
   return (
     <main className={`v2-player is-sketch ${shouldReveal && !isCalm ? 'v2-reveal' : ''} ${isMoving ? 'is-moving' : ''}`} style={{ '--accent': look.accent }}>
       <Frame segment={shown} look={dis ? sideLook(dis.side_a) : look} splitLook={dis ? sideLook(dis.side_b) : null} imageUrl={narration.imageUrl} imageUrls={narration.imageUrls} imageStatus={narration.imageStatus} soft={pull.soft} isPulling={isPulling} isCalm={isCalm} isPaused={!!evidence || !!panel || isSharing || isTranscriptOpen} isUngrounded={!shown.is_grounded}>
-        {waitingView && (
-          <div className="v2-stage-status">
-            <Waiting message={`finding ${waitingView.replace(/^The /, 'the ').toLowerCase()}`} slowMessage="still writing this view from the sources. it can take a few seconds." />
-          </div>
-        )}
+        <AnimatePresence>
+          {waitingView && <Shutter key="pull" variant="inline" message={`finding ${waitingView.toLowerCase()}...`} />}
+        </AnimatePresence>
       </Frame>
 
       {/* top: wordmark and date | ask pill and title | five icons and the ai badge */}
