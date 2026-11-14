@@ -133,7 +133,6 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
     },
     [viewScene],
   )
-  const [isAmbientOn, setIsAmbientOn] = useState(false)
   const [isSharing, setIsSharing] = useState(false)
   const closeShare = useCallback(() => setIsSharing(false), [])
   // Cmd+K / Ctrl+K
@@ -255,7 +254,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
             <IconBtn label="map" icon={MapIcon} isPressed={panel === 'map'} onClick={() => setPanel('map')} />
             <IconBtn label="sources" icon={FileText} badge={P.citedCount || null} isPressed={!!evidence} onClick={() => openEvidence()} />
             <IconBtn label={isSoundOn ? 'sound on' : 'sound off'} icon={isSoundOn ? Volume2 : VolumeX} onClick={onToggleSound} tip="left" />
-            <SettingsPopover variant="v2" language={language} onRestart={onRestart} mood={shown.mood} isAmbientOn={isAmbientOn} onToggleAmbient={() => setIsAmbientOn((v) => !v)} />
+            <SettingsPopover variant="v2" language={language} onRestart={onRestart} />
           </div>
           {aiKind && <AiBadge kind={aiKind} className="v2-hud-badge" />}
         </div>

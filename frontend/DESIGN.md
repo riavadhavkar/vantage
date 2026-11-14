@@ -46,7 +46,7 @@ Scales: type 12, 13, 15, 17, 20, 28, 40, display 44 to 112. Space 4, 8, 12, 16, 
 
 Motion tokens live in `src/constants/theme.js` and the `@theme static` block of `src/index.css`: durations 120, 200, 320, 600, 900 ms, the 700 ms signature, a 60 ms stagger, three easings and one spring. See MOTION.md.
 
-The v2 root re-points the base color and font variables (`--color-prussian` and the rest), so the shared components in `src/components/` (ask pill, subtitles, language selects, settings popover, voice input, ambient, continue on phone) take this look without edits.
+The v2 root re-points the base color and font variables (`--color-prussian` and the rest), so the shared components in `src/components/` (ask pill, subtitles, language selects, settings popover, voice input) take this look without edits.
 
 ## Trust rules (these are structural, not stylistic)
 
