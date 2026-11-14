@@ -40,3 +40,8 @@ export const SOURCE_TYPE = Object.freeze({
   NEWS: "news",
   ENCYCLOPEDIA: "encyclopedia",
 });
+
+export const MODE = Object.freeze({
+  WEB: "web",
+  IMESSAGE: "imessage",
+});
