@@ -27,3 +27,24 @@ def generate_audio(text: str, voice_id: Optional[str] = None) -> Optional[bytes]
     except Exception as e:
         print(f"[tts] failed: {str(e)[:200]}")
         return None
+
+
+def transcribe(audio_bytes: bytes, filename: str = "question.webm",
+               content_type: str = "audio/webm") -> Optional[str]:
+    """Speech to text with ElevenLabs Scribe. Returns the transcript or None."""
+    if not ELEVENLABS_API_KEY:
+        print("[stt] no ELEVENLABS_API_KEY set")
+        return None
+    try:
+        r = httpx.post(
+            "https://api.elevenlabs.io/v1/speech-to-text",
+            headers={"xi-api-key": ELEVENLABS_API_KEY},
+            files={"file": (filename, audio_bytes, content_type)},
+            data={"model_id": os.getenv("ELEVENLABS_STT_MODEL", "scribe_v1")},
+            timeout=60,
+        )
+        r.raise_for_status()
+        return (r.json().get("text") or "").strip() or None
+    except Exception as e:
+        print(f"[stt] failed: {str(e)[:200]}")
+        return None

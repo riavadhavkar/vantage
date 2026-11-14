@@ -55,3 +55,16 @@ def tts(body: TtsRequest, request: Request):
         with open(path, "wb") as f:
             f.write(data)
     return TtsResponse(audio_url=_url(request, name))
+
+
+from fastapi import UploadFile, File
+
+
+@router.post("/transcribe")
+async def transcribe(audio: UploadFile = File(...)):
+    data = await audio.read()
+    text = elevenlabs_service.transcribe(
+        data, audio.filename or "question.webm", audio.content_type or "audio/webm")
+    if not text:
+        return _error(502, "transcribe_failed", "Could not understand the recording.")
+    return {"text": text}

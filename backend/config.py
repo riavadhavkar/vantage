@@ -35,7 +35,7 @@ GEMINI_EMBED_MODEL = os.getenv("GEMINI_EMBED_MODEL", "gemini-embedding-2")
 IMAGE_STYLE_PREFIX = (
     "Cinematic painted illustration in rich, vivid color, dramatic lighting with warm golden "
     "highlights and deep blues, detailed historical setting, like film concept art, "
-    "no text, no lettering: "
+    "no text, no lettering, no signature, no watermark: "
 )
 
 XAI_API_KEY = os.getenv("XAI_API_KEY", "")
