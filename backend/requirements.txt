@@ -1,6 +1,11 @@
-# OWNER: Person A
 fastapi
 uvicorn[standard]
-pydantic
+pydantic>=2
 python-dotenv
+python-multipart
+google-genai
+chromadb
+deepagents
+langchain-google-genai
+elevenlabs
 httpx
