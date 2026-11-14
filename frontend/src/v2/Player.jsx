@@ -187,7 +187,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
     : [
         ...(isLoading || isPulling || P.isLookingBack ? [] : P.perspectives.filter((p) => p.perspective_id !== shown.perspective)).map((p) => ({
           id: `p-${p.perspective_id}`,
-          group: 'Switch to',
+          group: 'switch to',
           label: p.label,
           color: lookOf(p.perspective_id).accent,
           hint: P.heard[p.perspective_id] ? `heard ${P.heard[p.perspective_id]}` : 'not heard yet',
@@ -195,27 +195,27 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
         })),
         ...(showNext && !isLoading && shown.is_grounded && !shown.is_final ? shown.choices : []).map((c) => ({
           id: `c-${c.choice_id}`,
-          group: 'Go to',
+          group: 'go to',
           label: c.label,
           color: lookOf(c.perspective).accent,
           hint: (CHOICE_TYPE_LABEL[c.choice_type] || '').toLowerCase(),
           run: () => P.doChoose(c),
         })),
-        { id: 't-sources', group: 'Open', label: 'How this was grounded', hint: 'sources', run: () => openEvidence() },
-        { id: 't-graph', group: 'Open', label: 'How the story connects', hint: 'graph', run: () => setPanel('graph') },
-        { id: 't-map', group: 'Open', label: 'Where this happened', hint: 'map', run: () => setPanel('map') },
-        ...(shown.is_grounded ? [{ id: 't-share', group: 'Open', label: 'Share this moment', hint: 'image', run: () => setIsSharing(true) }] : []),
+        { id: 't-sources', group: 'open', label: 'how this was grounded', hint: 'sources', run: () => openEvidence() },
+        { id: 't-graph', group: 'open', label: 'story connections', hint: 'graph', run: () => setPanel('graph') },
+        { id: 't-map', group: 'open', label: 'map', hint: 'map', run: () => setPanel('map') },
+        ...(shown.is_grounded ? [{ id: 't-share', group: 'open', label: 'share this moment', hint: 'image', run: () => setIsSharing(true) }] : []),
         ...P.sources
           .filter((src) => P.segments.some((seg) => seg.source_ids?.includes(src.source_id) || seg.claims?.some((c) => c.source_id === src.source_id)))
           .map((src) => ({
             id: `s-${src.source_id}`,
-            group: 'Source',
+            group: 'source',
             label: src.title,
             hint: sourceLabel(src).toLowerCase(),
             run: () => openEvidence(src.source_id, shown.claims.find((c) => c.source_id === src.source_id)),
           })),
-        { id: 't-sound', group: 'Sound', label: isSoundOn ? 'Turn sound off' : 'Turn sound on', run: onToggleSound },
-        { id: 't-exit', group: 'Story', label: 'Start a new topic', run: onExit },
+        { id: 't-sound', group: 'sound', label: isSoundOn ? 'turn sound off' : 'turn sound on', run: onToggleSound },
+        { id: 't-exit', group: 'story', label: 'start a new topic', run: onExit },
       ]
 
   // The ring turns as soon as a view is asked for and keeps its target until the frame has caught up,

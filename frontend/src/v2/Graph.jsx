@@ -34,9 +34,9 @@ const SceneNode = memo(function SceneNode({ data }) {
       <span className={`v2-node-thumb ${isCurrent ? 'is-current' : ''}`}>
         <img src={thumb} alt="" className={real ? 'print-color' : ''} />
         {real && (
-          <span className="v2-node-ai" title="AI-generated illustration">
+          <span className="v2-node-ai" title="ai-generated illustration">
             <Sparkles aria-hidden="true" size={10} strokeWidth={2.2} />
-            <span className="v2-sr">AI-generated illustration</span>
+            <span className="v2-sr">ai-generated illustration</span>
           </span>
         )}
       </span>

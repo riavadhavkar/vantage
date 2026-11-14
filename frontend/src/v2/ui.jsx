@@ -8,9 +8,9 @@ import { sec, spring, useCalmMotion } from '../lib/motionMode.js'
 /** The only wording for AI-made media. Nothing in the new UI may reword or hide it. */
 const AI_COPY = { both: 'ai generated illustration and narration', image: 'ai generated illustration', voice: 'ai narration' }
 const SOURCE_COPY = {
-  mock: 'Sample content for development, not live',
-  demo: 'Cached demo, not live',
-  offline: 'Offline mode. Playing the cached demo',
+  mock: 'sample content for development, not live',
+  demo: 'cached demo, not live',
+  offline: 'offline mode. playing the cached demo',
 }
 
 export function AiBadge({ kind = 'image', className = '' }) {
@@ -162,7 +162,7 @@ function SheetBody({ onClose, title, subtitle, tone, children, headerExtra, clas
             {subtitle && <p>{subtitle}</p>}
           </div>
           {headerExtra}
-          <button ref={closeRef} type="button" className="v2-icon" onClick={onClose} aria-label="Close">
+          <button ref={closeRef} type="button" className="v2-icon" onClick={onClose} aria-label="close">
             <X aria-hidden="true" size={18} strokeWidth={1.7} />
           </button>
         </header>

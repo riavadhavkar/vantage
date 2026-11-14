@@ -36,7 +36,7 @@ export default function Palette({ items, onClose }) {
         className="v2-pal"
         role="dialog"
         aria-modal="true"
-        aria-label="Jump to"
+        aria-label="jump to"
         initial={{ opacity: 0, y: isCalm ? 0 : 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: sec(DURATION.quick), ease: EASING.enter }}
@@ -47,8 +47,8 @@ export default function Palette({ items, onClose }) {
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Jump to a point of view, a next step, or a source"
-            aria-label="Jump to"
+            placeholder="jump to a point of view, a next step, or a source"
+            aria-label="jump to"
             role="combobox"
             aria-expanded="true"
             aria-controls="v2-pal-list"
@@ -64,8 +64,8 @@ export default function Palette({ items, onClose }) {
           />
           <Kbd>esc</Kbd>
         </div>
-        <ul id="v2-pal-list" role="listbox" aria-label="Results">
-          {list.length === 0 && <li className="v2-pal-none">Nothing matches. Try a name, a source, or "map".</li>}
+        <ul id="v2-pal-list" role="listbox" aria-label="results">
+          {list.length === 0 && <li className="v2-pal-none">nothing matches. try a name, a source, or "map".</li>}
           {list.map((it, n) => (
             <li
               key={it.id}

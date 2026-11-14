@@ -52,7 +52,7 @@ function DrawnChart({ location, travelFrom, isCalm }) {
           {location.label}
         </motion.text>
       </svg>
-      <p>Drawn chart. {fmt(location.lat, 'N', 'S')}, {fmt(location.lng, 'E', 'W')}</p>
+      <p>drawn chart. {fmt(location.lat, 'N', 'S')}, {fmt(location.lng, 'E', 'W')}</p>
     </div>
   )
 }
@@ -114,7 +114,7 @@ export default function TravelMap({ location, travelFrom, isOffline }) {
     }
   }, [location, travelFrom, useChart, isCalm])
 
-  if (!location) return <p className="v2-map-empty">This part of the story has no place on the map. Choose a scene with a location to see it here.</p>
+  if (!location) return <p className="v2-map-empty">this part of the story has no place on the map. choose a scene with a location to see it here.</p>
   if (useChart) return <DrawnChart key={`${location.lat},${location.lng}`} location={location} travelFrom={travelFrom} isCalm={isCalm} />
   return <div ref={el} className="v2-map" aria-label={`Map showing ${location.label}`} role="region" />
 }
