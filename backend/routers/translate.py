@@ -8,7 +8,25 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+import httpx
+
+from config import XAI_API_KEY
 from services import gemini_service
+
+
+def _fast_translate(prompt: str) -> str:
+    """Fast, cheap model for translation; falls back to the normal text chain."""
+    try:
+        r = httpx.post("https://api.x.ai/v1/chat/completions",
+                       headers={"Authorization": f"Bearer {XAI_API_KEY}"},
+                       json={"model": "grok-4.20-0309-non-reasoning", "temperature": 0,
+                             "messages": [{"role": "user", "content": prompt}]},
+                       timeout=15)
+        r.raise_for_status()
+        return r.json()["choices"][0]["message"]["content"]
+    except Exception as e:
+        print(f"[translate] fast model failed, falling back: {str(e)[:120]}")
+        return gemini_service.generate_text(prompt)
 
 router = APIRouter()
 
@@ -41,7 +59,7 @@ def translate(body: TranslateRequest):
                   "Keep names, dates and numbers exactly as they are. Natural, spoken style. "
                   "Return only the translation, with no notes or quotes.\n\n" + text)
         try:
-            _CACHE[key] = gemini_service.generate_text(prompt).strip()
+            _CACHE[key] = _fast_translate(prompt).strip()
         except Exception as e:
             print(f"[translate] failed: {str(e)[:150]}")
             return JSONResponse(status_code=502, content={"error_code": "translate_failed",
