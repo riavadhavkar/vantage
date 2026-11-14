@@ -107,6 +107,8 @@ export default function App() {
             isSoundOn={isSoundOn}
             onToggleSound={toggleSound}
             dataSource={dataSource}
+            language={language}
+            onRestart={onRestart}
           />
         </Suspense>
       </MotionConfig>

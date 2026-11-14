@@ -1,5 +1,18 @@
 # Handoff: sketch layout and language support
 
+> **Update, after the merge with main: the sketch now targets the v2 interface (`?ui=v2`), which is the one that needed the redesign.** The first pass (below) rewrote the *classic* player; it is still on this branch and still works at `/`, but v2 is the real target. Everything in "What changed" below applies to both unless it says v2.
+>
+> **v2 pass (`src/v2/`)**
+> - `v2/Player.jsx`: top HUD (lowercase wordmark and bold rolling date | ask pill and title | share, story connections, map, sources, sound and a chevron for language settings, with the ai badge under them), subtitles above the lens ring, choices as a centered pill row, the existing disagreement card (text label, `≠` icon and red rule, not color alone), the "not grounded" notice, v2's own share card for the share icon, transcript sheet.
+> - `v2/LensRing` is the timeline "keep as is": only labels changed (lowercase, unheard dimmer, in focus bold; the ticks were already there). Done in `v2/sketch.css`, not in the component.
+> - Removed from v2: `Captions.jsx` and `claims.js` (the caption card with inline cited-sentence underlines and evidence chips). The sources panel (`Evidence`) still opens the grounding view. The "Jump to" button is gone (no sixth icon); Cmd/Ctrl+K still opens the palette. Ambient sound and the phone link moved into the settings popover.
+> - `v2/Landing.jsx`: the two selects sit under the topic field.
+> - `v2/ui.jsx` `AiBadge` now has `both | image | voice`; `Frame` no longer draws its own badge (the HUD derives it from image and voice state).
+> - Classic components reused inside v2 (they pick up v2 colors because `.v2` re-points the color tokens): `AskPill`, `Subtitles`, `LanguageSelects`, `SettingsPopover` (v2 trigger variant), `Ungrounded`.
+> - Scripts: `scripts/sketch-v2-shots.mjs` (screenshots `sketch-v2-*`), and `UI=v2 node scripts/sketch-verify.mjs` runs the behavior checks against v2. All checks pass on v2: keyboard (tab order now starts at the wordmark), reduced motion, placeholder rotation and pause, choices, contradiction, ungrounded, restart flow, demo (0 requests beyond the dev server), offline fallback.
+> - v2 contrast (worst case, pure white image behind the scrims; computed from the gradients): subtitles 8.4 to 13.8, date 13.1, title 10.5 to 12.3, ai badge 16.2, ring unheard labels 8.2.
+> - Not lowercased in v2: the landing page text, the Evidence (sources) sheet headings, and the Cmd+K palette. Only the player chrome in the sketch is lowercase.
+
 **Branch:** `b/ui-sketch` (worktree `../vantage-sketch`), based on `b/graph-ui` at `60a18ce`. Not pushed.
 **Decision from Ria:** the sketch layout replaces the current player. No flag, no classic fallback in this branch.
 

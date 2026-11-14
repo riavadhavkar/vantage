@@ -2,33 +2,35 @@
 // decides who is telling it. Data and actions come from usePlayer (same calls as classic).
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useTransform } from 'motion/react'
-import { Aperture, FileText, Map as MapIcon, Maximize2, Minimize2, Search, Share2, Volume2, VolumeX, Waypoints } from 'lucide-react'
+import { FileText, Map as MapIcon, Maximize2, Minimize2, Pause, Play, Share2, Volume2, VolumeX, Waypoints } from 'lucide-react'
 import usePlayer from './usePlayer.js'
 import Frame from './Frame.jsx'
-import Captions from './Captions.jsx'
 import LensRing from './LensRing.jsx'
 import Choices from './Choices.jsx'
 import Evidence from './Evidence.jsx'
 import Disagreement from './Disagreement.jsx'
-import VoiceInputButton from '../components/VoiceInputButton.jsx'
-import ContinueOnPhone from '../components/ContinueOnPhone.jsx'
-import AmbientPlayer from '../components/AmbientPlayer.jsx'
+import AskPill from '../components/AskPill.jsx'
+import Subtitles from '../components/Subtitles.jsx'
+import Ungrounded from '../components/Ungrounded.jsx'
+import SettingsPopover from '../components/SettingsPopover.jsx'
+import useSubtitleText from '../hooks/useSubtitleText.js'
+import { aiKindFor } from '../lib/aiKind.js'
 import { messageFor } from '../api/errors.js'
 import { DURATION, EASING, SPRING } from '../constants/theme.js'
 import { sec, spring } from '../lib/motionMode.js'
-import { Btn, DataBadge, IconBtn, Kbd, Sheet, Skeleton, Waiting } from './ui.jsx'
+import { AiBadge, Btn, DataBadge, IconBtn, Sheet, Skeleton, Waiting } from './ui.jsx'
 import { sourceLabel } from './labels.js'
 import { CHOICE_TYPE_LABEL } from '../constants/labels.js'
 import './player.css'
+import './sketch.css'
 
 // The graph and the map load on demand.
 const Graph = lazy(() => import('./Graph.jsx'))
 const TravelMap = lazy(() => import('./TravelMap.jsx'))
 const ShareCard = lazy(() => import('./ShareCard.jsx'))
 const Palette = lazy(() => import('./Palette.jsx'))
-const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 
-export default function Player({ session, topic, isSoundOn, onToggleSound, onExit, dataSource, shouldReveal = false }) {
+export default function Player({ session, topic, isSoundOn, onToggleSound, language, onRestart, onExit, dataSource, shouldReveal = false }) {
   const P = usePlayer({ session, topic, isSoundOn })
   const { shown, pull, look, lookOf, isCalm, isLoading, pending } = P
   // Which scene has finished narrating. Keyed by scene, so an instant typewriter (reduced motion)
@@ -38,6 +40,9 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
   const setIsTyped = useCallback((done) => setTypedId((id) => (done ? shownId : id === shownId ? null : id)), [shownId])
   const isTyped = typedId != null && typedId === shownId
   const isPulling = pull.phase !== 'idle'
+  const subtitle = useSubtitleText(shown, language)
+  const [isTranscriptOpen, setIsTranscriptOpen] = useState(false)
+  const closeTranscript = useCallback(() => setIsTranscriptOpen(false), [])
   const textOpacity = useTransform(pull.soft, (s) => 1 - 0.65 * s)
 
   // While the frame itself is changing, glass panels stop blurring what is behind them. Backdrop
@@ -114,15 +119,6 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
     return `Heard ${h} of ${plural(P.perspectives.length, 'point of view', 'points of view')}  ·  ${plural(c, 'source', 'sources')} cited${d ? `  ·  ${plural(d, 'disagreement', 'disagreements')}` : ''}`
   }, [shareStats, P.perspectives.length])
 
-  const [question, setQuestion] = useState('')
-  const submitQuestion = (e) => {
-    e.preventDefault()
-    const q = question.trim()
-    if (!q || isLoading) return
-    setQuestion('')
-    P.doAsk(q)
-  }
-
   // Cmd+K / Ctrl+K
   const [isPaletteOpen, setIsPaletteOpen] = useState(false)
   useEffect(() => {
@@ -184,100 +180,136 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
   const known = (id) => (id && P.perspectives.some((p) => p.perspective_id === id) ? id : null)
   const ringTarget = known(pending?.perspective) || known(session.currentSegment?.perspective) || shown.perspective
 
+  const narration = P.narration
+  const aiKind = aiKindFor({ hasImage: narration.imageStatus === 'ready' && !!narration.imageUrl, hasVoice: narration.voiceSource === 'remote' })
+  const hasPlayableVoice = narration.voiceSource === 'remote' || narration.voiceSource === 'device'
+  const subtitleNote = subtitle.status === 'loading' ? 'translating...' : subtitle.status === 'failed' ? 'subtitles unavailable' : null
+  const isTranslated = subtitle.status === 'ready'
+
   return (
-    <main className={`v2-player ${shouldReveal && !isCalm ? 'v2-reveal' : ''} ${isMoving ? 'is-moving' : ''}`} style={{ '--accent': look.accent }}>
-      <Frame segment={shown} look={dis ? sideLook(dis.side_a) : look} splitLook={dis ? sideLook(dis.side_b) : null} imageUrl={P.narration.imageUrl} imageUrls={P.narration.imageUrls} imageStatus={P.narration.imageStatus} soft={pull.soft} isPulling={isPulling} isCalm={isCalm} isPaused={!!evidence || !!panel || isSharing} isUngrounded={!shown.is_grounded}>
-        {shown.date_label && shown.is_grounded && !isPulling && (
-          <p key={shown.segment_id} className="v2-titlecard" aria-hidden="true"><span>{shown.date_label}</span></p>
-        )}
+    <main className={`v2-player is-sketch ${shouldReveal && !isCalm ? 'v2-reveal' : ''} ${isMoving ? 'is-moving' : ''}`} style={{ '--accent': look.accent }}>
+      <Frame segment={shown} look={dis ? sideLook(dis.side_a) : look} splitLook={dis ? sideLook(dis.side_b) : null} imageUrl={narration.imageUrl} imageUrls={narration.imageUrls} imageStatus={narration.imageStatus} soft={pull.soft} isPulling={isPulling} isCalm={isCalm} isPaused={!!evidence || !!panel || isSharing || isTranscriptOpen} isUngrounded={!shown.is_grounded}>
         {waitingView && (
           <div className="v2-stage-status">
-            <Waiting message={`Finding ${waitingView.replace(/^The /, 'the ')}`} slowMessage="Still writing this view from the sources. It can take a few seconds." />
+            <Waiting message={`finding ${waitingView.replace(/^The /, 'the ').toLowerCase()}`} slowMessage="still writing this view from the sources. it can take a few seconds." />
           </div>
         )}
       </Frame>
 
-      <header className="v2-bar">
-        <button type="button" className="v2-brand" onClick={onExit} aria-label="Vantage. Start a new topic">
-          <Aperture aria-hidden="true" size={20} strokeWidth={1.6} />
-          Vantage
-        </button>
-        <p className="v2-bar-topic">{P.topic?.title}</p>
-        <span className="v2-bar-gap" />
-        <DataBadge source={dataSource} />
-        <button type="button" className="v2-jump" onClick={() => setIsPaletteOpen(true)} aria-keyshortcuts={isMac ? 'Meta+K' : 'Control+K'}>
-          <Search aria-hidden="true" size={14} strokeWidth={1.8} />
-          Jump to
-          <Kbd>{isMac ? '⌘K' : 'Ctrl K'}</Kbd>
-        </button>
-        <IconBtn label="How the story connects" icon={Waypoints} isPressed={panel === 'graph'} onClick={() => setPanel('graph')} />
-        <IconBtn label="Where this happened" icon={MapIcon} isPressed={panel === 'map'} onClick={() => setPanel('map')} />
-        {shown.is_grounded && <IconBtn label="Share this moment" icon={Share2} isPressed={isSharing} onClick={() => setIsSharing(true)} />}
-        <IconBtn label="Sources" icon={FileText} badge={P.citedCount || null} isPressed={!!evidence} onClick={() => openEvidence()} />
-        <span className="v2-ambient"><AmbientPlayer mood={shown.mood} isOn={isAmbientOn} onToggle={() => setIsAmbientOn((v) => !v)} /></span>
-        <IconBtn label={isSoundOn ? 'Sound on' : 'Sound off'} icon={isSoundOn ? Volume2 : VolumeX} isPressed={isSoundOn} onClick={onToggleSound} tip="left" />
+      {/* top: wordmark and date | ask pill and title | five icons and the ai badge */}
+      <header className="v2-hud">
+        <div className="v2-hud-left">
+          <button type="button" className="v2-brand v2-wordmark-btn" onClick={onExit} aria-label="vantage. start a new topic">
+            vantage
+          </button>
+          <div className="v2-date-roll">
+            <AnimatePresence mode="popLayout" initial={false}>
+              {shown.date_label && (
+                <motion.p
+                  key={shown.date_label}
+                  className="v2-date-text"
+                  initial={{ opacity: 0, y: isCalm ? 0 : 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: isCalm ? 0 : -14 }}
+                  transition={{ duration: sec(DURATION.panel), ease: EASING.enter }}
+                >
+                  {shown.date_label}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
+          <DataBadge source={dataSource} className="v2-hud-databadge" />
+        </div>
+
+        <div className="v2-hud-center">
+          <AskPill perspectives={P.perspectives} onSubmit={P.doAsk} isLoading={isLoading} />
+          {shown.title && (
+            <h2 key={shown.segment_id} className="v2-hud-title">
+              {shown.title}
+            </h2>
+          )}
+          <DataBadge source={dataSource} className="v2-hud-databadge-narrow" />
+          {aiKind && <AiBadge kind={aiKind} className="v2-hud-badge-narrow" />}
+        </div>
+
+        <div className="v2-hud-right">
+          <div className="v2-tools" role="toolbar" aria-label="story tools">
+            <IconBtn label="share" icon={Share2} isPressed={isSharing} onClick={() => shown.is_grounded && setIsSharing(true)} disabled={!shown.is_grounded} />
+            <IconBtn label="story connections" icon={Waypoints} isPressed={panel === 'graph'} onClick={() => setPanel('graph')} />
+            <IconBtn label="map" icon={MapIcon} isPressed={panel === 'map'} onClick={() => setPanel('map')} />
+            <IconBtn label="sources" icon={FileText} badge={P.citedCount || null} isPressed={!!evidence} onClick={() => openEvidence()} />
+            <IconBtn label={isSoundOn ? 'sound on' : 'sound off'} icon={isSoundOn ? Volume2 : VolumeX} onClick={onToggleSound} tip="left" />
+            <SettingsPopover variant="v2" language={language} onRestart={onRestart} mood={shown.mood} isAmbientOn={isAmbientOn} onToggleAmbient={() => setIsAmbientOn((v) => !v)} linkCode={session.linkCode} />
+          </div>
+          {aiKind && <AiBadge kind={aiKind} className="v2-hud-badge" />}
+        </div>
       </header>
 
-      <div className="v2-body">
-        <Captions
-          key={shown.segment_id}
-          segment={shown}
+      {/* bottom: notes, disagreement, choices, subtitles; then the ring */}
+      <motion.div className="v2-lower" style={{ opacity: textOpacity }}>
+        {P.isLookingBack && !isPulling && (
+          <div className="v2-glass v2-back" role="status">
+            <p>you are looking back at an earlier scene.</p>
+            <Btn variant="quiet" onClick={() => viewScene(null)}>return to where you were</Btn>
+          </div>
+        )}
+        {P.error && (
+          <div role="alert" className="v2-glass v2-note v2-error">
+            <p>{messageFor(P.error)}</p>
+            {P.error.code === 'session_not_found' ? <Btn variant="quiet" onClick={onExit}>start again</Btn> : <Btn variant="quiet" onClick={P.retry}>try again</Btn>}
+          </div>
+        )}
+        {pending && !pending.perspective && (
+          <div className="v2-glass v2-asking">
+            <Waiting
+              message={pending.kind === 'ask' ? 'looking through the sources' : pending.kind === 'start' ? 'opening the archive' : 'tracing connections'}
+              slowMessage="still working from the sources. this can take a few seconds."
+            />
+          </div>
+        )}
+        {dis && <Disagreement key={dis.contradiction_id || shown.segment_id} contradiction={dis} sourcesById={P.sourcesById} lookOf={lookOf} onOpenEvidence={(id) => openEvidence(id, shown.claims.find((c) => c.source_id === id))} isCalm={isCalm} />}
+        {shown.is_grounded === false && !isPulling && <Ungrounded segment={shown} onRecover={P.recover} />}
+        {showNext &&
+          (shown.is_final ? (
+            <div className="v2-glass v2-end">
+              <p>this thread ends here.</p>
+              <p>hear the same story from another side, or start again.</p>
+              <div className="v2-end-actions">
+                <Btn variant="quiet" onClick={P.recover} disabled={isLoading}>try another point of view</Btn>
+                <Btn variant="ghost" onClick={() => setPanel('graph')}>see how it connects</Btn>
+                <Btn variant="ghost" onClick={onExit}>start a new topic</Btn>
+              </div>
+            </div>
+          ) : (
+            <Choices key={shown.segment_id} choices={shown.is_grounded ? shown.choices : []} lookOf={lookOf} onChoose={choose} isBusy={isLoading} pendingChoiceId={pending?.choiceId} isCalm={isCalm} />
+          ))}
+
+        <Subtitles
+          text={subtitle.status === 'off' ? (shown.is_grounded ? shown.narrative_text || '' : '') : subtitle.text}
+          lang={subtitle.lang}
+          durationMs={narration.audioDurationMs}
+          resetKey={shown.segment_id}
+          isPlaying={narration.isPlaying}
+          hasFinished={narration.hasFinished}
+          isVisible={subtitle.status !== 'off' && !!shown.is_grounded}
           isActive={!isPulling}
-          isCalm={isCalm}
-          narration={P.narration}
-          sourcesById={P.sourcesById}
-          lookOf={lookOf}
-          textOpacity={textOpacity}
-          onTyped={setIsTyped}
-          onOpenEvidence={openEvidence}
-          onRecover={P.recover}
+          onDoneChange={setIsTyped}
+          onOpen={() => setIsTranscriptOpen(true)}
+          note={subtitleNote}
         />
 
-        <motion.div className="v2-side" style={{ opacity: textOpacity }}>
-          {P.isLookingBack && !isPulling && (
-            <div className="v2-glass v2-back" role="status">
-              <p>You are looking back at an earlier scene.</p>
-              <Btn variant="quiet" onClick={() => viewScene(null)}>Return to where you were</Btn>
-            </div>
-          )}
-          {P.error && (
-            <div role="alert" className="v2-glass v2-note v2-error">
-              <p>{messageFor(P.error)}</p>
-              {P.error.code === 'session_not_found' ? <Btn variant="quiet" onClick={onExit}>Start again</Btn> : <Btn variant="quiet" onClick={P.retry}>Try again</Btn>}
-            </div>
-          )}
-          {pending?.kind === 'ask' && !pending.perspective && (
-            <div className="v2-glass v2-asking">
-              <Waiting message="Looking through the sources" slowMessage="Still looking. Answers are written from the sources, which can take a few seconds." />
-            </div>
-          )}
-          {dis && <Disagreement key={dis.contradiction_id || shown.segment_id} contradiction={dis} sourcesById={P.sourcesById} lookOf={lookOf} onOpenEvidence={(id) => openEvidence(id, shown.claims.find((c) => c.source_id === id))} isCalm={isCalm} />}
-          {showNext &&
-            (shown.is_final ? (
-              <div className="v2-glass v2-end">
-                <p>This thread ends here.</p>
-                <p>Hear the same story from another side, or start again.</p>
-                <div className="v2-end-actions">
-                  <Btn variant="quiet" onClick={P.recover} disabled={isLoading}>Try another point of view</Btn>
-                  <Btn variant="ghost" onClick={onExit}>Start a new topic</Btn>
-                </div>
-              </div>
-            ) : (
-              <Choices key={shown.segment_id} choices={shown.is_grounded ? shown.choices : []} lookOf={lookOf} onChoose={choose} isBusy={isLoading} pendingChoiceId={pending?.choiceId} isCalm={isCalm} />
-            ))}
-          {showNext && (
-            <form className="v2-glass v2-ask" onSubmit={submitQuestion}>
-              <label htmlFor="v2-ask" className="v2-sr">Ask a question about this moment</label>
-              <input id="v2-ask" value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Ask about this moment" autoComplete="off" />
-              <VoiceInputButton onTranscript={setQuestion} isDisabled={isLoading} />
-              <Btn type="submit" variant="ghost" disabled={!question.trim() || isLoading} isLoading={pending?.kind === 'ask' && !pending?.perspective}>Ask</Btn>
-            </form>
-          )}
-          <ContinueOnPhone linkCode={session.linkCode} />
-        </motion.div>
-      </div>
+        <div className="v2-voice-row">
+          {hasPlayableVoice ? (
+            <IconBtn label={narration.isPlaying ? 'pause narration' : 'play narration'} icon={narration.isPlaying ? Pause : Play} onClick={narration.isPlaying ? narration.pause : narration.play} tip="above" />
+          ) : narration.voiceSource === 'loading' ? (
+            <span className="v2-voice-wait" role="status">preparing the voice...</span>
+          ) : null}
+          {narration.voiceSource === 'device' && <span className="v2-voice-wait">device voice</span>}
+          {narration.audioStatus === 'failed' && !narration.voiceSource && shown.is_grounded && <span className="v2-voice-wait">narration audio is unavailable. subtitles only.</span>}
+        </div>
+      </motion.div>
 
-      <div className="v2-ringwrap">
+      <div className="v2-ringwrap v2-ring-sketch">
         <LensRing
           perspectives={P.perspectives}
           activeId={ringTarget}
@@ -289,21 +321,35 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
         />
       </div>
 
+      <Sheet tone="dark" isOpen={isTranscriptOpen} onClose={closeTranscript} title="transcript">
+        <div className="v2-transcript">
+          <h3>{shown.title}</h3>
+          {subtitle.status !== 'off' && <p lang={subtitle.lang} className="v2-transcript-main">{subtitle.text}</p>}
+          {isTranslated && (
+            <>
+              <h4>original narration</h4>
+              <p lang={language.narrationLanguage}>{shown.narrative_text}</p>
+            </>
+          )}
+          <Btn variant="quiet" onClick={() => { setIsTranscriptOpen(false); openEvidence() }}>how this was grounded</Btn>
+        </div>
+      </Sheet>
+
       <Sheet
         tone="dark"
         isOpen={panel === 'graph'}
         onClose={closePanel}
-        title="How the story connects"
+        title="story connections"
         className={isFull ? 'is-full' : ''}
-        headerExtra={<Btn variant="ghost" icon={isFull ? Minimize2 : Maximize2} aria-pressed={isFull} onClick={() => setIsFull((v) => !v)}>{isFull ? 'Exit full view' : 'Full view'}</Btn>}
+        headerExtra={<Btn variant="ghost" icon={isFull ? Minimize2 : Maximize2} aria-pressed={isFull} onClick={() => setIsFull((v) => !v)}>{isFull ? 'exit full view' : 'full view'}</Btn>}
       >
         {P.graphState === 'loading' && !P.hasGraphData ? (
           <div className="v2-sheet-wait">
-            <Waiting message="Tracing connections" slowMessage="Still tracing connections. This can take a few seconds." />
+            <Waiting message="tracing connections" slowMessage="still tracing connections. this can take a few seconds." />
             <Skeleton lines={3} />
           </div>
         ) : (
-          <Suspense fallback={<div className="v2-sheet-wait"><Waiting message="Tracing connections" /></div>}>
+          <Suspense fallback={<div className="v2-sheet-wait"><Waiting message="tracing connections" /></div>}>
             <Graph nodes={P.graph.nodes} edges={P.graph.edges} currentSegmentId={P.graph.currentId} looks={P.looks} perspectives={P.perspectives} thumbs={P.thumbs} onSelectNode={lookBack} />
             {P.graphState === 'error' && <p className="v2-sheet-note" role="status">Showing the scenes seen so far. The full graph could not load.</p>}
           </Suspense>
@@ -313,11 +359,11 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, onExi
         tone="dark"
         isOpen={panel === 'map'}
         onClose={closePanel}
-        title={shown.location?.label || 'Where this happened'}
+        title={shown.location?.label || 'where this happened'}
         className={isFull ? 'is-full' : ''}
-        headerExtra={<Btn variant="ghost" icon={isFull ? Minimize2 : Maximize2} aria-pressed={isFull} onClick={() => setIsFull((v) => !v)}>{isFull ? 'Exit full view' : 'Full view'}</Btn>}
+        headerExtra={<Btn variant="ghost" icon={isFull ? Minimize2 : Maximize2} aria-pressed={isFull} onClick={() => setIsFull((v) => !v)}>{isFull ? 'exit full view' : 'full view'}</Btn>}
       >
-        <Suspense fallback={<div className="v2-sheet-wait"><Waiting message="Unrolling the map" /></div>}>
+        <Suspense fallback={<div className="v2-sheet-wait"><Waiting message="unrolling the map" /></div>}>
           <TravelMap location={shown.location} travelFrom={shown.travel_from} isOffline={dataSource !== 'live' && dataSource !== 'mock'} />
         </Suspense>
       </Sheet>

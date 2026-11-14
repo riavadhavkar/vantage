@@ -1,12 +1,12 @@
 // Primitives for the new UI. Each has hover, focus, pressed, disabled and loading states in v2.css.
-import { useEffect, useRef } from 'react'
+import { forwardRef, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Sparkles, X } from 'lucide-react'
 import { DURATION, EASING, SPRING } from '../constants/theme.js'
 import { sec, spring, useCalmMotion } from '../lib/motionMode.js'
 
 /** The only wording for AI-made media. Nothing in the new UI may reword or hide it. */
-const AI_COPY = { image: 'AI-generated illustration', voice: 'AI narration' }
+const AI_COPY = { both: 'ai generated illustration and narration', image: 'ai generated illustration', voice: 'ai narration' }
 const SOURCE_COPY = {
   mock: 'Sample content for development, not live',
   demo: 'Cached demo, not live',
@@ -44,14 +44,14 @@ export function Btn({ variant = 'quiet', isLoading = false, icon: Icon, children
 }
 
 /** Icon-only control. `label` is its accessible name and its tooltip. */
-export function IconBtn({ label, icon: Icon, isPressed, badge, className = '', tip = 'below', children, ...rest }) {
+export const IconBtn = forwardRef(function IconBtn({ label, icon: Icon, isPressed, badge, className = '', tip = 'below', children, ...rest }, ref) {
   return (
-    <button type="button" {...rest} aria-label={label} aria-pressed={isPressed} data-tip={label} data-tip-side={tip} className={`v2-icon ${className}`}>
+    <button ref={ref} type="button" {...rest} aria-label={label} aria-pressed={isPressed} data-tip={label} data-tip-side={tip} className={`v2-icon ${className}`}>
       {Icon ? <Icon aria-hidden="true" size={18} strokeWidth={1.7} /> : children}
       {badge != null && <span className="v2-icon-count">{badge}</span>}
     </button>
   )
-}
+})
 
 export const Kbd = ({ children }) => <kbd className="v2-kbd">{children}</kbd>
 

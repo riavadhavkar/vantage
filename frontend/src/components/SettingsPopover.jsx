@@ -8,8 +8,9 @@ import LanguageSelects from './LanguageSelects.jsx'
 import AmbientPlayer from './AmbientPlayer.jsx'
 import ContinueOnPhone from './ContinueOnPhone.jsx'
 import IconButton from './IconButton.jsx'
+import { IconBtn } from '../v2/ui.jsx'
 
-export default function SettingsPopover({ language, onRestart, mood, isAmbientOn, onToggleAmbient, linkCode }) {
+export default function SettingsPopover({ language, onRestart, mood, isAmbientOn, onToggleAmbient, linkCode, variant = 'classic' }) {
   const [isOpen, setIsOpen] = useState(false)
   const [pending, setPending] = useState(null) // narration code awaiting confirmation
   const root = useRef(null)
@@ -45,9 +46,13 @@ export default function SettingsPopover({ language, onRestart, mood, isAmbientOn
 
   return (
     <div ref={root} className="relative">
-      <IconButton tipAlign="end" ref={trigger} label="subtitles and languages" onClick={() => setIsOpen((v) => !v)} isPressed={isOpen} aria-expanded={isOpen} aria-controls={isOpen ? panelId : undefined} className="!w-7 sm:!w-8">
-        <ChevronDown aria-hidden="true" size={16} strokeWidth={1.75} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </IconButton>
+      {variant === 'v2' ? (
+        <IconBtn ref={trigger} label="subtitles and languages" icon={ChevronDown} isPressed={isOpen} onClick={() => setIsOpen((v) => !v)} aria-expanded={isOpen} aria-controls={isOpen ? panelId : undefined} tip="left" className="v2-chevron" />
+      ) : (
+        <IconButton tipAlign="end" ref={trigger} label="subtitles and languages" onClick={() => setIsOpen((v) => !v)} isPressed={isOpen} aria-expanded={isOpen} aria-controls={isOpen ? panelId : undefined} className="!w-7 sm:!w-8">
+          <ChevronDown aria-hidden="true" size={16} strokeWidth={1.75} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </IconButton>
+      )}
       <AnimatePresence>
         {isOpen && (
           <motion.div
