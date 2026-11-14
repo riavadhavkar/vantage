@@ -242,7 +242,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
         <div className="v2-hud-left">
           <button type="button" className="v2-brand v2-wordmark-btn" onClick={onExit} aria-label="vantage. start a new topic">
             <Logo size={24} />
-            vantage
+            <span className="v2-wordmark-text">vantage</span>
           </button>
           <div className="v2-date-roll">
             <AnimatePresence mode="popLayout" initial={false}>

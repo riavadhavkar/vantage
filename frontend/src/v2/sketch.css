@@ -32,6 +32,10 @@
 }
 @media (max-width: 520px) {
   .v2-wordmark-btn { font-size: 20px; }
+}
+/* small phones: the six controls need the row, so the mark stands alone (its name stays the button's label) */
+@media (max-width: 430px) {
+  .v2-wordmark-text { display: none; }
   .v2-tools { gap: 2px; }
 }
 
