@@ -55,3 +55,9 @@ None.
 **Next**
 
 Waiting for a pick (one direction, a hybrid, or notes). Then phase 2: `frontend/design/PLAN.md`. I need to know how many hours are available today to size the tiers.
+
+## 2026-11-14 08:59 EST. Note: this working tree is shared (Person B)
+
+While phase 1 was running, commit `46c5591` (`docs: voice mapping handoff for the 8 perspectives`, 08:41) was made from another session in this same checkout. Because I had switched the checkout to `b/ui-redesign`, it landed here first; `b/graph-ui` and `origin/b/graph-ui` now point at it too. Nothing was lost and none of the lab work was pushed. `b/ui-redesign` is `46c5591` plus the lab commit, local only.
+
+Risk: two sessions sharing one checkout will keep moving each other's branch. For phase 3, the redesign should move to its own git worktree unless the other session is done.
