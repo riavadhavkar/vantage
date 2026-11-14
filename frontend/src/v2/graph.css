@@ -1,0 +1,39 @@
+/* Story graph (MOTION.md rows 41 to 44) */
+.v2-graph { position: relative; width: 100%; height: 100%; background: var(--stage); }
+.v2-node { width: 188px; animation: v2-node-in var(--duration-panel) var(--ease-enter) both; animation-delay: calc(var(--stagger) * 2 * var(--order)); transform-origin: 50% 40%; }
+@keyframes v2-node-in { from { opacity: 0; transform: scale(0.6); } }
+.v2-node-thumb { position: relative; height: 66px; border-radius: 6px; overflow: hidden; box-shadow: 0 0 0 1px var(--line); }
+.v2-node-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.v2-node-thumb.is-current { box-shadow: 0 0 0 2px var(--text); }
+/* row 44: the current scene breathes twice, then rests */
+.v2-node-thumb.is-current::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: 0 0 0 0 rgb(243 245 246 / 0.5); animation: v2-breathe 1100ms ease-out 2 both; animation-delay: var(--duration-scene); }
+.v2-node-thumb.is-current { overflow: visible; }
+.v2-node-thumb.is-current img { border-radius: 6px; }
+@keyframes v2-breathe { from { box-shadow: 0 0 0 0 rgb(243 245 246 / 0.5); } to { box-shadow: 0 0 0 12px rgb(243 245 246 / 0); } }
+.v2-node-title { margin: 6px 0 0; font-size: 14px; line-height: 18px; font-weight: 560; color: var(--text); }
+.v2-node-who { margin: 0; font-size: 12px; line-height: 16px; color: var(--accent); }
+.v2 .v2-node-handle { width: 6px; height: 6px; min-width: 0; min-height: 0; border: 0; background: var(--dim); }
+/* row 42: edges draw themselves. The dash pattern each edge type uses comes back when the draw ends. */
+.v2-graph .react-flow__edge-path { animation: v2-edge-draw var(--duration-scene) var(--ease-move) backwards; animation-delay: var(--draw-delay, 0ms); }
+@keyframes v2-edge-draw { from { stroke-dasharray: 2000; stroke-dashoffset: 2000; } to { stroke-dasharray: 2000; stroke-dashoffset: 0; } }
+.v2-graph .react-flow__arrowhead polyline, .v2-graph marker path { fill: var(--text); }
+.v2-graph-legend { position: absolute; left: 12px; bottom: 12px; display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 6px; background: rgb(10 12 15 / 0.85); font-size: 12px; line-height: 16px; color: var(--dim); pointer-events: none; }
+.v2-graph-legend li { display: flex; align-items: center; gap: 8px; }
+.v2 .react-flow__controls-button { background: var(--raised); border-color: var(--line); fill: var(--text); }
+.v2 .react-flow__controls-button:hover { background: #20242a; }
+@media (prefers-reduced-motion: reduce) {
+  .v2-node, .v2-node-thumb.is-current::after, .v2-graph .react-flow__edge-path { animation: none; }
+}
+html[data-motion='off'] .v2-node-thumb.is-current::after { animation: none; }
+@media (max-width: 640px) { .v2-graph-legend { font-size: 11px; padding: 8px; } }
+
+/* a scene can be reopened from the graph; its node is a real button */
+.v2-node-btn { display: block; width: 100%; text-align: left; border-radius: 6px; }
+.v2-node-btn > span { display: block; }
+/* React Flow turns pointer events off on nodes that cannot be dragged; the button needs them */
+button.v2-node-btn { pointer-events: all; cursor: pointer; transition: transform var(--duration-micro) var(--ease-enter); }
+button.v2-node-btn:hover .v2-node-thumb:not(.is-current) { box-shadow: 0 0 0 1px rgb(255 255 255 / 0.5); }
+button.v2-node-btn:active { transform: scale(0.98); }
+/* every AI-made image is labeled, at thumbnail size too */
+.v2-node-ai { position: absolute; right: 4px; bottom: 4px; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 4px; background: rgb(10 12 15 / 0.85); color: var(--text); }
+.v2-node-ai.is-legend { position: static; flex: none; width: 28px; }

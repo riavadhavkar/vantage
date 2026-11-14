@@ -28,8 +28,66 @@
   --ease-focus: cubic-bezier(0.2, 0.7, 0.1, 1);
 }
 
+/* Motion tokens (new UI). Mirror DURATION, EASING, SPRING and STAGGER_STEP_MS in theme.js.
+   "static" keeps every token in the output even when no utility class uses it yet,
+   because component CSS and inline styles read them with var(). */
+@theme static {
+  --duration-micro: 120ms;
+  --duration-quick: 200ms;
+  --duration-panel: 320ms;
+  --duration-scene: 600ms;
+  --duration-slow: 900ms;
+  --duration-signature: 700ms;
+  --duration-spring: 500ms;
+  --stagger: 60ms;
+  --ease-enter: cubic-bezier(0.2, 0.7, 0.1, 1);
+  --ease-move: cubic-bezier(0.65, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.5, 0, 0.8, 0.4);
+  /* The JS spring (stiffness 260, damping 28, mass 0.9) sampled over 500 ms, for CSS-only movement. */
+  --ease-spring: linear(0, 0.07, 0.217, 0.381, 0.533, 0.661, 0.761, 0.837, 0.892, 0.931, 0.957, 0.974, 0.985, 0.992, 0.997, 0.999, 1, 1.001, 1.001, 1.001, 1);
+}
+
+/* Review flags. ?motion=slow plays everything at 3x. ?motion=off makes everything instant
+   (the same replacements as prefers-reduced-motion). Set by src/lib/motionMode.js. */
+html[data-motion='slow'] {
+  --duration-micro: 360ms;
+  --duration-quick: 600ms;
+  --duration-panel: 960ms;
+  --duration-scene: 1800ms;
+  --duration-slow: 2700ms;
+  --duration-signature: 2100ms;
+  --duration-spring: 1500ms;
+  --stagger: 180ms;
+}
+html[data-motion='off'] {
+  --duration-micro: 1ms;
+  --duration-quick: 1ms;
+  --duration-panel: 1ms;
+  --duration-scene: 1ms;
+  --duration-slow: 1ms;
+  --duration-signature: 1ms;
+  --duration-spring: 1ms;
+  --stagger: 0ms;
+}
+html[data-motion='off'] *,
+html[data-motion='off'] *::before,
+html[data-motion='off'] *::after {
+  animation-duration: 1ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+  transition-delay: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
 :root {
   color-scheme: dark;
+}
+
+/* The new UI's stage color, set before its chunk loads so there is no flash of the old background. */
+html[data-ui='v2'],
+html[data-ui='v2'] body {
+  background: #0a0c0f;
 }
 
 html,
@@ -103,16 +161,20 @@ body {
   text-wrap: pretty;
 }
 
+/* Slow pan and zoom so a scene reads as moving footage. It sits on the wrapper around the
+   image (not the image itself) so the perspective tint moves with it; the wrapper's parent
+   clips it, and each scene remounts the wrapper, which restarts the move. */
 @keyframes ken-burns {
   from {
-    transform: scale(1.04) translate3d(-1%, 0.5%, 0);
+    transform: scale(1) translate3d(0, 0, 0);
   }
   to {
-    transform: scale(1.12) translate3d(1.5%, -1%, 0);
+    transform: scale(1.08) translate3d(-1.5%, -1%, 0);
   }
 }
 .ken-burns {
-  animation: ken-burns 24s var(--ease-focus) infinite alternate;
+  animation: ken-burns 24s ease-in-out infinite alternate;
+  transform-origin: center;
   will-change: transform;
 }
 
@@ -183,10 +245,15 @@ body {
   background: #1a3d5c;
 }
 
-/* Leaflet */
-.leaflet-container {
+/* Leaflet. Its own stylesheet loads later with the map chunk, so these need the extra weight. */
+html .leaflet-container {
   background: var(--color-prussian);
   font-family: var(--font-sans);
+}
+/* OpenStreetMap tiles are light. Invert them once to a dark, neutral map so the marker,
+   the travel line and the label stay readable on the dark stage. Static filter, never animated. */
+.leaflet-tile-pane {
+  filter: grayscale(1) invert(1) brightness(0.92) contrast(0.92);
 }
 .leaflet-control-attribution {
   background: rgb(10 30 48 / 0.8) !important;

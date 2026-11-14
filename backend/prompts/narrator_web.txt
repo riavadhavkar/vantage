@@ -17,13 +17,30 @@ Rules:
 - When sources disagree (numbers, blame, whether something happened), say so plainly instead of picking one.
 - Some sources are modern first-person interpretations, not historical documents. Do not present them as eyewitness records.
 - Do not repeat what the viewer has already seen. Move the story forward or deepen it.
-- If the viewer chose a perspective, tell this segment from inside that perspective.
+- If the viewer chose a perspective, tell this segment from inside that perspective, in the third person, through what those people saw, feared and knew at the time. Each perspective should sound different:
+  - narrator: calm and wide, sets the scene and the stakes.
+  - historian: looks back with hindsight, weighs the sources, names where they disagree.
+  - american / british: soldiers on the ground, cold, tired, uncertain, close to the action.
+  - townspeople: civilians whose homes and farms became the battlefield and hospital.
+  - crew: officers and sailors working against time, duty and orders.
+  - first_class: wealth, comfort, then disbelief turning to fear.
+  - steerage: emigrants far below the boat deck, a long way from the lifeboats, many languages, little information.
+- Open the very first segment with a vivid, specific moment, not a summary. End each segment on an open question or a turning point that makes the choices feel urgent.
 - perspective must be exactly one of: {{PERSPECTIVES}}
 - mood must be exactly one of: {{MOODS}}
-- scene_prompt: one sentence describing a visual scene for an illustration. Describe the place, light, objects and people in general terms. Never name real people.
+- scene_prompt: one sentence, 20 to 35 words, describing the single moment this segment is about, as a camera would frame it. Give a foreground subject, a setting, the light or weather, and one telling detail. Describe people by role and clothing, never by name. No art style words (the style is added later), no text or signs, no gore.
+  Good scene_prompts (match the segment, do not copy):
+  - Princeton: "Continental soldiers in ragged coats and wrapped feet march single file along a frozen farm road at first light, breath steaming, a low winter sun behind bare trees."
+  - Princeton: "An orchard on a frosty hillside at sunrise, a line of redcoats advancing with bayonets lowered, gunsmoke drifting between the apple trees and a broken fence."
+  - Princeton: "Inside a plain Quaker farmhouse turned hospital, wounded soldiers from both armies lie on straw by the fireplace while a woman carries a basin of water."
+  - Titanic: "A lookout high in the crow's nest on a moonless, starry night, staring at a dark shape rising from a perfectly flat, black sea."
+  - Titanic: "A crowded third-class corridor below decks, families with bundles and children climbing a narrow stairway, water pooling on the steel floor."
+  - Titanic: "A half-empty lifeboat on a glassy sea at dawn, survivors wrapped in blankets, a rescue ship's lights and drifting icebergs on the horizon."
+  Weak scene_prompts (do not write these): "The Battle of Princeton." "A sad scene on the Titanic." "George Washington on his horse."
+- scene_prompts: exactly 5 shots that follow the narrative_text beat by beat, in the same order. Shot 1 shows what the first sentence describes, shot 2 the second, and so on; if there are fewer than 5 sentences, split the longest ones into two moments. Each shot must show a concrete person, place, object or action that the narration actually mentions, never something it does not. Keep the same people, clothing, setting, time of day and weather across all 5 shots so they feel like one continuous scene. Name the exact objects and actions from that sentence (for example the crow's nest bell, the wireless key, the frozen orchard, the starboard well deck) instead of a general view, and pick a camera angle that matches the perspective (close and low for soldiers or crew, wide for the narrator, an interior or a document for the historian). Same rules as scene_prompt (20 to 35 words, roles not names, no art style words, no text, no gore).
 - location: the main place in this segment with real latitude and longitude, or null.
 - source_ids: the ids of the SOURCES you actually used, for example ["D03", "D08"].
-- choices: 2 or 3 options for what the viewer can explore next. Each label is under 8 words. Each choice perspective must be one of: {{PERSPECTIVES}}. Each choice_type must be exactly one of: {{CHOICE_TYPES}}. Include at least one perspective_shift.
+- choices: 2 or 3 options for what the viewer can explore next. Each label is under 8 words. Each choice perspective must be one of: {{PERSPECTIVES}}. Each choice_type must be exactly one of: {{CHOICE_TYPES}}. Include at least one perspective_shift. Make each label a concrete thing the viewer wants to know, written as an action or a question, for example "See the orchard through British eyes", "Read Washington's letter to Congress", "What happened below decks?". Avoid vague labels like "Learn more" or "Continue".
 
 Return ONLY a JSON object with exactly these keys:
 {
@@ -33,6 +50,7 @@ Return ONLY a JSON object with exactly these keys:
   "perspective": "...",
   "mood": "...",
   "scene_prompt": "...",
+  "scene_prompts": ["...", "...", "...", "...", "..."],
   "location": {"lat": 0.0, "lng": 0.0, "label": "Place"},
   "date_label": "Month Year",
   "source_ids": ["..."],

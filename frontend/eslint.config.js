@@ -20,4 +20,6 @@ export default [
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
+  // The design lab mixes components and helpers in small files on purpose.
+  { files: ['src/lab/**'], rules: { 'react-refresh/only-export-components': 'off' } },
 ]

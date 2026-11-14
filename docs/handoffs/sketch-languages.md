@@ -63,7 +63,14 @@ Try: Begin, open the chevron next to the sound icon, set subtitles to spanish (m
 
 ## Merge notes
 
-- `b/ui-redesign` also rewrites the player, `Stage`, `LandingScreen` and the controls, and it adds `docs/BUILD_LOG.md`. Expect conflicts in `Player.jsx`, `Stage.jsx`, `LandingScreen.jsx`, `App.jsx`, `index.css` and `docs/BUILD_LOG.md` (add/add). It also has the `?ui=classic` flag, which this branch does not.
-- Files removed here: `NarrativeCard.jsx` (split into `Subtitles`, `Ungrounded` and the sources-panel grounding section). Files added: `Subtitles`, `TimelineStrip`, `AskPill`, `IconButton`, `SettingsPopover`, `LanguageSelects`, `Ungrounded`, `lib/{share,chunkText,aiKind}.js`, `hooks/{useLanguageSettings,useSubtitleText}.js`.
-- Dependencies added: `lucide-react`, `@fontsource/noto-sans-devanagari`. Nothing else.
-- The language backend needs `a/languages` merged before translated subtitles work live.
+`origin/main` (62 commits, including `b/ui-redesign` PR #35 and the tighter-shots work) is merged into this branch. Conflicts and how they were resolved:
+
+- `App.jsx`: kept the language and sound wiring, added main's `?ui=v2` switch. The v2 interface gets the same session and callbacks, but **has no language or subtitle controls**; that is not done.
+- `Player.jsx`: kept the sketch layout and ported main's changes: graph nodes reopen an earlier scene (`viewedId`, `thumbs`, `onSelectNode` now also closes the sheet), multi-shot `imageUrls`, and the "typed" state keyed by scene (the subtitle completion flag uses it).
+- `Stage.jsx`: kept the full-bleed stage and ported main's multi-shot rotation paced to the narration. `GradedImage` still draws no badge; the HUD badge is the label.
+- `useNarration.js`: took main's version and re-added `audioDurationMs`.
+- `package.json` and the lockfile: main's versions plus `@fontsource/noto-sans-devanagari`. `lucide-react` was already on main.
+- `docs/BUILD_LOG.md`: main's file with this branch's entry appended.
+- Main's default is still classic with `?ui=v2` opt-in, and classic is what this branch rewrote. Nothing else in main touches the player.
+- Still true: the language backend (`/api/languages`, `/api/translate`, `language` on start) is only on `origin/a/languages`, not on main.
+- Files removed here: `NarrativeCard.jsx`. Added: `Subtitles`, `TimelineStrip`, `AskPill`, `IconButton`, `SettingsPopover`, `LanguageSelects`, `Ungrounded`, `lib/{share,chunkText,aiKind}.js`, `hooks/{useLanguageSettings,useSubtitleText}.js`.

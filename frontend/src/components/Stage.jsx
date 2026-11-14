@@ -2,7 +2,7 @@
 // The full-bleed stage: illustration (or a drawn scene), soft vignette, top and bottom scrims
 // for the HUD, and paper source pins. Title, date, icons and subtitles are drawn by the Player
 // over it. The perspective pull closes the iris over it.
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { sceneDataUrl, sceneKindFor, hashString } from '../lib/scene.js'
 import { DEVELOP_MS, EASE_FOCUS } from '../constants/theme.js'
@@ -44,8 +44,29 @@ function pinsFor(segment, sourcesById) {
   })
 }
 
-export default function Stage({ segment, grade, imageUrl, imageStatus, pull, pullMessage, sourcesById, onOpenSource }) {
+const SHOT_MS_MIN = 3000
+const SHOT_MS_MAX = 8000
+
+export default function Stage({ segment, grade, imageUrl, imageUrls, imageStatus, pull, pullMessage, sourcesById, onOpenSource }) {
   const reduce = useReducedMotion()
+  // several shots per scene, paced to the narration (about 2.6 words a second)
+  const shots = useMemo(() => {
+    const list = (imageUrls || []).filter(Boolean)
+    return list.length ? list : imageUrl ? [imageUrl] : []
+  }, [imageUrls, imageUrl])
+  const shotMs = useMemo(() => {
+    const words = (segment?.narrative_text || '').split(/\s+/).filter(Boolean).length
+    const planned = Math.max(segment?.scene_prompts?.length || shots.length || 1, 1)
+    return Math.max(SHOT_MS_MIN, Math.min(SHOT_MS_MAX, Math.round((words / 2.6) * 1000 / planned)))
+  }, [segment, shots.length])
+  const [shotIdx, setShotIdx] = useState(0)
+  useEffect(() => setShotIdx(0), [segment?.segment_id])
+  useEffect(() => {
+    if (reduce || shots.length < 2) return undefined
+    const t = setInterval(() => setShotIdx((i) => (i + 1) % shots.length), shotMs)
+    return () => clearInterval(t)
+  }, [shots.length, reduce, shotMs])
+  const currentShot = shots[shotIdx % (shots.length || 1)] || imageUrl
   const sceneUrl = useMemo(
     () =>
       segment
@@ -82,12 +103,18 @@ export default function Stage({ segment, grade, imageUrl, imageStatus, pull, pul
                 animate={{ opacity: 1 }}
                 transition={{ duration: reduce ? 0.2 : DEVELOP_MS / 1000, ease: EASE_FOCUS }}
               >
-                <GradedImage
-                  src={imageUrl}
-                  grade={grade}
-                  alt={segment.scene_prompt ? `Illustration: ${segment.title}` : ''}
-                  shouldPan={!reduce}
-                />
+                <AnimatePresence initial={false}>
+                  <motion.div
+                    key={currentShot}
+                    className="absolute inset-0"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: reduce ? 0.2 : 1.4, ease: EASE_FOCUS }}
+                  >
+                    <GradedImage src={currentShot} grade={grade} alt={segment.scene_prompt ? `Illustration: ${segment.title}` : ''} shouldPan={!reduce} />
+                  </motion.div>
+                </AnimatePresence>
               </motion.div>
             )}
           </motion.div>
