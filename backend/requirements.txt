@@ -9,3 +9,8 @@ deepagents
 langchain-google-genai
 elevenlabs
 httpx
+requests
+trafilatura
+pypdf
+langchain-xai
+photonhq-api==0.5.0
