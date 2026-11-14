@@ -68,3 +68,8 @@ Append only. Newest entries at the bottom.
 
 - Person A: `/api/topic`, `/api/sources`, and `error_code` on 404s; perspective enum for Titanic and Princeton.
 - Person B (me): `/api/tts` and `/api/image` in `backend/routers/media.py` with ElevenLabs.
+
+## 2026-11-13 23:20, Person B (frontend), merged Person C's data
+
+- Merged main with `data/documents.csv`, `edges.csv` and the fetch scripts. All 31 mock sources (15 Titanic, 16 Princeton) match the committed CSV by doc id, URL, source type and perspective. Build and lint pass. No frontend change needed.
+- Still open for Person C: the four non-enum `source_type` values, and T08 Beesley tagged `first_class`.
