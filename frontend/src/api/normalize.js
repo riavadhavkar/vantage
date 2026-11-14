@@ -15,6 +15,7 @@ export function normalizeSegment(seg) {
     is_grounded: seg.is_grounded !== false,
     grounding_notes: seg.grounding_notes ?? null,
     scene_prompt: seg.scene_prompt || null,
+    scene_prompts: Array.isArray(seg.scene_prompts) ? seg.scene_prompts.filter(Boolean) : [],
     contradiction: seg.contradiction ?? null,
     location: seg.location ?? null,
     travel_from: seg.travel_from ?? null,
