@@ -1,6 +1,6 @@
 // The study map: the whole story as a centre title and five branches (causes, key people, turning
-// points, where sources disagree, consequences). Every point cites sources; a chip opens the
-// evidence panel on that source, like the chips on the disagreement card.
+// points, where sources disagree, consequences). The sources behind it are listed underneath as
+// pills; one opens the evidence panel on that source.
 import { motion } from 'motion/react'
 import { DURATION, EASING, STAGGER_STEP_MS } from './theme.js'
 import { sec, useCalmMotion } from './motionMode.js'
@@ -39,11 +39,9 @@ export default function StudyMap({ analysis, sourcesById, onOpenSource, onRetry 
     )
 
   const { center, branches } = analysis.data
-  // Sources are numbered in the order they first appear. A chip shows its number; the key at the
-  // bottom says which source each number is, once, instead of repeating the title on every chip.
+  // The sources behind the map, each once, in the order they first appear.
   const order = []
   for (const b of branches) for (const pt of b.points) for (const id of pt.source_ids) if (sourcesById[id] && !order.includes(id)) order.push(id)
-  const numberOf = (id) => order.indexOf(id) + 1
   return (
     <div className="ui-smap">
       <motion.h3
@@ -70,19 +68,9 @@ export default function StudyMap({ analysis, sourcesById, onOpenSource, onRetry 
             ) : (
               <ul>
                 {b.points.map((p, k) => {
-                  const cited = p.source_ids.filter((id) => sourcesById[id])
                   return (
                     <li key={k}>
                       <p>{stripIds(p.text)}</p>
-                      {cited.length > 0 && (
-                        <span className="ui-smap-chips">
-                          {cited.map((id) => (
-                            <button key={id} type="button" className="ui-chip ui-smap-chip" title={sourcesById[id].title} aria-label={`source ${numberOf(id)}: ${sourcesById[id].title}`} onClick={() => onOpenSource(id)}>
-                              {numberOf(id)}
-                            </button>
-                          ))}
-                        </span>
-                      )}
                     </li>
                   )
                 })}
@@ -92,16 +80,15 @@ export default function StudyMap({ analysis, sourcesById, onOpenSource, onRetry 
         ))}
       </ul>
       {order.length > 0 && (
-        <ol className="ui-smap-key" aria-label="sources">
+        <ul className="ui-smap-key" aria-label="sources">
           {order.map((id) => (
             <li key={id}>
-              <button type="button" onClick={() => onOpenSource(id)}>
-                <span className="mono" aria-hidden="true">{numberOf(id)}</span>
+              <button type="button" className="ui-smap-pill" onClick={() => onOpenSource(id)}>
                 {sourcesById[id].title}
               </button>
             </li>
           ))}
-        </ol>
+        </ul>
       )}
     </div>
   )

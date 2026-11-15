@@ -10,19 +10,16 @@
 .ui-smap-branch ul { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; list-style: none; }
 .ui-smap-branch p { margin: 0; font-size: 15px; line-height: 22px; color: var(--text); }
 .ui-smap-branch .ui-smap-empty { color: var(--dim); font-size: 13px; line-height: 19px; }
-.ui-smap-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.ui-smap-chip { min-width: 28px; justify-content: center; font-variant-numeric: tabular-nums; }
-.ui-smap-key { width: 100%; max-width: 72rem; margin: 24px 0 0; padding: 16px 0 0; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 20px; list-style: none; }
-.ui-smap-key button { display: inline-flex; align-items: baseline; gap: 8px; min-height: 32px; font-size: 13px; line-height: 18px; color: var(--dim); text-align: left; }
-.ui-smap-key button:hover { color: var(--text); }
-.ui-smap-key .mono { color: var(--text); }
+.ui-smap-key { width: 100%; max-width: 72rem; margin: 24px 0 0; padding: 16px 0 0; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; list-style: none; padding-left: 0; }
+.ui-smap-pill { display: inline-flex; align-items: center; min-height: 36px; padding: 0 16px; border-radius: 999px; border: 1px solid rgb(255 255 255 / 0.28); font-size: 14px; line-height: 20px; font-weight: 560; color: var(--text); text-align: left; transition: background-color var(--duration-micro) linear, border-color var(--duration-micro) linear; }
+.ui-smap-pill:hover { background: rgb(255 255 255 / 0.1); border-color: rgb(255 255 255 / 0.55); }
 @media (max-width: 899px) {
   .ui-smap { padding: 16px 16px 24px; align-items: stretch; }
   .ui-smap-center { border-radius: 14px; }
   .ui-smap-center::after { display: none; }
   .ui-smap-branches { margin-top: 16px; }
   .ui-smap-branch { flex-basis: 100%; }
-  .ui-smap-key { justify-content: flex-start; flex-direction: column; }
+  .ui-smap-key { justify-content: flex-start; }
 }
 
 /* loading and error: centred in the panel, on one line */
