@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowUpRight, ChevronDown } from 'lucide-react'
 import { sourceLabel } from './labels.js'
+import { getFacts } from '../api/client.js'
 import { Btn, Sheet, Skeleton, Waiting } from './controls.jsx'
 import './evidence.css'
 
@@ -65,6 +66,40 @@ function SourceCard({ source, role, informed, citedFor, mark, isOpen, onToggle }
         )}
       </div>
     </li>
+  )
+}
+
+/** Exact figures for this scene (old money in today's dollars, distances, the moon on a dated night), computed by Wolfram|Alpha. Shown only when there are some. */
+function ComputedFacts({ text }) {
+  const [facts, setFacts] = useState([])
+  useEffect(() => {
+    if (!text) return
+    let isLive = true
+    getFacts(text)
+      .then((f) => isLive && setFacts(f))
+      .catch(() => {})
+    return () => {
+      isLive = false
+    }
+  }, [text])
+  if (!facts.length) return null
+  return (
+    <section className="ui-facts" aria-labelledby="ev-facts">
+      <h3 id="ev-facts">computed with wolfram|alpha</h3>
+      <ul>
+        {facts.map((f) => (
+          <li key={f.query}>
+            <span className="ui-fact-label">{f.label}</span>
+            <span className="ui-fact-answer is-data">{f.answer}</span>
+            <a href={`https://www.wolframalpha.com/input?i=${encodeURIComponent(f.query)}`} target="_blank" rel="noopener noreferrer" className="ui-src-link">
+              see the computation
+              <ArrowUpRight aria-hidden="true" size={15} />
+              <span className="ui-sr"> (opens in a new tab)</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 
@@ -152,6 +187,8 @@ function Body({ focus, segment, segments, sources, sourcesById, sourcesState, on
         )}
         {segment.grounding_notes && <p className="ui-ev-note is-data">{segment.grounding_notes}</p>}
       </div>
+
+      {segment.is_grounded && <ComputedFacts text={segment.narrative_text} />}
 
       {here.ids.length > 0 && (
         <section aria-label="sources for this scene">

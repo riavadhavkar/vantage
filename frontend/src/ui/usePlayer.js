@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useNarration from './useNarration.js'
 import usePull from './usePull.js'
 import useVoicedSegment from './useVoicedSegment.js'
-import { getSources, getGraph } from '../api/client.js'
+import { getSources, getGraph, getAnalysis } from '../api/client.js'
 import { deriveTopic } from '../api/normalize.js'
 import { looksForTopic, NEUTRAL_LOOK } from './looks.js'
 import { gradedSceneUrl, sceneOptsFor } from './gradedScene.js'
@@ -187,6 +187,23 @@ export default function usePlayer({ session, topic, isSoundOn, isHeld = false, l
     return { nodes, edges, currentId: graphData.nodes.find((n) => n.is_current)?.id || currentSegment?.segment_id }
   }, [segments, graphData, currentSegment])
 
+  // The study map, built once per story when its tab is first opened. It takes about 20 seconds,
+  // so it is kept here and survives closing the panel. requested guards against asking twice.
+  const [analysisFor, setAnalysisFor] = useState({ sessionId: null, data: null, state: 'idle' })
+  const analysisRequested = useRef(null)
+  const loadAnalysis = useCallback(() => {
+    if (!sessionId || analysisRequested.current === sessionId) return
+    analysisRequested.current = sessionId
+    setAnalysisFor({ sessionId, data: null, state: 'loading' })
+    getAnalysis(sessionId)
+      .then((data) => setAnalysisFor((a) => (a.sessionId === sessionId ? { sessionId, data, state: 'ready' } : a)))
+      .catch(() => {
+        analysisRequested.current = null
+        setAnalysisFor((a) => (a.sessionId === sessionId ? { ...a, state: 'error' } : a))
+      })
+  }, [sessionId])
+  const analysis = analysisFor.sessionId === sessionId ? analysisFor : { sessionId, data: null, state: 'idle' }
+
   const citedCount = useMemo(() => new Set(segments.flatMap((s) => s.source_ids || [])).size, [segments])
 
   return {
@@ -223,5 +240,7 @@ export default function usePlayer({ session, topic, isSoundOn, isHeld = false, l
     graphState,
     hasGraphData: !!graphData,
     setIsGraphOpen,
+    analysis,
+    loadAnalysis,
   }
 }
