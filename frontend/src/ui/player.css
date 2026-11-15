@@ -166,6 +166,7 @@ html[data-motion='off'] .ui-dis-icon { animation: none; }
 .ui-back { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 12px 16px; font-size: 15px; line-height: 22px; animation: ui-rise var(--duration-panel) var(--ease-enter) both; }
 
 /* two views inside the story connections panel */
+.ui-sheet-head > .ui-tabs { flex: none; }
 .ui-tabs { display: flex; gap: 4px; padding: 3px; border-radius: 999px; border: 1px solid var(--line); }
 .ui-tab { white-space: nowrap; min-height: 36px; padding: 0 14px; border-radius: 999px; font-size: 14px; line-height: 20px; font-weight: 560; text-transform: lowercase; color: var(--dim); transition: background-color var(--duration-micro) linear, color var(--duration-micro) linear; }
 .ui-tab:hover { color: var(--text); }
