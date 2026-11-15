@@ -20,8 +20,9 @@
   .ui-smap { padding: 16px 16px 24px; align-items: stretch; }
   .ui-smap-center { border-radius: 14px; }
   .ui-smap-center::after { display: none; }
-  /* cards are centred, including a short last row */
-.ui-smap-branches { width: 100%; max-width: 72rem; margin-top: 24px; display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; list-style: none; padding: 0; }
+  .ui-smap-branches { margin-top: 16px; }
+  .ui-smap-branch { flex-basis: 100%; }
+  .ui-smap-key { justify-content: flex-start; flex-direction: column; }
 }
 
 /* loading and error: centred in the panel, on one line */

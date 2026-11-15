@@ -116,9 +116,9 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
       root.style.removeProperty('--lower-h')
     }
   }, [])
-  // A question to the ask bar takes a while: say so with a toast that stays until the answer is in.
   // The generated illustrations shown so far: the share card picks one of them.
   const shareImages = useMemo(() => [...new Set([...Object.values(P.thumbs), ...(P.narration.imageUrls || [])].filter(Boolean))], [P.thumbs, P.narration.imageUrls])
+  // A question to the ask bar takes a while: say so with a toast that stays until the answer is in.
   const isAsking = pending?.kind === 'ask' && !pending.perspective
   useEffect(() => {
     if (isAsking) toast.push('looking through the sources...', { id: 'ask', isSticky: true })
