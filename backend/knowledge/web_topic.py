@@ -116,6 +116,31 @@ def _fetch_page(title: str):
     return None
 
 
+QUESTION_START = re.compile(r"^(who|what|when|where|why|how|is|was|were|did|does|do|can|explain|tell|give)\b", re.I)
+
+
+def _to_search_phrase(query: str) -> str:
+    """Turn a question or a misspelled topic into the title of the best Wikipedia article (about a second)."""
+    if len(query.split()) <= 3 and not QUESTION_START.match(query):
+        return query
+    try:
+        from config import XAI_API_KEY
+        r = httpx.post("https://api.x.ai/v1/chat/completions",
+                       headers={"Authorization": f"Bearer {XAI_API_KEY}"},
+                       json={"model": "grok-4.20-0309-non-reasoning", "temperature": 0,
+                             "messages": [{"role": "user", "content":
+                                 "Give the title of the single most relevant English Wikipedia article for this. "
+                                 "Fix spelling. If it rests on a false premise, give the article about the real subject. "
+                                 "Reply with the title only.\n\n" + query}]}, timeout=10)
+        r.raise_for_status()
+        phrase = r.json()["choices"][0]["message"]["content"].strip().strip('"').strip()
+        print(f"[web_topic] searching Wikipedia for {phrase!r} (asked: {query!r})")
+        return phrase[:90] or query
+    except Exception as e:
+        print(f"[web_topic] phrase rewrite failed: {str(e)[:120]}")
+        return query
+
+
 def ensure_topic(raw_topic: str):
     """Returns a topic key with sources loaded, or None if nothing usable was found."""
     query = (raw_topic or "").replace("_", " ").strip()
@@ -132,7 +157,7 @@ def ensure_topic(raw_topic: str):
         return key
 
     try:
-        titles = _search_titles(query)
+        titles = _search_titles(_to_search_phrase(query))
     except Exception as e:
         print(f"[web_topic] search failed: {str(e)[:150]}")
         return None
