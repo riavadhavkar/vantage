@@ -59,7 +59,7 @@ def _unique_id(state, slug):
 
 
 def _mock(state, topic_key):
-    mocks = MOCK_BY_TOPIC.get(topic_key or "titanic")
+    mocks = MOCK_BY_TOPIC.get(topic_key) or MOCK_BY_TOPIC["titanic"]
     data = dict(mocks[len(state["seen_segment_ids"]) % len(mocks)])
     data["segment_id"] = _unique_id(state, data.pop("segment_id").removeprefix("seg_"))
     return data
@@ -107,6 +107,11 @@ def run_pipeline(session_id: str, choice_id: Optional[str] = None,
         return None
 
     topic_key = state.get("topic_key") or resolve_topic(state["topic"])
+    if not topic_key:
+        from knowledge import web_topic
+        topic_key = web_topic.ensure_topic(state["topic"])
+        if topic_key:
+            TOPIC_TITLES[topic_key] = web_topic.topic_title(topic_key)
     state["topic_key"] = topic_key
     perspectives = PERSPECTIVES_BY_TOPIC.get(topic_key, ["narrator", "historian"])
     topic_title = TOPIC_TITLES.get(topic_key, state["topic"].replace("_", " "))

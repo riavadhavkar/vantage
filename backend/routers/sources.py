@@ -18,7 +18,10 @@ def _error(status, code, message):
 
 
 def _source(doc_id: str) -> Source:
-    row = load_documents().get(doc_id, {})
+    row = load_documents().get(doc_id)
+    if not row:
+        from knowledge import web_topic
+        row = web_topic.doc_row(doc_id)
     st = row.get("source_type", "secondary")
     p = row.get("perspective", "historian")
     return Source(

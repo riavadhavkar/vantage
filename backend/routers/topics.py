@@ -60,7 +60,12 @@ def _topic_key(session_id: Optional[str]) -> str:
 
 @router.get("/topic")
 def get_topic(session_id: Optional[str] = None):
-    t = TOPICS[_topic_key(session_id)]
+    key = _topic_key(session_id)
+    if key in TOPICS:
+        t = TOPICS[key]
+    else:
+        from knowledge import web_topic
+        t = web_topic.topic_info(key) if web_topic.is_web_topic(key) else TOPICS["titanic"]
     return {
         **{k: v for k, v in t.items() if k != "perspectives"},
         "perspectives": [
