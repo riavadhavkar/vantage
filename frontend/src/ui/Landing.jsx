@@ -170,6 +170,8 @@ export default function Landing({ onStart, isStarting, error, language }) {
     { columns: 'story', value: null, options: STORIES.map((s) => ({ value: s.id, title: s.title, line: s.line, disabled: isStarting })) },
   ]
   const panelId = useId()
+  const anyId = useId()
+  const [anyEvent, setAnyEvent] = useState('')
   const suggestions = error?.code === 'topic_not_supported' ? error.suggestions : []
   const fade = { duration: sec(isCalm ? DURATION.quick : DURATION.panel), ease: EASING.enter }
 
@@ -263,6 +265,28 @@ export default function Landing({ onStart, isStarting, error, language }) {
                   onPick={(v) => pick(active, v)}
                   onEscape={() => setActive(-1)}
                 />
+                {active === 2 && (
+                  <form className="ui-lany" onSubmit={(e) => { e.preventDefault(); begin(anyEvent.trim()) }}>
+                    <label htmlFor={anyId} className="ui-lpanel-title">or type any event, past or present</label>
+                    <div className="ui-lany-row">
+                      <input
+                        id={anyId}
+                        className="ui-lany-input"
+                        value={anyEvent}
+                        onChange={(e) => setAnyEvent(e.target.value)}
+                        placeholder="the eruption of Pompeii"
+                        autoComplete="off"
+                        disabled={isStarting}
+                      />
+                      <button type="submit" className="ui-lany-go" disabled={!anyEvent.trim() || isStarting}>
+                        {isStarting && anyEvent.trim() ? 'finding sources…' : 'research it'}
+                      </button>
+                    </div>
+                    {isStarting && anyEvent.trim() && (
+                      <p className="ui-lnote" aria-live="polite">reading real sources and finding every side of the story. this takes about 30 seconds.</p>
+                    )}
+                  </form>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

@@ -60,7 +60,7 @@ export const getTopic = (sessionId) => request('/topic', sessionId ? { query: { 
 
 /** @param {string} topic @param {string} [language] narration language code, fixed when the session starts */
 export async function startSession(topic, language) {
-  const data = await request('/start', { method: 'POST', body: language ? { topic, language } : { topic } })
+  const data = await request('/start', { method: 'POST', body: language ? { topic, language } : { topic }, timeoutMs: 120000 })
   return { ...data, segment: normalizeSegment(data.segment) }
 }
 

@@ -11,7 +11,7 @@ from config import VOICE_BY_PERSPECTIVE, AGENT_MODE
 from agents.narrator_agent import NarratorAgent
 from agents.mock_segments import MOCK_BY_TOPIC
 from knowledge.catalog import resolve_topic
-from knowledge import retriever, graph
+from knowledge import retriever, graph, live_research
 
 _narrator = NarratorAgent()
 
@@ -59,10 +59,32 @@ def _unique_id(state, slug):
 
 
 def _mock(state, topic_key):
-    mocks = MOCK_BY_TOPIC.get(topic_key or "titanic")
+    mocks = MOCK_BY_TOPIC.get(topic_key) or MOCK_BY_TOPIC["titanic"]
     data = dict(mocks[len(state["seen_segment_ids"]) % len(mocks)])
     data["segment_id"] = _unique_id(state, data.pop("segment_id").removeprefix("seg_"))
     return data
+
+
+def _live_fallback(state, live, chunks):
+    """If the narrator fails on a live topic, read out what the sources say instead of a mock."""
+    picked = chunks[:2] or [{"source_id": sid, "text": s["excerpt"], "perspective": s["perspective"]}
+                            for sid, s in list(live["sources"].items())[:2]]
+    text = " ".join(" ".join((c.get("text") or "").split())[:380] for c in picked)
+    return {
+        "segment_id": _unique_id(state, "sources_" + live_research.slug(live["title"])[:20]),
+        "title": live["title"],
+        "narrative_text": text or live["one_line"],
+        "perspective": "historian",
+        "mood": "neutral",
+        "scene_prompt": live.get("scene_anchor") or live["title"],
+        "scene_prompts": [live.get("scene_anchor") or live["title"]],
+        "location": None,
+        "date_label": live.get("date_label"),
+        "source_ids": list(dict.fromkeys(c["source_id"] for c in picked)),
+        "choices": [Choice(choice_id="ch_what_happened_next", label="What happened next?",
+                           perspective="narrator", choice_type="what_next")],
+        "contradiction": None,
+    }
 
 
 def _relevant(note, narrative):
@@ -74,6 +96,23 @@ def _relevant(note, narrative):
 def _contradiction_for(state, used_ids, retrieved_ids, narrative=""):
     """Pick one documented disagreement touching this segment's sources, not shown before."""
     shown = set(state.get("shown_contradictions", []))
+    live = live_research.LIVE.get(state.get("topic_key") or "")
+    if live:
+        for ids in (used_ids, retrieved_ids):
+            ids = set(ids)
+            for e in live["contradictions"]:
+                key = f'{e["from_doc"]}_{e["to_doc"]}'
+                if key in shown or not (e["from_doc"] in ids or e["to_doc"] in ids):
+                    continue
+                note = e.get("note") or ""
+                return key, Contradiction(
+                    contradiction_id="con_" + key.lower(),
+                    claim=e["claim"],
+                    side_a=ContradictionSide(text=e["a"] or graph.doc_title(e["from_doc"]), source_id=e["from_doc"]),
+                    side_b=ContradictionSide(text=e["b"] or graph.doc_title(e["to_doc"]), source_id=e["to_doc"]),
+                    explanation=(note + " " if note else "") + "Found by AI across these sources: check both.",
+                )
+        return None, None
     for ids in (used_ids, retrieved_ids):
         for e in graph.contradictions_between(ids):
             key = f'{e["from_doc"]}_{e["to_doc"]}'
@@ -108,12 +147,19 @@ def run_pipeline(session_id: str, choice_id: Optional[str] = None,
 
     topic_key = state.get("topic_key") or resolve_topic(state["topic"])
     state["topic_key"] = topic_key
-    perspectives = PERSPECTIVES_BY_TOPIC.get(topic_key, ["narrator", "historian"])
-    topic_title = TOPIC_TITLES.get(topic_key, state["topic"].replace("_", " "))
+    live = live_research.LIVE.get(topic_key or "")
+    if live:
+        perspectives = ["narrator", "historian"] + live_research.SLOTS
+        topic_title = live_research.topic_title(topic_key)
+    else:
+        perspectives = PERSPECTIVES_BY_TOPIC.get(topic_key, ["narrator", "historian"])
+        topic_title = TOPIC_TITLES.get(topic_key, state["topic"].replace("_", " "))
 
     action, query, chosen_perspective, edge_type = _describe_action(state, choice_id, question)
     if not choice_id and not question and topic_key in OPENING_QUERIES:
         query = OPENING_QUERIES[topic_key]
+    elif not choice_id and not question and live:
+        query = live["opening_query"]
     previous_id = state["current_segment_id"]
     previous_location = state.get("last_location")
 
@@ -154,10 +200,18 @@ def run_pipeline(session_id: str, choice_id: Optional[str] = None,
             "source_ids": out["source_ids"],
             "choices": [Choice(**c) for c in out["choices"]],
         }
-        anchor = SCENE_ANCHORS.get(topic_key)
+        anchor = SCENE_ANCHORS.get(topic_key) or (live or {}).get("scene_anchor")
         if anchor:
             data["scene_prompt"] = f"{anchor}. {data['scene_prompt']}"
             data["scene_prompts"] = [f"{anchor}. {x}" for x in data.get("scene_prompts") or []]
+        if not data["location"] and live and live.get("location"):
+            try:
+                data["location"] = Location(lat=float(live["location"]["lat"]), lng=float(live["location"]["lng"]),
+                                            label=str(live["location"].get("label") or ""))
+            except (KeyError, TypeError, ValueError):
+                pass
+        if not data["date_label"] and live:
+            data["date_label"] = live.get("date_label")
         if not data["location"] and chunks and chunks[0].get("lat"):
             c = chunks[0]
             data["location"] = Location(lat=c["lat"], lng=c["lng"], label=c.get("location_label", ""))
@@ -166,7 +220,7 @@ def run_pipeline(session_id: str, choice_id: Optional[str] = None,
         data["contradiction"] = contradiction
     except Exception as e:
         print(f"[orchestrator] narrator failed, using mock: {str(e)[:200]}")
-        data = _mock(state, topic_key)
+        data = _live_fallback(state, live, chunks) if live else _mock(state, topic_key)
 
     data["session_id"] = session_id
     data["voice_id"] = VOICE_BY_PERSPECTIVE.get(str(data["perspective"])) or None

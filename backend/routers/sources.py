@@ -6,6 +6,7 @@ from enums import Perspective, SourceType
 from schemas import Source, SourcesResponse, GraphResponse, GraphNode, GraphEdge
 from state import session_store
 from knowledge.catalog import load_documents
+from knowledge import live_research
 
 router = APIRouter()
 
@@ -18,7 +19,14 @@ def _error(status, code, message):
 
 
 def _source(doc_id: str) -> Source:
-    row = load_documents().get(doc_id, {})
+    live = live_research.source(doc_id)
+    if live:
+        return Source(source_id=doc_id, title=live["title"], source_type=live["source_type"],
+                      perspective=live["perspective"], url=live.get("url"), excerpt=live["excerpt"])
+    row = load_documents().get(doc_id)
+    if not row:
+        from knowledge import web_topic
+        row = web_topic.doc_row(doc_id)
     st = row.get("source_type", "secondary")
     p = row.get("perspective", "historian")
     return Source(

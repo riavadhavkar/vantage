@@ -6,6 +6,9 @@ from schemas import (StartRequest, StartResponse, NextSegmentRequest, AskRequest
                      SegmentResponse)
 from state import session_store
 from agents.orchestrator import run_pipeline
+from config import LIVE_RESEARCH
+from knowledge.catalog import resolve_topic
+from knowledge import live_research
 
 router = APIRouter()
 
@@ -14,9 +17,42 @@ def _error(status: int, code: str, message: str) -> JSONResponse:
     return JSONResponse(status_code=status, content={"error_code": code, "message": message})
 
 
+def _wiki_fallback(topic: str):
+    """When Gemini research is unavailable (quota, overload), build the sources from Wikipedia instead."""
+    try:
+        from knowledge import web_topic
+        from agents.orchestrator import TOPIC_TITLES, OPENING_QUERIES
+        key = web_topic.ensure_topic(topic)
+        if key:
+            TOPIC_TITLES[key] = web_topic.topic_title(key)
+            OPENING_QUERIES[key] = f"{topic} what happened overview"
+            print(f"[start] using Wikipedia sources for {topic!r}: {key}")
+        return key
+    except Exception as e:
+        print(f"[start] wikipedia fallback failed: {str(e)[:200]}")
+        return None
+
+
 @router.post("/start", response_model=StartResponse)
 def start(body: StartRequest):
+    live_key = None
+    if LIVE_RESEARCH and not resolve_topic(body.topic) and body.topic.strip():
+        # Any-event mode: find and read real sources for this event before the first scene.
+        try:
+            live_key = live_research.research(body.topic.strip())
+        except Exception as e:
+            print(f"[start] live research failed for {body.topic!r}: {str(e)[:300]}")
+        if not live_key:
+            live_key = _wiki_fallback(body.topic.strip())
+        if not live_key:
+            return JSONResponse(status_code=422, content={
+                "error_code": "topic_not_supported",
+                "message": "We could not find enough sources for that event. Try another, or one of these.",
+                "suggestions": ["The Battle of Princeton", "The sinking of the Titanic"],
+            })
     state = session_store.create_session(body.topic)
+    if live_key:
+        state["topic_key"] = live_key
     state["language"] = (body.language or "en").lower()
     segment = run_pipeline(state["session_id"])
     return StartResponse(session_id=state["session_id"], segment=segment, link_code=state["link_code"])

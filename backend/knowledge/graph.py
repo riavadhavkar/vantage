@@ -14,4 +14,8 @@ def related(doc_id: str) -> list:
 
 
 def doc_title(doc_id: str) -> str:
+    from knowledge import live_research
+    live = live_research.source(doc_id)
+    if live:
+        return live["title"]
     return load_documents().get(doc_id, {}).get("title", doc_id)
