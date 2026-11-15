@@ -66,6 +66,9 @@ def get_topic(session_id: Optional[str] = None):
         lt = live_research.LIVE[key]
         t = {"topic_id": key, "title": lt["title"], "one_line": lt["one_line"],
              "aliases": [lt["event"]], "perspectives": lt["perspectives"]}
+    elif key.startswith("web_"):
+        from knowledge import web_topic
+        t = web_topic.topic_info(key)
     else:
         t = TOPICS.get(key) or TOPICS["titanic"]
     return {
