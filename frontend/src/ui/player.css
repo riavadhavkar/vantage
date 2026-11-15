@@ -1,0 +1,166 @@
+/* Player: stage, lens ring, panels. Motion rows refer to design/MOTION.md. */
+.ui-player { position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 100dvh; }
+.ui-player.ui-reveal { animation: ui-iris var(--duration-slow) var(--ease-move) both; }
+
+/* glass stops blurring while the frame behind it is changing (see Player.jsx) */
+.ui-player.is-moving { --glass: rgb(13 16 20 / 0.9); --glass-blur: none; }
+.ui-player .ui-glass, .ui-player .ui-ring { transition: background-color var(--duration-quick) linear, border-color var(--duration-micro) linear; }
+
+/* landing to player: the landing frame grows into the stage (View Transitions, where supported) */
+::view-transition-group(ui-frame) { animation-duration: var(--duration-slow); animation-timing-function: var(--ease-move); }
+::view-transition-old(ui-frame), ::view-transition-new(ui-frame) { height: 100%; object-fit: cover; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--duration-panel); }
+
+/* ---------- stage ---------- */
+.ui-stage { position: fixed; inset: 0; overflow: hidden; background: #000; view-transition-name: ui-frame; }
+.ui-plate, .ui-plate-zoom, .ui-pan, .ui-drawn, .ui-ai, .ui-shot { position: absolute; inset: 0; }
+.ui-fill { position: absolute; inset: -3%; width: 106%; height: 106%; max-width: none; object-fit: cover; }
+.ui-pan.is-paused { animation-play-state: paused; }
+/* row 8: three depth bands of the drawn scene. Each higher band covers everything below its edge. */
+.ui-band-mid { -webkit-mask-image: linear-gradient(to bottom, transparent 46%, #000 57%); mask-image: linear-gradient(to bottom, transparent 46%, #000 57%); }
+.ui-band-fore { -webkit-mask-image: linear-gradient(to bottom, transparent 72%, #000 83%); mask-image: linear-gradient(to bottom, transparent 72%, #000 83%); }
+/* blurred once; only its opacity changes */
+.ui-softimg { inset: -6%; width: 112%; height: 112%; filter: blur(22px); }
+/* the usual case: a 256 px pre-blurred bitmap, stretched by the GPU. No CSS blur to rasterize. */
+.ui-softimg.is-tiny { inset: -2%; width: 104%; height: 104%; filter: none; }
+.ui-softfill { display: none; position: absolute; inset: 0; background: rgb(10 12 15 / 0.62); }
+html[data-lite] .ui-softimg { display: none; }
+html[data-lite] .ui-softfill { display: block; }
+.ui-grade { position: absolute; inset: 0; transition: clip-path var(--duration-signature) var(--ease-move); }
+.ui-develop { position: absolute; inset: 0; background: #000; }
+.ui-seam { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; margin-left: -1px; background: var(--signal); transform: scaleY(0); transform-origin: top; transition: transform var(--duration-signature) var(--ease-move); }
+.ui-stage.is-split .ui-seam { transform: scaleY(1); }
+.ui-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgb(10 12 15 / 0.6) 0%, rgb(10 12 15 / 0) 20%, rgb(10 12 15 / 0) 45%, rgb(10 12 15 / 0.84) 100%); }
+.ui-stage-badge { position: absolute; z-index: 1; top: calc(var(--bar-h) + 8px); right: var(--gutter); padding: 6px 10px; border-radius: 6px; background: rgb(10 12 15 / 0.8); animation: ui-rise var(--duration-panel) var(--ease-enter) both; }
+.ui-stage-wait { font-size: 12px; line-height: 16px; color: var(--dim); }
+html[data-lite] .ui-pan, .ui-pan.ken-burns { will-change: transform; }
+html[data-lite] .ui-pan { animation: none; }
+@media (max-width: 899px), (hover: none) { .ui-pan { animation: none !important; } }
+
+/* row 10: the date as a title card */
+.ui-titlecard { position: absolute; z-index: 1; left: var(--gutter); top: 24%; margin: 0; overflow: hidden; pointer-events: none; animation: ui-tc-out var(--duration-panel) var(--ease-exit) both; animation-delay: calc(var(--duration-scene) + 1600ms); }
+.ui-titlecard span { display: block; font-size: clamp(28px, 4.6vw, 64px); line-height: 1.05; font-weight: 520; font-variation-settings: 'wdth' 122; letter-spacing: -0.02em; text-shadow: 0 2px 24px rgb(0 0 0 / 0.5); animation: ui-tc-in var(--duration-scene) var(--ease-enter) both; }
+@keyframes ui-tc-in { from { transform: translateY(105%); } }
+@keyframes ui-tc-out { to { opacity: 0; } }
+
+/* ---------- bar ---------- */
+.ui-player > .ui-bar { gap: 4px; }
+
+/* ---------- body ---------- */
+.ui-body { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 580px) minmax(0, 420px); justify-content: space-between; align-items: end; gap: 24px; padding: 24px var(--gutter) 32px; }
+.ui-card { padding: 24px; }
+.ui-date { color: var(--accent); }
+.ui-title { margin-top: 4px; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.05; font-weight: 640; font-variation-settings: 'wdth' 116; letter-spacing: -0.02em; text-wrap: balance; }
+.ui-captions { margin-top: 16px; font-size: 17px; line-height: 27px; text-wrap: pretty; cursor: default; }
+/* row 17: words come in one at a time; the text is laid out from the start, so nothing shifts */
+.ui-word { display: inline-block; white-space: pre; opacity: 0; transform: translateY(4px); transition: opacity var(--duration-micro) linear, transform var(--duration-micro) var(--ease-enter); }
+.ui-word.is-in { opacity: 1; transform: none; }
+/* row 18: a sentence with a source gets an underline in that source's perspective color */
+.ui-sent.is-cited { padding-bottom: 1px; background: linear-gradient(var(--mark), var(--mark)) 0 100% / 0% 1px no-repeat; -webkit-box-decoration-break: clone; box-decoration-break: clone; transition: background-size var(--duration-panel) var(--ease-enter); }
+.ui-sent.is-cited.is-said { background-size: 100% 1px; }
+.ui-sent.is-cited.is-open { cursor: pointer; }
+.ui-sent.is-cited.is-open:hover { background-size: 100% 2px; }
+.ui-voice-note, .ui-voice-wait { color: var(--dim); }
+.ui-voice-wait { font-size: 13px; line-height: 18px; }
+.ui-ungrounded { margin-top: 16px; padding-left: 16px; border-left: 2px solid var(--signal); display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.ui-ungrounded p { font-size: 17px; line-height: 26px; }
+.ui-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+/* phone and tablet: the frame sits on top, the story scrolls under it */
+@media (max-width: 899px) {
+  .ui-player { display: block; padding-bottom: calc(var(--ring-h) + env(safe-area-inset-bottom) + 16px); }
+  .ui-stage { position: sticky; top: 0; height: 42dvh; min-height: 240px; z-index: 0; }
+  .ui-player > .ui-bar { position: absolute; top: 0; left: 0; right: 0; }
+  .ui-stage-badge { top: auto; bottom: 28px; }
+  .ui-titlecard { top: auto; bottom: 64px; }
+  .ui-body { grid-template-columns: minmax(0, 1fr); padding: 0 var(--gutter) 24px; margin-top: -16px; gap: 12px; }
+  .ui-card { padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-titlecard, .ui-titlecard span, .ui-stage-badge, .ui-player.ui-reveal { animation: none; }
+  .ui-titlecard { display: none; }
+}
+html[data-motion='off'] .ui-titlecard { display: none; }
+
+/* ---------- lens ring (rows 12, 23, 24) ---------- */
+.ui-ringwrap { position: relative; z-index: 2; }
+.ui-ring { position: relative; height: var(--ring-h); overflow: hidden; border-top: 1px solid var(--line); background: var(--glass); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); padding-bottom: env(safe-area-inset-bottom); box-sizing: content-box; }
+.ui-ring-window { position: absolute; inset: 0; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); }
+.ui-ring-ticks { position: absolute; top: 0; left: 50%; width: 6000px; margin-left: -3000px; height: 14px; background: repeating-linear-gradient(90deg, rgb(255 255 255 / 0.5) 0 1px, transparent 1px 29.5px), repeating-linear-gradient(90deg, rgb(255 255 255 / 0.28) 0 1px, transparent 1px 5.9px); background-size: auto 14px, auto 6px; background-repeat: repeat-x; transition: transform var(--duration-signature) var(--ease-move); will-change: transform; }
+.ui-ring-index { position: absolute; top: 0; left: 50%; z-index: 1; width: 2px; height: 22px; margin-left: -1px; background: var(--signal); }
+.ui-ring-marks { position: absolute; top: 22px; left: 50%; transition: transform var(--duration-signature) var(--ease-move); will-change: transform; }
+.ui-mark { position: absolute; top: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 64px; padding: 0 12px; text-align: center; color: var(--dim); transition: color var(--duration-micro) linear, opacity var(--duration-panel) linear; }
+.ui-mark-name { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; line-height: 18px; font-weight: 420; font-variation-settings: 'wdth' 84; transition: font-variation-settings var(--duration-panel) var(--ease-move), font-weight var(--duration-panel) var(--ease-move), transform var(--duration-micro) var(--ease-enter); text-align: left; }
+.ui-mark-sub { font-family: var(--font-mono); font-size: 12px; line-height: 16px; color: var(--dim); }
+/* each point of view shows once: copies outside the current turn of the ring stay hidden */
+.ui-mark.is-ghost { opacity: 0; pointer-events: none; }
+.ui-mark:hover:not(:disabled):not(.is-on) { color: var(--text); }
+.ui-mark:active:not(:disabled) .ui-mark-name { transform: scale(0.97); }
+.ui-mark:disabled:not(.is-ghost) { opacity: 0.5; }
+.ui-mark.is-on { color: var(--accent); }
+.ui-mark.is-on .ui-mark-name { font-weight: 640; font-variation-settings: 'wdth' 112; }
+/* row 24: a point of view not heard yet pulses once, then rests */
+.ui-mark.is-unheard:not(.is-on) .ui-mark-name { animation: ui-once var(--duration-scene) var(--ease-move) 1 both; animation-delay: calc(var(--duration-slow) + var(--stagger) * 2 * var(--n)); }
+@keyframes ui-once { 0% { opacity: 1; } 40% { opacity: 0.35; } 100% { opacity: 1; } }
+/* row 23: the coverage ring draws itself when a view is first heard */
+.ui-cov { flex: none; width: 14px; height: 14px; transform: rotate(-90deg); }
+.ui-cov circle { fill: none; stroke-width: 2; }
+.ui-cov-track { stroke: currentColor; opacity: 0.3; }
+.ui-cov-fill { stroke: var(--accent); stroke-dasharray: 1; transition: stroke-dashoffset var(--duration-scene) var(--ease-move); }
+
+
+
+.ui-end { padding: 16px; }
+.ui-end p { font-size: 17px; line-height: 24px; }
+.ui-end p + p { margin-top: 4px; font-size: 13px; line-height: 19px; color: var(--dim); }
+.ui-end-actions { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------- ask ---------- */
+.ui-ask { display: flex; align-items: center; gap: 4px; padding: 4px 4px 4px 16px; border-radius: 999px; }
+.ui-ask:focus-within { border-color: rgb(255 255 255 / 0.45); }
+.ui-ask input { flex: 1; min-width: 0; height: 44px; border: 0; background: none; color: var(--text); font: 15px/22px var(--font-sans); font-variation-settings: 'wdth' 100; }
+.ui-ask input::placeholder { color: var(--dim); opacity: 0.8; }
+.ui .ui-ask input:focus-visible { outline: none; }
+
+@media (max-width: 899px) {
+  .ui-player .ui-ringwrap { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; }
+  /* fully opaque here: the story scrolls underneath the ring on phones */
+  .ui-player .ui-ring { background: rgb(16 19 23); }
+  .ui-mark-name { font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-mark.is-unheard:not(.is-on) .ui-mark-name { animation: none; }
+}
+
+/* ---------- disagreement (rows 29 to 32) ---------- */
+.ui-dis { padding: 16px; border-color: var(--signal); }
+.ui-dis-flag { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; line-height: 18px; font-weight: 640; color: var(--signal-text); }
+.ui-dis-icon { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 999px; background: var(--signal); color: #14171b; font-size: 15px; font-weight: 700; animation: ui-dis-pulse var(--duration-scene) var(--ease-move) 1 both; }
+/* one pulse when the two accounts meet. Slower than three a second by a wide margin, and once. */
+@keyframes ui-dis-pulse { 0% { box-shadow: 0 0 0 0 rgb(255 106 77 / 0.7); transform: scale(1); } 40% { transform: scale(1.18); } 100% { box-shadow: 0 0 0 14px rgb(255 106 77 / 0); transform: scale(1); } }
+.ui-dis h3 { margin-top: 8px; font-size: 20px; line-height: 26px; font-weight: 620; letter-spacing: -0.01em; text-wrap: balance; }
+.ui-dis-sides { margin-top: 16px; display: grid; grid-template-columns: minmax(0, 1fr) 2px minmax(0, 1fr); gap: 12px; }
+.ui-dis-seam { background: var(--signal); transform-origin: top; }
+.ui-dis-side { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }
+.ui-dis-who { display: flex; align-items: center; gap: 8px; font-size: 12px; line-height: 16px; font-weight: 600; color: var(--accent); }
+.ui-dis-letter { display: grid; place-items: center; flex: none; width: 20px; height: 20px; border-radius: 4px; border: 1px solid var(--accent); font-weight: 700; }
+.ui-dis-text { font-size: 15px; line-height: 22px; }
+.ui-dis-side .ui-chip { max-width: 100%; margin-top: auto; padding: 5px 10px; white-space: normal; text-align: left; }
+.ui-dis-why { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 13px; line-height: 20px; color: var(--dim); }
+.ui-dis-why strong { color: var(--text); font-weight: 600; }
+@media (max-width: 520px) {
+  .ui-dis-sides { grid-template-columns: minmax(0, 1fr); }
+  .ui-dis-seam { height: 2px; transform-origin: left; }
+}
+@media (prefers-reduced-motion: reduce) { .ui-dis-icon { animation: none; } }
+html[data-motion='off'] .ui-dis-icon { animation: none; }
+
+/* ---------- states: errors are calm (no shake), waiting says what it is doing ---------- */
+.ui-error { border-left-width: 2px; border-color: var(--line); border-left-color: var(--signal); border-radius: 0 14px 14px 0; }
+.ui-asking { padding: 4px 16px; }
+.ui-sheet-wait { display: flex; flex-direction: column; gap: 24px; max-width: 420px; padding: 24px; }
+.ui-sheet-note { position: absolute; left: 24px; top: 12px; font-size: 12px; line-height: 16px; color: var(--dim); }
+@media (max-width: 899px) { .ui-sheet-dark .ui-btn-ghost span { display: none; } }
+
+/* looking back at an earlier scene */
+.ui-back { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 12px 16px; font-size: 15px; line-height: 22px; animation: ui-rise var(--duration-panel) var(--ease-enter) both; }

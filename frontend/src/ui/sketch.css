@@ -1,0 +1,74 @@
+/* The sketch layout for the ui player: one full-bleed stage; wordmark and date top left; ask pill
+   and title top center; five icons and the ai badge top right; subtitles above the lens ring.
+   Interface chrome is lowercase; text that comes from the backend never is. */
+.ui-player.is-sketch { display: block; position: relative; height: 100dvh; min-height: 560px; overflow: hidden; padding: 0; }
+.ui-player.is-sketch .ui-stage { position: fixed; inset: 0; height: auto; min-height: 0; }
+
+/* ---------- top ---------- */
+.ui-hud { position: absolute; z-index: 3; top: 0; left: 0; right: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 36rem) minmax(0, 1fr); align-items: start; gap: 12px 16px; padding: 12px max(var(--gutter), env(safe-area-inset-right)) 0 max(var(--gutter), env(safe-area-inset-left)); }
+.ui-hud::before { content: ''; position: absolute; inset: 0 0 -90px; z-index: -1; pointer-events: none; background: linear-gradient(180deg, rgb(10 12 15 / 0.92) 0%, rgb(10 12 15 / 0.78) 55%, rgb(10 12 15 / 0) 100%); }
+.ui-hud-left { min-width: 0; }
+.ui-hud-brand { display: flex; align-items: center; gap: 4px; }
+.ui-wordmark-btn { display: inline-flex; align-items: center; gap: 8px; text-transform: lowercase; font-size: 22px; line-height: 1; margin-left: -4px; padding: 0 4px; }
+.ui-date-roll { position: relative; min-height: 24px; }
+.ui-date-text { font-size: 15px; line-height: 24px; font-weight: 700; color: var(--text); }
+.ui-hud-center { min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 12px; }
+.ui-hud-title { text-align: center; font-size: clamp(22px, 2.4vw, 30px); line-height: 1.15; font-weight: 640; font-variation-settings: 'wdth' 116; letter-spacing: -0.02em; text-wrap: balance; text-shadow: 0 1px 4px rgb(0 0 0 / 0.7); }
+.ui-hud-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; min-width: 0; }
+.ui-tools { display: flex; align-items: center; gap: 4px; }
+.ui-tools .ui-icon { background: rgb(10 12 15 / 0.82); border: 1px solid var(--line); }
+.ui-tools .ui-icon:hover:not(:disabled) { background: rgb(28 32 38 / 0.95); }
+.ui-tools .ui-icon[aria-pressed='true'] { background: rgb(40 45 52 / 0.95); border-color: rgb(255 255 255 / 0.4); }
+.ui-hud .ui-badge { text-transform: lowercase; }
+.ui-hud .ui-badge { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgb(10 12 15 / 0.95); font-size: 13px; line-height: 18px; animation: none; }
+.ui-hud .ui-hud-badge-narrow { display: none; }
+
+@media (max-width: 1023px) {
+  .ui-hud { grid-template-columns: minmax(0, 1fr) auto; }
+  .ui-hud-center { grid-column: 1 / -1; grid-row: 2; }
+  .ui-hud .ui-hud-badge { display: none; }
+  .ui-hud .ui-hud-badge-narrow { display: inline-flex; align-self: center; }
+  .ui-hud .ui-hud-databadge-narrow { display: flex; justify-content: center; }
+}
+@media (max-width: 520px) {
+  .ui-wordmark-btn { font-size: 20px; }
+}
+/* small phones: the six controls need the row, so the mark stands alone (its name stays the button's label) */
+@media (max-width: 430px) {
+  .ui-wordmark-text { display: none; }
+  .ui-tools { gap: 2px; }
+}
+
+/* ---------- bottom ---------- */
+.ui-lower { position: absolute; z-index: 2; left: 0; right: 0; bottom: calc(var(--ring-h) + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 12px; padding: 56px max(var(--gutter), env(safe-area-inset-right)) 8px max(var(--gutter), env(safe-area-inset-left)); max-height: calc(100dvh - var(--ring-h) - 250px); overflow-y: auto; background: linear-gradient(0deg, rgb(10 12 15 / 0.94) 0%, rgb(10 12 15 / 0.82) 55%, rgb(10 12 15 / 0) 100%); }
+.ui-lower > * { width: 100%; max-width: 56rem; margin-inline: auto; flex: none; }
+.ui-lower .ui-btn, .ui-lower .ui-note, .ui-lower .ui-waiting, .ui-lower .ui-back, .ui-lower .ui-end, .ui-lower .ui-dis-flag, .ui-lower .ui-dis-who, .ui-lower .ui-dis-why strong { text-transform: lowercase; }
+.ui-lower .ui-end { text-align: center; }
+.ui-lower .ui-end-actions { justify-content: center; }
+.ui-voice-row { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 44px; }
+.ui-voice-row .ui-icon { border: 1px solid var(--line); background: rgb(10 12 15 / 0.82); padding: 0; }
+.ui-voice-row .ui-voice-wait { text-transform: lowercase; }
+
+/* the ring: only its labels change. lowercase, unheard dimmer, in focus bold, ticks as they were */
+.ui-ring-sketch { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; }
+.ui-ring-sketch .ui-ring { background: rgb(10 12 15 / 0.97); }
+.ui-ring-sketch .ui-mark, .ui-ring-sketch .ui-mark-name, .ui-ring-sketch .ui-mark-sub { text-transform: lowercase; }
+.ui-ring-sketch .ui-mark:not(.is-on):not(.is-unheard) { color: var(--text); }
+.ui-ring-sketch .ui-mark.is-unheard:not(.is-on) { color: #a3adb8; }
+.ui-ring-sketch .ui-mark.is-unheard:not(.is-on) .ui-mark-sub { color: #a3adb8; }
+
+/* ---------- transcript ---------- */
+.ui-transcript { height: 100%; overflow-y: auto; padding: 24px var(--gutter); }
+.ui-transcript > * { max-width: 64ch; margin-inline: auto; }
+.ui-transcript h3 { font-size: 20px; line-height: 26px; font-weight: 620; }
+.ui-transcript .ui-transcript-main { margin-top: 12px; font-size: 19px; line-height: 32px; }
+.ui-transcript h4 { margin-top: 24px; font-size: 13px; line-height: 18px; color: var(--dim); text-transform: lowercase; }
+.ui-transcript p { margin-top: 4px; font-size: 17px; line-height: 28px; }
+.ui-transcript .ui-btn { margin-top: 24px; text-transform: lowercase; }
+
+/* the ask pill shows focus on the pill itself (ring), not on the input inside it */
+.ui .ui-hud-center form input:focus-visible { outline: none; animation: none; }
+
+/* the language popover */
+.ui-langpop { position: relative; }
+.ui-langpop-panel { position: absolute; top: calc(100% + 8px); right: 0; z-index: 50; width: min(20rem, calc(100vw - 32px)); padding: 16px; border-radius: 14px; border: 1px solid rgb(255 255 255 / 0.3); background: #0a0c0f; box-shadow: 0 16px 40px rgb(0 0 0 / 0.5); }

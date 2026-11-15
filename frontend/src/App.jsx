@@ -1,16 +1,14 @@
-// OWNER: Person B
-// One interface: v2. This file owns the session, the topic, the data source, language
-// settings and sound; V2App renders the landing page and the player from them.
+// The app's state: the session, the topic, language settings and sound. Shell renders the
+// landing page and the player from them.
 import { useCallback, useEffect, useState } from 'react'
 import { MotionConfig } from 'motion/react'
-import V2App from './v2/V2App.jsx'
-import useSession from './hooks/useSession.js'
-import useLanguageSettings from './hooks/useLanguageSettings.js'
-import { getTopic, resolveDataSource, getDataSource } from './api/client.js'
-import { MOTION_MODE } from './lib/motionMode.js'
+import Shell from './ui/Shell.jsx'
+import useSession from './ui/useSession.js'
+import useLanguageSettings from './ui/useLanguageSettings.js'
+import { getTopic } from './api/client.js'
+import { MOTION_MODE } from './ui/motionMode.js'
 
 export default function App() {
-  const [dataSource, setDataSource] = useState(getDataSource())
   const [topic, setTopic] = useState(null)
   const [view, setView] = useState('landing')
   const [isSoundOn, setIsSoundOn] = useState(() => {
@@ -20,27 +18,18 @@ export default function App() {
       return true
     }
   })
-  const [isSourceKnown, setIsSourceKnown] = useState(false)
-  const lang = useLanguageSettings(isSourceKnown)
-  const isOfflineData = dataSource === 'demo' || dataSource === 'offline'
-  // Offline, the cached story is English: narration cannot change and subtitles cannot translate.
-  const narrationLanguage = isOfflineData ? 'en' : lang.narrationLanguage
+  const lang = useLanguageSettings()
   // The language the session was started in. The backend fixes it at /api/start; a later narration
-  // change is applied on top of it in the player (see v2/useVoicedSegment.js).
+  // change is applied on top of it in the player (see ui/useVoicedSegment.js).
   const [sessionLanguage, setSessionLanguage] = useState('en')
-  const language = { ...lang, narrationLanguage, sessionLanguage, isOffline: isOfflineData }
+  const language = { ...lang, sessionLanguage }
   const session = useSession()
   const { startSession, reset } = session
 
   useEffect(() => {
     let isLive = true
-    resolveDataSource()
-      .then((src) => {
-        if (!isLive) return
-        setDataSource(src)
-        setIsSourceKnown(true)
-        return getTopic().then((t) => isLive && setTopic(t))
-      })
+    getTopic()
+      .then((t) => isLive && setTopic(t))
       .catch(() => {})
     return () => {
       isLive = false
@@ -59,7 +48,7 @@ export default function App() {
   }, [])
 
   const onStart = useCallback(
-    async (text, code = narrationLanguage) => {
+    async (text, code = lang.narrationLanguage) => {
       const data = await startSession(text, code)
       if (data) setSessionLanguage(code)
       if (!data) return
@@ -71,7 +60,7 @@ export default function App() {
       window.scrollTo(0, 0)
       setView('player')
     },
-    [startSession, narrationLanguage],
+    [startSession, lang.narrationLanguage],
   )
 
   const onExit = useCallback(() => {
@@ -82,7 +71,7 @@ export default function App() {
 
   return (
     <MotionConfig reducedMotion={MOTION_MODE === 'off' ? 'always' : 'user'}>
-      <V2App
+      <Shell
         isPlayer={view === 'player' && !!session.currentSegment}
         session={session}
         topic={topic}
@@ -90,7 +79,6 @@ export default function App() {
         onExit={onExit}
         isSoundOn={isSoundOn}
         onToggleSound={toggleSound}
-        dataSource={dataSource}
         language={language}
       />
     </MotionConfig>

@@ -1,0 +1,94 @@
+/* Landing: a white page. The wordmark sharpens in, then the step bar (languages, story, search). Light tokens are local to this page. */
+.ui:has(.ui-landing) { background: #fff; }
+.ui-landing {
+  --text: #14171b;
+  --dim: #4c535c;
+  --signal: #d2402f;
+  position: relative;
+  min-height: 100dvh;
+  background: #fff;
+  color: var(--text);
+  padding: 48px var(--gutter);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+.ui-lwrap { position: relative; z-index: 1; width: 100%; max-width: 56rem; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; }
+.ui-lhead { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; }
+
+/* the wordmark */
+.ui-lmark-wrap { display: flex; justify-content: center; font-size: clamp(56px, 12vw, 112px); line-height: 1; margin: 0; }
+.ui-lmark { position: relative; display: block; font-size: inherit; line-height: 1; font-weight: 700; font-variation-settings: 'wdth' 118; letter-spacing: -0.05em; color: var(--text); white-space: nowrap; }
+.ui-lmark-soft, .ui-lmark-sharp { display: inline-flex; align-items: center; gap: 0.08em; }
+/* blurred once; only its opacity changes, so the blur-in costs nothing per frame */
+.ui-lmark-soft { position: absolute; inset: 0; filter: blur(28px); }
+.ui-lmark-logo { width: 0.62em; height: 0.62em; stroke-width: 2.4; }
+
+/* the step bar */
+.ui-lbar { overflow: clip; overflow-clip-margin: 8px; display: flex; flex-direction: column; gap: 12px; }
+.ui-lsteps { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.ui-lpill { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 20px 0 8px; border-radius: 999px; border: 1px solid rgb(20 23 27 / 0.22); background: #fff; color: var(--dim); font-size: 15px; line-height: 20px; font-weight: 560; text-transform: lowercase; transition: background-color var(--duration-micro) linear, border-color var(--duration-micro) linear, color var(--duration-micro) linear; }
+.ui-lpill:hover { border-color: rgb(20 23 27 / 0.55); color: var(--text); }
+.ui-lpill.is-done { color: var(--text); }
+.ui-lpill.is-active { background: #14171b; border-color: #14171b; color: #fff; }
+.ui-lpill-text .is-short { display: none; }
+.ui-lpill-n { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; border: 1px solid currentColor; font-family: var(--font-mono); font-size: 13px; }
+.ui-lpill.is-active .ui-lpill-n { background: #fff; border-color: #fff; color: #14171b; }
+
+.ui-lpanel-open { overflow: hidden; display: flex; flex-direction: column; justify-content: center; min-height: 128px; padding: 16px; border-radius: 20px; border: 1px solid rgb(20 23 27 / 0.14); background: #f6f5f1; }
+.ui-lpanel-title { margin: 0 0 12px; font-size: 13px; line-height: 18px; font-weight: 600; color: var(--dim); text-transform: lowercase; }
+.ui-opts { display: grid; gap: 8px; }
+.ui-opts.is-lang { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.ui-opt { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-height: 64px; padding: 12px 18px; border-radius: 14px; border: 1px solid rgb(20 23 27 / 0.16); background: #fff; text-align: left; transition: background-color var(--duration-micro) linear, border-color var(--duration-micro) linear, transform var(--duration-micro) var(--ease-enter); }
+.ui-opt:hover:not(:disabled) { background: #efede6; border-color: rgb(20 23 27 / 0.45); }
+.ui-opt:active:not(:disabled) { transform: scale(0.98); }
+.ui-opt[aria-checked='true'] { border-color: #14171b; box-shadow: inset 0 0 0 1px #14171b; }
+.ui-opt:disabled { opacity: 0.5; }
+.ui-opt-title { font-size: 20px; line-height: 26px; font-weight: 620; color: var(--text); }
+.ui-opts.is-lang .ui-opt-title { text-transform: lowercase; }
+.ui-opt-line { font-size: 14px; line-height: 20px; color: var(--dim); }
+.ui-lnote { margin-top: 12px; font-size: 13px; line-height: 18px; color: var(--dim); }
+.ui-lerror { background: #fdf0ee; border-radius: 0 14px 14px 0; }
+.ui-landing .ui-link { text-decoration-color: rgb(20 23 27 / 0.4); }
+
+/* search for any event */
+
+/* the search bar is a pill the same height as the option boxes (64px) */
+.ui-lany-row { display: flex; align-items: center; gap: 8px; min-height: 64px; padding: 0 8px 0 24px; border-radius: 999px; border: 1px solid rgb(20 23 27 / 0.28); background: #fff; }
+.ui-lany-row:focus-within { border-color: #14171b; box-shadow: 0 0 0 1px #14171b; }
+.ui-lany-input { flex: 1; min-width: 0; align-self: stretch; padding: 0; border: 0; background: transparent; color: var(--text); font-size: 20px; line-height: 26px; }
+.ui-lany-input::placeholder { color: #7c858e; }
+.ui-lany-input:focus { outline: none; }
+.ui-lany-go { display: grid; place-items: center; flex: none; width: 48px; height: 48px; border-radius: 999px; border: 0; background: #14171b; color: #fff; }
+.ui-lany-go:disabled { opacity: 0.35; }
+
+
+@media (max-width: 640px) {
+  .ui-landing { padding-top: 32px; }
+  .ui-lsteps { justify-content: flex-start; }
+  /* the active step runs full width; finished steps shrink to compact chips */
+  .ui-lsteps li:has(.is-active) { flex-basis: 100%; order: 1; }
+  .ui-lsteps li:has(.is-active) .ui-lpill { width: 100%; }
+  .ui-lpill:not(.is-active) .ui-lpill-text .is-long { display: none; }
+  .ui-lpill:not(.is-active) .ui-lpill-text .is-short { display: inline; }
+  .ui-lpill { min-height: 44px; padding-right: 14px; font-size: 13px; }
+  .ui-lpill-n { width: 28px; height: 28px; }
+  .ui-lpanel-open { padding: 12px; min-height: 252px; }
+  .ui-opt { min-height: 56px; padding: 10px 14px; }
+  .ui-opt-title { font-size: 18px; line-height: 24px; }
+  .ui-opts.is-lang { grid-template-columns: 1fr 1fr; }
+}
+
+/* questions drifting in the background; the page content is the foreground */
+.ui-qdrift { position: absolute; inset: 0; z-index: 0; display: flex; flex-direction: column; justify-content: space-evenly; pointer-events: none; user-select: none; opacity: 0; transition: opacity var(--duration-slow) var(--ease-enter); }
+.ui-qdrift.is-shown { opacity: 0.3; }
+.ui-qrow { overflow: hidden; white-space: nowrap; line-height: 1.6; font-weight: 560; letter-spacing: -0.01em; }
+.ui-qtrack { display: flex; width: max-content; animation: ui-qscroll linear infinite; }
+.ui-qtrack.is-reverse { animation-direction: reverse; }
+.ui-qline { display: flex; flex: none; }
+.ui-qline span { padding-right: 4rem; }
+@keyframes ui-qscroll { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .ui-qtrack { animation: none; } }
+html[data-motion='off'] .ui-qtrack { animation: none; }
+@media (max-width: 640px) { .ui-qrow { font-size: 16px !important; } }

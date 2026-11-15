@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* Tokens mirror src/constants/theme.js. Perspective grades are runtime CSS variables, never classes. */
+/* Tokens mirror src/ui/theme.js. Perspective grades are runtime CSS variables, never classes. */
 @theme {
   --color-prussian: #0a1e30;
   --color-developer: #12304a;
@@ -15,7 +15,7 @@
 
   /* One family for everything; mono only for source excerpts and metadata. */
   --font-sans: 'Geist Variable', 'Noto Sans Devanagari', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
   --text-xs: 13px;
   --text-xs--line-height: 18px;
@@ -48,7 +48,7 @@
 }
 
 /* Review flags. ?motion=slow plays everything at 3x. ?motion=off makes everything instant
-   (the same replacements as prefers-reduced-motion). Set by src/lib/motionMode.js. */
+   (the same replacements as prefers-reduced-motion). Set by src/ui/motionMode.js. */
 html[data-motion='slow'] {
   --duration-micro: 360ms;
   --duration-quick: 600ms;
@@ -82,12 +82,6 @@ html[data-motion='off'] *::after {
 
 :root {
   color-scheme: dark;
-}
-
-/* The new UI's stage color, set before its chunk loads so there is no flash of the old background. */
-html[data-ui='v2'],
-html[data-ui='v2'] body {
-  background: #0a0c0f;
 }
 
 html,

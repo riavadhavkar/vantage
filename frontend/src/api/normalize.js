@@ -1,4 +1,3 @@
-// OWNER: Person B
 // Accept both the brief's contract and backend/schemas.py as merged on main:
 // connected_to may be a string or a list; claims / is_grounded / grounding_notes may be absent.
 // Unknown or missing fields get the contract defaults (null or []), never invented values.
