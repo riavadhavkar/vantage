@@ -27,3 +27,6 @@ app.mount("/media", StaticFiles(directory=media.MEDIA_DIR), name="media")
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+from routers import facts as _facts
+app.include_router(_facts.router, prefix="/api")
