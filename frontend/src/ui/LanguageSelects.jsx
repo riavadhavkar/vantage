@@ -25,7 +25,6 @@ export default function LanguageSelects({ languages, narration, subtitles, onNar
         </label>
         <select id={`${uid}-subtitles`} value={subtitles} onChange={(e) => onSubtitles(e.target.value)} className={selectClass}>
           <option value="off">off</option>
-          <option value="same">same as narration</option>
           {languages.map((l) => (
             <option key={l.code} value={l.code} lang={l.code}>
               {l.name.toLowerCase()}

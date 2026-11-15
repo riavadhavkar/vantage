@@ -1,5 +1,5 @@
 // Narration language (fixed per session) and subtitle language (changes any time).
-// subtitleLanguage: 'off' | 'same' | a language code. Saved in localStorage; the app works without it.
+// subtitleLanguage: 'off' | a language code. Saved in localStorage; the app works without it.
 import { useCallback, useEffect, useState } from 'react'
 import { FALLBACK_LANGUAGES, getLanguages } from '../api/client.js'
 
@@ -10,10 +10,10 @@ function load() {
     const v = JSON.parse(localStorage.getItem(KEY) || '{}')
     return {
       narrationLanguage: typeof v.narrationLanguage === 'string' ? v.narrationLanguage : 'en',
-      subtitleLanguage: typeof v.subtitleLanguage === 'string' ? v.subtitleLanguage : 'same',
+      subtitleLanguage: typeof v.subtitleLanguage === 'string' && v.subtitleLanguage !== 'same' ? v.subtitleLanguage : 'en',
     }
   } catch {
-    return { narrationLanguage: 'en', subtitleLanguage: 'same' }
+    return { narrationLanguage: 'en', subtitleLanguage: 'en' }
   }
 }
 

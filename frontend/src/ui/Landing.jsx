@@ -149,12 +149,12 @@ export default function Landing({ onStart, isStarting, error, language }) {
     setActive(i + 1)
   }
 
-  const subtitleName = subtitleLanguage === 'off' ? 'off' : subtitleLanguage === 'same' ? 'same as narration' : nameOf(subtitleLanguage)
+  const subtitleName = subtitleLanguage === 'off' ? 'off' : nameOf(subtitleLanguage)
   const narrationName = nameOf(narrationLanguage)
   // long text for the full pill, short text for the compact chip on phones
   const pills = [
     [`narration: ${narrationName}`, narrationName],
-    [`subtitles: ${subtitleName}`, subtitleLanguage === 'same' ? 'same' : subtitleName],
+    [`subtitles: ${subtitleName}`, subtitleName],
     ['story', 'story'],
   ]
   const groups = [
@@ -164,7 +164,6 @@ export default function Landing({ onStart, isStarting, error, language }) {
       value: subtitleLanguage,
       options: [
         { value: 'off', title: 'off' },
-        { value: 'same', title: 'same as narration' },
         ...languages.map((l) => ({ value: l.code, title: l.name.toLowerCase(), lang: l.code })),
       ],
     },
