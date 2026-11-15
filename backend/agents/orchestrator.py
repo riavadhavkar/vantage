@@ -59,7 +59,7 @@ def _unique_id(state, slug):
 
 
 def _mock(state, topic_key):
-    mocks = MOCK_BY_TOPIC.get(topic_key or "titanic")
+    mocks = MOCK_BY_TOPIC.get(topic_key) or MOCK_BY_TOPIC["titanic"]
     data = dict(mocks[len(state["seen_segment_ids"]) % len(mocks)])
     data["segment_id"] = _unique_id(state, data.pop("segment_id").removeprefix("seg_"))
     return data
