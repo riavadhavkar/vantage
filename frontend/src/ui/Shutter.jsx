@@ -3,8 +3,8 @@
 // `inline` sits on the stage during a perspective pull, over the blurred frame.
 import { motion } from 'motion/react'
 import Logo from './Logo.jsx'
-import { DURATION } from '../constants/theme.js'
-import { sec, useCalmMotion } from '../lib/motionMode.js'
+import { DURATION } from './theme.js'
+import { sec, useCalmMotion } from './motionMode.js'
 
 /** isInstant: appear without a fade (it takes over from the landing page's shutter). */
 export default function Shutter({ message, variant = 'overlay', action = null, isInstant = false }) {

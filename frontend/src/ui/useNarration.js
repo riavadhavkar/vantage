@@ -1,8 +1,7 @@
-// OWNER: Person B
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as api from '../api/client.js'
-import { getNarrationAudio } from '../lib/audio.js'
-import { canSpeak, speak, voiceForIndex } from '../lib/speech.js'
+import { getNarrationAudio } from './audio.js'
+import { canSpeak, speak, voiceForIndex } from './speech.js'
 
 /**
  * Requests narration audio and the illustration in parallel. Text shows immediately;

@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
 import Landing from './Landing.jsx'
 import Player from './Player.jsx'
-import Toaster from '../components/Toaster.jsx'
-import { useCalmMotion } from '../lib/motionMode.js'
+import Toaster from './Toaster.jsx'
+import { useCalmMotion } from './motionMode.js'
 
 export default function Shell({ isPlayer, session, topic, onStart, onExit, isSoundOn, onToggleSound, language }) {
   const isCalm = useCalmMotion()

@@ -1,5 +1,5 @@
-// The new player: a full-bleed stage with the story on glass over it, and a lens ring that
-// decides who is telling it. Data and actions come from usePlayer (same calls as classic).
+// The player: a full-bleed stage with the story on glass over it, and a lens ring that
+// decides who is telling it. Data and actions come from usePlayer.
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useTransform } from 'motion/react'
 import { FileText, Map as MapIcon, Maximize2, Minimize2, Pause, Play, Share2, Volume2, VolumeX, Waypoints } from 'lucide-react'
@@ -10,19 +10,17 @@ import Logo from './Logo.jsx'
 import LensRing from './LensRing.jsx'
 import Evidence from './Evidence.jsx'
 import Disagreement from './Disagreement.jsx'
-import AskPill from '../components/AskPill.jsx'
-import Subtitles from '../components/Subtitles.jsx'
-import Ungrounded from '../components/Ungrounded.jsx'
+import AskPill from './AskPill.jsx'
+import Subtitles from './Subtitles.jsx'
+import Ungrounded from './Ungrounded.jsx'
 import LanguagePopover from './LanguagePopover.jsx'
-import useSubtitleText from '../hooks/useSubtitleText.js'
-import useToast from '../hooks/useToast.js'
-import { aiKindFor } from '../lib/aiKind.js'
+import useSubtitleText from './useSubtitleText.js'
+import useToast from './useToast.js'
 import { messageFor } from '../api/errors.js'
-import { DURATION, EASING } from '../constants/theme.js'
-import { ms, sec } from '../lib/motionMode.js'
+import { DURATION, EASING } from './theme.js'
+import { ms, sec } from './motionMode.js'
 import { AiBadge, Btn, IconBtn, Sheet, Skeleton, Waiting } from './controls.jsx'
-import { sourceLabel } from './labels.js'
-import { CHOICE_TYPE_LABEL } from '../constants/labels.js'
+import { CHOICE_TYPE_LABEL, sourceLabel } from './labels.js'
 import './player.css'
 import './sketch.css'
 
@@ -34,6 +32,14 @@ const Palette = lazy(() => import('./Palette.jsx'))
 
 /** After this long behind the shutter, offer to go on with the drawn scene. */
 const IMAGE_WAIT_MS = 20000
+
+/** Which AI label applies, from what is actually on screen. */
+function aiKindFor({ hasImage, hasVoice }) {
+  if (hasImage && hasVoice) return 'both'
+  if (hasImage) return 'image'
+  if (hasVoice) return 'voice'
+  return null
+}
 
 /** undefined while an image is loading, true once decoded, 'error' if it failed. */
 function useDecoded(url) {

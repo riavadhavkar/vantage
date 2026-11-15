@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'motion/react'
 import { Search } from 'lucide-react'
-import { DURATION, EASING, SPRING } from '../constants/theme.js'
-import { sec, spring, useCalmMotion } from '../lib/motionMode.js'
+import { DURATION, EASING, SPRING } from './theme.js'
+import { sec, spring, useCalmMotion } from './motionMode.js'
 import { Kbd } from './controls.jsx'
 import './palette.css'
 

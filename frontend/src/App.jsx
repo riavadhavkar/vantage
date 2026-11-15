@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { MotionConfig } from 'motion/react'
 import Shell from './ui/Shell.jsx'
-import useSession from './hooks/useSession.js'
-import useLanguageSettings from './hooks/useLanguageSettings.js'
+import useSession from './ui/useSession.js'
+import useLanguageSettings from './ui/useLanguageSettings.js'
 import { getTopic } from './api/client.js'
-import { MOTION_MODE } from './lib/motionMode.js'
+import { MOTION_MODE } from './ui/motionMode.js'
 
 export default function App() {
   const [topic, setTopic] = useState(null)

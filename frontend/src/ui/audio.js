@@ -1,4 +1,3 @@
-// OWNER: Person B
 // One shared narration element, unlocked by the Begin gesture so later segments can play.
 import { unlockSpeech } from './speech.js'
 

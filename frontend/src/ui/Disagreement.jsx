@@ -3,8 +3,8 @@
 // The two accounts slide in from opposite sides and meet at the divider, the badge pulses
 // once, and only then does the explanation appear.
 import { motion } from 'motion/react'
-import { DURATION, EASING, STAGGER_STEP_MS } from '../constants/theme.js'
-import { sec } from '../lib/motionMode.js'
+import { DURATION, EASING, STAGGER_STEP_MS } from './theme.js'
+import { sec } from './motionMode.js'
 import { sourceLabel } from './labels.js'
 
 function Account({ letter, side, source, look, from, delay, isCalm, onOpen }) {

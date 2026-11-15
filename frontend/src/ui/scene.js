@@ -1,4 +1,3 @@
-// OWNER: Person B
 // Procedural grayscale scenes. They are graded like any print, so the page is
 // beautiful with no generated assets. Topic-agnostic: the kind of scene is chosen
 // from keywords in whatever text describes it, never from a hardcoded topic.

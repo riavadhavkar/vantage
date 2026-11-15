@@ -1,9 +1,9 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Globe } from 'lucide-react'
-import LanguageSelects from '../components/LanguageSelects.jsx'
-import { DURATION } from '../constants/theme.js'
-import { sec } from '../lib/motionMode.js'
+import LanguageSelects from './LanguageSelects.jsx'
+import { DURATION } from './theme.js'
+import { sec } from './motionMode.js'
 import { IconBtn } from './controls.jsx'
 
 export default function LanguagePopover({ language, onNarrationChange }) {

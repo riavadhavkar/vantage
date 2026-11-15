@@ -1,8 +1,7 @@
-// Everything the new player needs to know and do. This is the same data logic as the
-// classic Player (sources, graph polling, choosing, asking, retrying), copied here so the
-// classic screen stays untouched as the fallback. Calls go through api/client.js as before.
+// Everything the player needs to know and do: sources, graph polling, choosing, asking and
+// retrying. Calls go through api/client.js.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import useNarration from '../hooks/useNarration.js'
+import useNarration from './useNarration.js'
 import usePull from './usePull.js'
 import useVoicedSegment from './useVoicedSegment.js'
 import { getSources, getGraph } from '../api/client.js'
@@ -10,7 +9,7 @@ import { deriveTopic } from '../api/normalize.js'
 import { looksForTopic, NEUTRAL_LOOK } from './looks.js'
 import { gradedSceneUrl, sceneOptsFor } from './gradedScene.js'
 import { prepareSoft } from './softImage.js'
-import { useCalmMotion } from '../lib/motionMode.js'
+import { useCalmMotion } from './motionMode.js'
 
 const GRAPH_POLL_MS = 5000
 

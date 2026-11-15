@@ -1,4 +1,4 @@
-// The map for the new UI. Same behavior as the classic StoryMap (OpenStreetMap tiles when live,
+// The story map (OpenStreetMap tiles when live,
 // a drawn chart when the tiles cannot load), plus one piece of motion: when a
 // scene says the story travelled from one place to another, the marker makes that journey
 // along the line. It only happens when the data has travel_from; nothing is inferred.
@@ -6,8 +6,8 @@ import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { motion } from 'motion/react'
-import { DURATION, EASING } from '../constants/theme.js'
-import { ms, sec, useCalmMotion } from '../lib/motionMode.js'
+import { DURATION, EASING } from './theme.js'
+import { ms, sec, useCalmMotion } from './motionMode.js'
 import './map.css'
 
 const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'

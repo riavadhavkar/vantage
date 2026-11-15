@@ -1,4 +1,3 @@
-// OWNER: Person B
 import { useCallback, useRef, useState } from 'react'
 import * as api from '../api/client.js'
 

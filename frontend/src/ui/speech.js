@@ -1,4 +1,3 @@
-// OWNER: Person B
 // Browser speech synthesis as the narration fallback. It uses voices installed on the
 // device, so it works offline and costs nothing. It is still a synthetic voice, so the
 // player labels it "AI narration".

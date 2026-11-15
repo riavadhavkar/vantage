@@ -1,4 +1,3 @@
-// OWNER: Person B
 export class ApiError extends Error {
   /** @param {string} code error_code from the backend, or 'network' / 'bad_response' */
   constructor(code, message, extra = {}) {

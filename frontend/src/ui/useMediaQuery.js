@@ -1,4 +1,3 @@
-// OWNER: Person B
 import { useEffect, useState } from 'react'
 
 export default function useMediaQuery(query) {

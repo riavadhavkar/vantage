@@ -1,4 +1,4 @@
-// The story graph for the new UI. Same data and layout as the classic KnowledgeGraph (lanes by
+// The story graph (lanes by
 // point of view, one node per scene), with motion that explains it: nodes grow in along the
 // path, edges draw themselves from cause to effect, the camera glides out from where the story
 // began, and the scene you are on breathes twice and then rests.
@@ -6,10 +6,10 @@ import { memo, useEffect, useMemo } from 'react'
 import { ReactFlow, Background, Controls, Handle, Position, MarkerType, useReactFlow, useNodesInitialized } from '@xyflow/react'
 import { Sparkles } from 'lucide-react'
 import '@xyflow/react/dist/style.css'
-import { DURATION, STAGGER_STEP_MS } from '../constants/theme.js'
-import { ms, useCalmMotion } from '../lib/motionMode.js'
+import { DURATION, STAGGER_STEP_MS } from './theme.js'
+import { ms, useCalmMotion } from './motionMode.js'
 import { gradedSceneUrl } from './gradedScene.js'
-import { sceneKindFor } from '../lib/scene.js'
+import { sceneKindFor } from './scene.js'
 import { NEUTRAL_LOOK } from './looks.js'
 import './graph.css'
 

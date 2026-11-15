@@ -2,7 +2,7 @@
 // It repeats in both directions and always turns the short way. Each mark carries a small
 // coverage ring that draws itself the first time that point of view is heard.
 import { useState } from 'react'
-import useMediaQuery from '../hooks/useMediaQuery.js'
+import useMediaQuery from './useMediaQuery.js'
 
 const mod = (a, n) => ((a % n) + n) % n
 

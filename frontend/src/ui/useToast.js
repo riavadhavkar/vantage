@@ -1,4 +1,4 @@
-// Toasts: short, polite status messages. The provider lives in components/Toaster.jsx.
+// Toasts: short, polite status messages. The provider lives in Toaster.jsx.
 import { createContext, useContext } from 'react'
 
 export const ToastContext = createContext({ push: () => {} })

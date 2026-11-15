@@ -5,8 +5,8 @@
 // Tapping opens the full transcript.
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { TYPE_SPEED_MS } from '../constants/theme.js'
-import { fitChunks } from '../lib/chunkText.js'
+import { TYPE_SPEED_MS } from './theme.js'
+import { fitChunks } from './chunkText.js'
 
 const MORE = ' ...'
 

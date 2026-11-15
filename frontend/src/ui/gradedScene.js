@@ -2,8 +2,8 @@
 // with two full-screen blend layers; here the same duotone (multiply by the highlight, then keep
 // the lighter of that and the shadow) is applied to the scene's own colors once, so the frame is
 // a plain image and a focus pull has no blend layers to composite.
-import { sceneSvg, sceneKindFor } from '../lib/scene.js'
-import { hexToRgb } from '../constants/theme.js'
+import { sceneSvg, sceneKindFor } from './scene.js'
+import { hexToRgb } from './theme.js'
 
 const cache = new Map()
 

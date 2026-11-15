@@ -5,8 +5,8 @@
 // point, so the frame never sharpens onto stale content.
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { animate, cubicBezier, useMotionValue, useTransform } from 'motion/react'
-import { EASING, SIGNATURE } from '../constants/theme.js'
-import { MOTION_MODE, sec } from '../lib/motionMode.js'
+import { EASING, SIGNATURE } from './theme.js'
+import { MOTION_MODE, sec } from './motionMode.js'
 
 const TOTAL = SIGNATURE.soften + SIGNATURE.swap + SIGNATURE.sharpen
 const HALF = TOTAL / 2

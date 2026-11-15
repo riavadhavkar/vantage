@@ -2,8 +2,8 @@
 import { forwardRef, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Sparkles, X } from 'lucide-react'
-import { DURATION, EASING, SPRING } from '../constants/theme.js'
-import { sec, spring, useCalmMotion } from '../lib/motionMode.js'
+import { DURATION, EASING, SPRING } from './theme.js'
+import { sec, spring, useCalmMotion } from './motionMode.js'
 
 /** The only wording for AI-made media. Nothing in the new UI may reword or hide it. */
 const AI_COPY = { both: 'ai generated illustration and narration', image: 'ai generated illustration', voice: 'ai narration' }

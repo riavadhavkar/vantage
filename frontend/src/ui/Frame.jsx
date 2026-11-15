@@ -6,8 +6,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from 'motion/react'
 import { gradedSceneUrl, sceneOptsFor } from './gradedScene.js'
 import { prepareSoft, softUrl } from './softImage.js'
-import { DURATION, EASING, SIGNATURE } from '../constants/theme.js'
-import { sec } from '../lib/motionMode.js'
+import { DURATION, EASING, SIGNATURE } from './theme.js'
+import { sec } from './motionMode.js'
 
 /** The faint perspective tint over a color illustration, split down the middle for a contradiction. */
 function Tint({ look, splitLook }) {
@@ -29,8 +29,7 @@ const BANDS = [
 ]
 
 // Storyboard: a scene can have several shots (useNarration fills imageUrls as they arrive).
-// The frame cuts between them at the pace of the narration, with the same formula as the classic
-// stage: the time it takes to say the text (2.6 words a second), shared between the planned shots.
+// The frame cuts between them at the pace of the narration, by the time it takes to say the text (2.6 words a second), shared between the planned shots.
 function shotDuration(segment, shotCount) {
   const words = String(segment?.narrative_text || '').split(/\s+/).filter(Boolean).length
   const planned = Math.max(segment?.scene_prompts?.length || shotCount || 1, 1)

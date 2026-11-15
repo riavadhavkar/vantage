@@ -3,9 +3,9 @@
 // "switching narration..." can turn into "narration is now in ..." in place.
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { ToastContext } from '../hooks/useToast.js'
-import { DURATION } from '../constants/theme.js'
-import { sec, useCalmMotion } from '../lib/motionMode.js'
+import { ToastContext } from './useToast.js'
+import { DURATION } from './theme.js'
+import { sec, useCalmMotion } from './motionMode.js'
 
 const LIFE_MS = 4000
 const MAX = 2

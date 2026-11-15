@@ -1,4 +1,3 @@
-// OWNER: Person B
 // Design tokens. Mirrored in src/index.css @theme.
 
 export const COLORS = Object.freeze({
@@ -16,7 +15,7 @@ export const COLORS = Object.freeze({
 })
 
 export const TYPE_SPEED_MS = 30
-/* ---------- motion tokens (new UI). Mirrored in src/index.css @theme; scaled by ?motion= in src/lib/motionMode.js ---------- */
+/* ---------- motion tokens. Mirrored in src/index.css @theme; scaled by ?motion= in src/ui/motionMode.js ---------- */
 
 /** One duration scale for everything. micro: press and hover. quick: small reveals. panel: sheets and rows.
  *  scene: stage-level changes. slow: one-off arrivals (landing load, image develop). */

@@ -1,6 +1,6 @@
 // OKLCH helpers: every perspective color in the new UI is derived from the hue the topic
 // data gives that perspective, then checked for contrast. Nothing is hardcoded per topic.
-import { hexToRgb, rgbToHex, contrast } from '../constants/theme.js'
+import { hexToRgb, rgbToHex, contrast } from './theme.js'
 
 export { contrast }
 

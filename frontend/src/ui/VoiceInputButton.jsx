@@ -1,4 +1,3 @@
-// OWNER: Person B
 // Records a spoken question and sends it to /transcribe. Nothing is stored.
 import { useRef, useState } from 'react'
 import { Mic } from 'lucide-react'
