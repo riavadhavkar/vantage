@@ -70,7 +70,8 @@ function Plate({ segment, look, splitLook, shotUrls, canShowImage, soft, pointer
   const zoom = useTransform(soft, (s) => 1 + 0.03 * s)
   useEffect(() => onImage?.(showImage), [showImage, onImage])
   useEffect(() => {
-    if (isCalm || isPaused || shots.length < 2) return
+    // calm motion still changes shots (as a cut, no Ken Burns); only an open panel pauses the storyboard
+    if (isPaused || shots.length < 2) return
     const t = setInterval(() => setShotIndex((i) => (i + 1) % shots.length), shotDuration(segment, shots.length))
     return () => clearInterval(t)
   }, [shots.length, isCalm, isPaused, segment])
