@@ -95,16 +95,51 @@ export async function getSources(sessionId) {
 /** @returns {Promise<{nodes: object[], edges: object[]}>} */
 export const getGraph = (sessionId) => request('/graph', { query: { session_id: sessionId } })
 
+// Image and voice calls are paid. A repeat of a request that is in flight, or already done (a
+// re-render, React running an effect twice in development, going back to a scene), reuses the one
+// call instead of making another. A failed call, or one that came back without a file, is dropped
+// from the cache so it can be retried.
+const MEDIA_CACHE_MAX = 200
+const media = new Map()
+function once(key, make, isUsable) {
+  if (media.has(key)) return media.get(key)
+  const promise = make().then(
+    (result) => {
+      if (!isUsable(result)) media.delete(key)
+      return result
+    },
+    (err) => {
+      media.delete(key)
+      throw err
+    },
+  )
+  media.set(key, promise)
+  if (media.size > MEDIA_CACHE_MAX) media.delete(media.keys().next().value)
+  return promise
+}
+
 /** @returns {Promise<{audio_url: string, audio_duration_ms: number}>} */
-export async function generateAudio({ segment_id, text, voice_id }) {
-  const data = await request('/tts', { method: 'POST', body: { segment_id, text, voice_id }, timeoutMs: 60000 })
-  return { ...data, audio_url: absolute(data.audio_url) }
+export function generateAudio({ segment_id, text, voice_id }) {
+  return once(
+    `tts|${segment_id}|${voice_id}|${text}`,
+    async () => {
+      const data = await request('/tts', { method: 'POST', body: { segment_id, text, voice_id }, timeoutMs: 60000 })
+      return { ...data, audio_url: absolute(data.audio_url) }
+    },
+    (d) => !!d.audio_url,
+  )
 }
 
 /** @returns {Promise<{image_url: string}>} */
-export async function generateImage({ segment_id, scene_prompt }) {
-  const data = await request('/image', { method: 'POST', body: { segment_id, scene_prompt }, timeoutMs: 100000 })
-  return { ...data, image_url: absolute(data.image_url) }
+export function generateImage({ segment_id, scene_prompt }) {
+  return once(
+    `image|${segment_id}|${scene_prompt}`,
+    async () => {
+      const data = await request('/image', { method: 'POST', body: { segment_id, scene_prompt }, timeoutMs: 100000 })
+      return { ...data, image_url: absolute(data.image_url) }
+    },
+    (d) => !!d.image_url,
+  )
 }
 
 /** @param {Blob} audioBlob @returns {Promise<{text: string}>} */
