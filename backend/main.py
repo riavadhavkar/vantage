@@ -30,3 +30,6 @@ def health():
 
 from routers import facts as _facts
 app.include_router(_facts.router, prefix="/api")
+
+from routers import analysis as _analysis
+app.include_router(_analysis.router, prefix="/api")
