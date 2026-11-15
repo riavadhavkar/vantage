@@ -23,7 +23,6 @@ export default function App() {
   const [isSourceKnown, setIsSourceKnown] = useState(false)
   const lang = useLanguageSettings(isSourceKnown)
   const isOfflineData = dataSource === 'demo' || dataSource === 'offline'
-  // Offline, the cached story is English: narration cannot change and subtitles cannot translate.
   const narrationLanguage = isOfflineData ? 'en' : lang.narrationLanguage
   // The language the session was started in. The backend fixes it at /api/start; a later narration
   // change is applied on top of it in the player (see v2/useVoicedSegment.js).

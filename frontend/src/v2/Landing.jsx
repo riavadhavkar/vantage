@@ -88,7 +88,6 @@ export default function Landing({ onStart, isStarting, error, dataSource, langua
   const isCalm = useCalmMotion()
   const panels = useMemo(() => heroFrom(SAMPLE_BUNDLES[0]), [])
   const { languages, narrationLanguage, subtitleLanguage, setNarrationLanguage, setSubtitleLanguage, nameOf, isOffline } = language
-  // Offline, the cached story exists in English only.
   const langs = useMemo(() => (isOffline ? languages.filter((l) => l.code === 'en') : languages), [isOffline, languages])
 
   // ---------- load sequence ----------
@@ -124,7 +123,6 @@ export default function Landing({ onStart, isStarting, error, dataSource, langua
   const [active, setActive] = useState(isOffline ? 2 : 0) // 0 | 1 | 2 | -1 (all collapsed)
   const [done, setDone] = useState(isOffline ? [true, true, false] : [false, false, false])
   const [hasMoved, setHasMoved] = useState(false) // focus moves into a step only after the viewer acts
-  // Demo and offline: English and "same as narration" are the only choices, so steps 1 and 2 close.
   useEffect(() => {
     if (!isOffline) return
     setNarrationLanguage('en')
@@ -272,7 +270,6 @@ export default function Landing({ onStart, isStarting, error, dataSource, langua
                   onPick={(v) => pick(active, v)}
                   onEscape={() => setActive(-1)}
                 />
-                {active === 2 && isOffline && <p className="v2-lnote">offline demo: the cached story is in english.</p>}
               </motion.div>
             )}
           </AnimatePresence>

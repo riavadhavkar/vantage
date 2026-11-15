@@ -1,6 +1,3 @@
-// The language button (a globe, next to the sound button). Two controls: the language you hear
-// and the language you read. A narration change applies in place (see useVoicedSegment), so
-// there is nothing to confirm.
 import { useEffect, useId, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Globe } from 'lucide-react'
@@ -53,7 +50,6 @@ export default function LanguagePopover({ language, onNarrationChange }) {
               subtitles={language.subtitleLanguage}
               onNarration={(code) => code !== language.narrationLanguage && onNarrationChange(code)}
               onSubtitles={language.setSubtitleLanguage}
-              isOffline={language.isOffline}
             />
           </motion.div>
         )}
