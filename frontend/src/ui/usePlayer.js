@@ -67,8 +67,8 @@ export default function usePlayer({ session, topic, isSoundOn, isHeld = false, l
   const [thumbs, setThumbs] = useState({})
   const shownKey = shown?.segment_id
   useEffect(() => {
-    if (shownKey && narration.imageUrl) setThumbs((t) => (t[shownKey] ? t : { ...t, [shownKey]: narration.imageUrl }))
-  }, [shownKey, narration.imageUrl])
+    if (shownKey && (narration.imageUrl || narration.imageUrls?.[0])) setThumbs((t) => (t[shownKey] ? t : { ...t, [shownKey]: narration.imageUrl || narration.imageUrls[0] }))
+  }, [shownKey, narration.imageUrl, narration.imageUrls])
 
   const loadSources = useCallback(() => {
     if (!sessionId) return

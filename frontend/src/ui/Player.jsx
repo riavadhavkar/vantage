@@ -216,6 +216,10 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
   const closePalette = useCallback(() => setIsPaletteOpen(false), [])
 
   if (!shown) return null
+  // Looking back at an earlier scene: reuse its saved picture instead of the placeholder.
+  const backUrl = P.isLookingBack
+    ? (Object.entries(P.thumbs || {}).find(([k]) => k === shown.segment_id || String(k).includes(shown.segment_id))?.[1] || null)
+    : null
   const showNext = isTyped && P.isCurrentShown && !isPulling
   // A contradiction splits the frame: each half takes the grade of the account on that side.
   const dis = showNext && shown.is_grounded ? shown.contradiction : null
@@ -270,7 +274,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
 
   return (
     <main className={`ui-player is-sketch ${shouldReveal && !isCalm ? 'ui-reveal' : ''} ${isMoving ? 'is-moving' : ''}`} style={{ '--accent': look.accent }}>
-      <Frame segment={shown} look={dis ? sideLook(dis.side_a) : look} splitLook={dis ? sideLook(dis.side_b) : null} imageUrl={narration.imageUrl} imageUrls={narration.imageUrls} imageStatus={narration.imageStatus} soft={pull.soft} isPulling={isPulling} isCalm={isCalm} isPaused={!!evidence || !!panel || isSharing || isTranscriptOpen} isUngrounded={!shown.is_grounded}>
+      <Frame segment={shown} look={dis ? sideLook(dis.side_a) : look} splitLook={dis ? sideLook(dis.side_b) : null} imageUrl={backUrl || narration.imageUrl} imageUrls={backUrl ? [backUrl] : narration.imageUrls} imageStatus={backUrl ? 'ready' : narration.imageStatus} soft={pull.soft} isPulling={isPulling} isCalm={isCalm} isPaused={!!evidence || !!panel || isSharing || isTranscriptOpen} isUngrounded={!shown.is_grounded}>
         <AnimatePresence>
           {waitingView && <Shutter key="pull" variant="inline" message={`finding ${waitingView.toLowerCase()}...`} />}
         </AnimatePresence>
