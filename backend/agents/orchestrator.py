@@ -230,6 +230,13 @@ def run_pipeline(session_id: str, choice_id: Optional[str] = None,
         print(f"[orchestrator] narrator failed, using mock: {str(e)[:200]}")
         data = _live_fallback(state, live, chunks) if live else _mock(state, topic_key)
 
+    if len(data.get("scene_prompts") or []) < 2 and data.get("narrative_text"):
+        # deep mode returns one scene prompt; build the 5-shot storyboard so the pictures still change
+        try:
+            from services.shots import make_shots
+            data["scene_prompts"] = make_shots(data["narrative_text"], data.get("scene_prompt") or "", topic_title)
+        except Exception as e:
+            print(f"[orchestrator] shots failed: {str(e)[:150]}")
     data["session_id"] = session_id
     data["voice_id"] = VOICE_BY_PERSPECTIVE.get(str(data["perspective"])) or None
     if previous_id:
