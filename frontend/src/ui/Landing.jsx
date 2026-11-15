@@ -11,8 +11,11 @@ import Logo from './Logo.jsx'
 import Shutter from './Shutter.jsx'
 import './landing.css'
 
-/** Load sequence (ms): the wordmark sharpens for 1300, then the rest arrives. */
-const T = { sharp: 1300 }
+/** Load sequence (ms): the wordmark sharpens big and alone for 1300, then shrinks for 700 while the step bar opens under it. */
+const T = { sharp: 1300, shrink: 700 }
+
+/** Wordmark size in px: big while it sharpens, smaller once the step bar is there. */
+const markSize = (vw, isBig) => Math.round(Math.min(isBig ? 240 : 112, Math.max(56, vw * (isBig ? 0.145 : 0.12))))
 const NUMBERS = ['1', '2', '3']
 const STEP_NAMES = ['narration language', 'subtitles language', 'story']
 
@@ -141,13 +144,24 @@ export default function Landing({ onStart, isStarting, error, language, isReturn
   const suggestions = error?.code === 'topic_not_supported' ? error.suggestions : []
   const fade = { duration: sec(isCalm ? DURATION.quick : DURATION.panel), ease: EASING.enter }
   const isReady = phase === 'ready'
+  const [vw, setVw] = useState(() => window.innerWidth)
+  useEffect(() => {
+    const onResize = () => setVw(window.innerWidth)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
   const rise = (i) => ({ initial: { opacity: 0, y: isCalm ? 0 : 10 }, animate: isReady ? { opacity: 1, y: 0 } : {}, transition: { ...fade, delay: isCalm ? 0 : sec(i * 90) } })
 
   return (
     <main className={`ui-landing is-${phase}`}>
       <div className="ui-lwrap">
         <header className="ui-lhead">
-          <h1 className="ui-lmark-wrap">
+          <motion.h1
+            className="ui-lmark-wrap"
+            initial={false}
+            animate={{ fontSize: markSize(vw, !isReady) }}
+            transition={{ duration: sec(isCalm ? 0 : T.shrink), ease: EASING.move }}
+          >
             <span className="ui-lmark" aria-label="vantage" role="img">
               {!isCalm && (
                 <motion.span className="ui-lmark-soft" aria-hidden="true" initial={{ opacity: 1 }} animate={{ opacity: 0 }} transition={{ duration: sec(T.sharp), ease: EASING.enter }}>
@@ -166,11 +180,17 @@ export default function Landing({ onStart, isStarting, error, language, isReturn
                 vantage
               </motion.span>
             </span>
-          </h1>
+          </motion.h1>
         </header>
 
         {isReady && (
-          <section className="ui-lbar" aria-label="start a story">
+          <motion.section
+            className="ui-lbar"
+            aria-label="start a story"
+            initial={isCalm || isReturning ? false : { height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            transition={{ duration: sec(isCalm ? 0 : T.shrink), ease: EASING.move }}
+          >
             <p className="ui-sr" aria-live="polite">
               {active >= 0 ? `step ${active + 1} of 3: ${STEP_NAMES[active]}` : ''}
             </p>
@@ -252,7 +272,7 @@ export default function Landing({ onStart, isStarting, error, language, isReturn
                 ))}
               </div>
             )}
-          </section>
+          </motion.section>
         )}
 
       </div>
