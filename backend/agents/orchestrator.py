@@ -171,6 +171,14 @@ def run_pipeline(session_id: str, choice_id: Optional[str] = None,
         except Exception as e:
             print(f"[orchestrator] retrieval failed: {str(e)[:200]}")
 
+    if question:
+        try:
+            from services import wolfram_context
+            computed = wolfram_context.chunk_for(question, topic_title, state.get("history", []))
+            if computed:
+                chunks = [computed] + list(chunks)
+        except Exception as e:
+            print(f"[orchestrator] wolfram context failed: {str(e)[:150]}")
     contradiction_key = None
     try:
         out = None

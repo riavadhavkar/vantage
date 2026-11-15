@@ -2,6 +2,7 @@
 Needs WOLFRAM_APP_ID in .env (free App ID from developer.wolframalpha.com, choose the LLM API).
 """
 import os
+import re
 
 import httpx
 
@@ -15,21 +16,35 @@ def is_configured() -> bool:
 
 
 def _result_line(text: str) -> str:
-    """Pull the main answer out of the LLM API's plain-text report (the lines under "Result:")."""
-    lines = [l.strip() for l in (text or "").splitlines()]
-    for i, line in enumerate(lines):
-        if line.lower().startswith("result:"):
-            parts = [line.split(":", 1)[1].strip()]
-            for nxt in lines[i + 1:i + 4]:
-                if not nxt:
-                    break
-                parts.append(nxt)
-            clean = [p.strip(" |") for p in parts if p.strip(" |")]
-            if clean:
-                return ", ".join(clean)
-    for line in lines:
-        if line and not line.lower().startswith(("query:", "input interpretation:", "wolfram")):
-            return line.strip(" |")
+    """Pull the main answer out of the LLM API's plain-text report.
+    The report is a list of sections ("Query:", "Input interpretation:", "Result:", "Age:" ...).
+    Prefer "Result", otherwise take the first section that is not an echo of the question."""
+    sections, cur = [], None
+    for raw in (text or "").splitlines():
+        line = raw.strip()
+        if not line:
+            cur = None
+            continue
+        m = re.match(r"^([A-Za-z][^:|]{0,60}):\s*(.*)$", line)
+        if cur is None and m:
+            cur = [m.group(1).strip().lower(), []]
+            sections.append(cur)
+            if m.group(2):
+                cur[1].append(m.group(2))
+        elif cur is not None:
+            cur[1].append(line)
+
+    def clean(parts):
+        bits = [p.strip(" |") for p in parts[:3] if p.strip(" |")]
+        return ", ".join(bits)
+
+    skip = ("query", "input", "assumption", "wolfram", "image", "unit conversion")
+    for name, parts in sections:
+        if name.startswith("result") and clean(parts):
+            return clean(parts)
+    for name, parts in sections:
+        if not name.startswith(skip) and clean(parts):
+            return clean(parts)
     return ""
 
 
@@ -45,6 +60,7 @@ def query(question: str, max_chars: int = 1200):
             print(f"[wolfram] {r.status_code} for {question!r}: {r.text[:120]}")
             return None
         answer = _result_line(r.text)
+        print(f"[wolfram] ok {question!r} -> {answer[:100]}")
         return answer[:220] or None
     except Exception as e:
         print(f"[wolfram] failed for {question!r}: {str(e)[:150]}")

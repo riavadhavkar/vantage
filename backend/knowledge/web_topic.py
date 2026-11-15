@@ -127,6 +127,8 @@ def ensure_topic(raw_topic: str):
     saved = _load_saved(key)
     if saved and _has_chunks(key):
         _remember(key, saved)
+        if not saved.get("web_done"):
+            _start_web_research(key, query, re.sub(r"[^A-Z]", "", query.upper())[:3] or "WEB")
         return key
 
     try:
@@ -183,6 +185,7 @@ def ensure_topic(raw_topic: str):
     json.dump(info, open(os.path.join(_DATA_DIR, f"{key}.json"), "w"), indent=2)
     _remember(key, info)
     print(f"[web_topic] built '{key}': {len(docs)} articles, {total} chunks")
+    _start_web_research(key, query, prefix)
     return key
 
 
@@ -205,3 +208,29 @@ def topic_info(key: str) -> dict:
         "aliases": [title],
         "perspectives": [(p, *PERSPECTIVE_INFO[p]) for p in WEB_PERSPECTIVES if p != "narrator"],
     }
+
+
+def _start_web_research(key: str, query: str, prefix: str) -> None:
+    """Background Grok web search that adds non-Wikipedia sources to this topic's library."""
+    from knowledge import grok_research
+
+    def add_docs(found):
+        info = _TOPICS.get(key) or {"title": topic_title(key), "one_line": "", "docs": []}
+        col = _collection()
+        n = sum(1 for d in info["docs"] if d["source_id"].startswith(prefix + "W"))
+        for d in found:
+            n += 1
+            sid = f"{prefix}W{n}"
+            meta = {"source_id": sid, "topic": key, "perspective": d["perspective"],
+                    "source_type": d["source_type"], "time_period": "", "subtopic": "", "subtopics": "",
+                    "title": d["title"], "url": d["url"], "location_label": "", "lat": 0.0, "lng": 0.0}
+            col.add(ids=[f"chk_{key}_{sid}_000"], documents=[d["text"]], metadatas=[meta])
+            info["docs"].append({"source_id": sid, "title": d["title"], "url": d["url"],
+                                 "source_type": d["source_type"], "perspective": d["perspective"],
+                                 "notes": d["text"][:300]})
+        info["web_done"] = True
+        _remember(key, info)
+        os.makedirs(_DATA_DIR, exist_ok=True)
+        json.dump(info, open(os.path.join(_DATA_DIR, f"{key}.json"), "w"), indent=2)
+
+    grok_research.start(key, query, prefix, add_docs)
