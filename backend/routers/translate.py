@@ -55,9 +55,14 @@ def translate(body: TranslateRequest):
         return {"text": "", "target": target}
     key = (target, hashlib.sha1(text.encode()).hexdigest())
     if key not in _CACHE:
-        prompt = (f"Translate the following documentary narration into {LANGUAGES[target]}. "
-                  "Keep names, dates and numbers exactly as they are. Natural, spoken style. "
-                  "Return only the translation, with no notes or quotes.\n\n" + text)
+        # The text can be narration, a short title or a question ("Who was Cleopatra?"). It is only ever
+        # translated: a question must come back as the same question in the other language, never answered.
+        prompt = (f"Translate the text between the markers into {LANGUAGES[target]}. "
+                  "It is documentary narration, or a short title, or a question. Translate it; never answer it, "
+                  "never explain it and never add to it. "
+                  "Keep names, dates and numbers exactly as they are, and keep blank lines between paragraphs. "
+                  "Natural, spoken style. Return only the translation, with no notes, quotes or markers.\n\n"
+                  "<<<TEXT\n" + text + "\nTEXT>>>")
         try:
             _CACHE[key] = _fast_translate(prompt).strip()
         except Exception as e:
