@@ -19,6 +19,70 @@ const markSize = (vw, isBig) => Math.round(Math.min(isBig ? 240 : 112, Math.max(
 const NUMBERS = ['1', '2', '3']
 const STEP_NAMES = ['narration language', 'subtitles language', 'story']
 
+/** Questions that drift across the background for inspiration. Dealt out to the rows in turn. */
+const QUESTIONS = [
+  'what really sank the titanic?',
+  'why did rome fall?',
+  'who started the first world war?',
+  'what happened at chernobyl?',
+  'why did the berlin wall come down?',
+  'how did the printing press change the world?',
+  'what caused the great depression?',
+  'who built the pyramids?',
+  'what was the cuban missile crisis?',
+  'why did the dinosaurs go extinct?',
+  'how did the black death end?',
+  'what happened on the first day of the french revolution?',
+  'why was the library of alexandria lost?',
+  'who won the space race?',
+  'what was the boston tea party really about?',
+  'how did the moon landing happen?',
+  'why did the soviet union collapse?',
+  'what caused the 2008 financial crisis?',
+  'what was the salem witch trial?',
+  'how did the wright brothers learn to fly?',
+  'what happened at pompeii?',
+  'why did the ottoman empire end?',
+  'who was cleopatra, really?',
+  'what was the partition of india?',
+  'how did the internet begin?',
+  'what happened at the battle of waterloo?',
+  'why did the dust bowl happen?',
+  'what was the silk road?',
+  'how did apollo 13 get home?',
+  'what started the american civil war?',
+]
+const Q_COLORS = ['#3b82c4', '#d08a2e', '#4e9a6b', '#8b5cb8', '#d2402f', '#2a9da6']
+const Q_ROWS = Q_COLORS.map((color, i) => ({
+  color,
+  questions: QUESTIONS.filter((_, k) => k % Q_COLORS.length === i),
+  seconds: 90 + ((i * 17) % 50), // each row drifts at its own pace
+  size: 19 + ((i * 5) % 9), // px
+  reverse: i % 2 === 1,
+}))
+
+/** Rows of questions drifting sideways behind the page. Each row is one long line: the next question
+ *  is appended to the end of the one before, and the line is doubled so it loops without a seam. */
+function QuestionDrift({ isShown }) {
+  return (
+    <div className={`ui-qdrift ${isShown ? 'is-shown' : ''}`} aria-hidden="true">
+      {Q_ROWS.map((row, i) => (
+        <div key={i} className="ui-qrow" style={{ color: row.color, fontSize: row.size }}>
+          <div className={`ui-qtrack ${row.reverse ? 'is-reverse' : ''}`} style={{ animationDuration: `${row.seconds}s`, animationDelay: `-${i * 13}s` }}>
+            {[0, 1].map((copy) => (
+              <div key={copy} className="ui-qline">
+                {row.questions.map((q) => (
+                  <span key={q}>{q}</span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 /** A group of large options with a roving focus: arrows move, Enter or a click accepts, Escape collapses. */
 function Options({ label, options, value, onPick, onEscape, autoFocus, columns }) {
   const refs = useRef([])
@@ -145,6 +209,7 @@ export default function Landing({ onStart, isStarting, error, language, isReturn
 
   return (
     <main className={`ui-landing is-${phase}`}>
+      <QuestionDrift isShown={isReady || isCalm} />
       <div className="ui-lwrap">
         <header className="ui-lhead">
           <motion.h1

@@ -12,8 +12,9 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  overflow: hidden;
 }
-.ui-lwrap { width: 100%; max-width: 56rem; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; }
+.ui-lwrap { position: relative; z-index: 1; width: 100%; max-width: 56rem; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; }
 .ui-lhead { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; }
 
 /* the wordmark */
@@ -76,3 +77,16 @@
   .ui-opt-title { font-size: 18px; line-height: 24px; }
   .ui-opts.is-lang { grid-template-columns: 1fr 1fr; }
 }
+
+/* questions drifting in the background; the page content is the foreground */
+.ui-qdrift { position: absolute; inset: 0; z-index: 0; display: flex; flex-direction: column; justify-content: space-evenly; pointer-events: none; user-select: none; opacity: 0; transition: opacity var(--duration-slow) var(--ease-enter); }
+.ui-qdrift.is-shown { opacity: 0.3; }
+.ui-qrow { overflow: hidden; white-space: nowrap; line-height: 1.6; font-weight: 560; letter-spacing: -0.01em; }
+.ui-qtrack { display: flex; width: max-content; animation: ui-qscroll linear infinite; }
+.ui-qtrack.is-reverse { animation-direction: reverse; }
+.ui-qline { display: flex; flex: none; }
+.ui-qline span { padding-right: 4rem; }
+@keyframes ui-qscroll { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .ui-qtrack { animation: none; } }
+html[data-motion='off'] .ui-qtrack { animation: none; }
+@media (max-width: 640px) { .ui-qrow { font-size: 16px !important; } }
