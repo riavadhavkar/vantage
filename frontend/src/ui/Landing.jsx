@@ -19,13 +19,6 @@ const markSize = (vw, isBig) => Math.round(Math.min(isBig ? 240 : 112, Math.max(
 const NUMBERS = ['1', '2', '3']
 const STEP_NAMES = ['narration language', 'subtitles language', 'story']
 
-/** Story choices: the topics named in the frontend config. */
-const STORIES = (import.meta.env.VITE_VANTAGE_EXAMPLE_TOPICS || 'Titanic,Battle of Princeton')
-  .split(',')
-  .map((t) => t.trim())
-  .filter(Boolean)
-  .map((title) => ({ id: title, title }))
-
 /** A group of large options with a roving focus: arrows move, Enter or a click accepts, Escape collapses. */
 function Options({ label, options, value, onPick, onEscape, autoFocus, columns }) {
   const refs = useRef([])
@@ -117,7 +110,6 @@ export default function Landing({ onStart, isStarting, error, language, isReturn
     if (i === 0) setNarrationLanguage(value)
     if (i === 1) setSubtitleLanguage(value)
     setDone((d) => d.map((x, k) => (k === i ? true : x)))
-    if (i === 2) return begin(STORIES.find((s) => s.id === value)?.title)
     setActive(i + 1)
   }
 
@@ -136,7 +128,6 @@ export default function Landing({ onStart, isStarting, error, language, isReturn
       value: subtitleLanguage,
       options: [{ value: 'off', title: 'off' }, ...languages.map((l) => ({ value: l.code, title: l.name.toLowerCase(), lang: l.code }))],
     },
-    { columns: 'story', value: null, options: STORIES.map((s) => ({ value: s.id, title: s.title, line: s.line, disabled: isStarting })) },
   ]
   const panelId = useId()
   const anyId = useId()
@@ -227,19 +218,23 @@ export default function Landing({ onStart, isStarting, error, language, isReturn
                   exit={{ opacity: 0 }}
                   transition={{ ...fade, delay: isCalm || hasMoved ? 0 : sec(3 * 90) }}
                 >
-                  <h2 className="ui-lpanel-title">{STEP_NAMES[active]}</h2>
-                  <Options
-                    label={STEP_NAMES[active]}
-                    options={groups[active].options}
-                    value={groups[active].value}
-                    columns={groups[active].columns}
-                    autoFocus={hasMoved}
-                    onPick={(v) => pick(active, v)}
-                    onEscape={() => setActive(-1)}
-                  />
+                  {active < 2 && (
+                    <>
+                      <h2 className="ui-lpanel-title">{STEP_NAMES[active]}</h2>
+                      <Options
+                        label={STEP_NAMES[active]}
+                        options={groups[active].options}
+                        value={groups[active].value}
+                        columns={groups[active].columns}
+                        autoFocus={hasMoved}
+                        onPick={(v) => pick(active, v)}
+                        onEscape={() => setActive(-1)}
+                      />
+                    </>
+                  )}
                   {active === 2 && (
-                    <form className="ui-lany" onSubmit={(e) => { e.preventDefault(); begin(anyEvent.trim()) }}>
-                      <label htmlFor={anyId} className="ui-lpanel-title">or search any event, past or present</label>
+                    <form onSubmit={(e) => { e.preventDefault(); begin(anyEvent.trim()) }}>
+                      <label htmlFor={anyId} className="ui-sr">search any event</label>
                       <div className="ui-lany-row">
                         <input
                           id={anyId}
@@ -249,6 +244,7 @@ export default function Landing({ onStart, isStarting, error, language, isReturn
                           onChange={(e) => setAnyEvent(e.target.value)}
                           placeholder="the eruption of Pompeii"
                           autoComplete="off"
+                          autoFocus={hasMoved}
                           disabled={isStarting}
                         />
                         <button type="submit" className="ui-lany-go" disabled={!anyEvent.trim() || isStarting}>
