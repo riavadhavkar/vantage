@@ -2,8 +2,8 @@
 //
 // The backend fixes the narration language at /api/start and has no way to change it mid-session,
 // and a new session would not reproduce the viewer's path (its segments and choices are generated
-// fresh). So the change is applied on top of the same session: each scene's narration and title
-// are translated with /api/translate and voiced with /api/tts (which reads any language with the
+// fresh). So the change is applied on top of the same session: each scene's narration
+// is translated with /api/translate and voiced with /api/tts (which reads any language with the
 // same voice). The viewer keeps the same moment, the same perspective and the same story path.
 //
 // While a language swap is being prepared, the previous voiced version of the scene stays on
@@ -12,35 +12,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { translateText } from '../api/client.js'
 
-const cache = new Map() // `${segment_id}|${lang}` -> { narrative_text, title }
+const cache = new Map() // `${segment_id}|${lang}` -> { narrative_text }
 
 const keyOf = (segment, lang) => `${segment.segment_id}|${lang}`
 
-// A title that is a question ("Who was Cleopatra?") can come back from the translator as an answer,
-// a whole paragraph. A translated title is at most about three times as long as the original.
-const isTitleSane = (translated, original) => !!translated && translated.length <= Math.max(original.length * 3, 60)
-
-/**
- * The scene's title and narration in another language. A short title on its own is a bad thing to
- * send to the translator: a question ("Who was Cleopatra?") comes back answered. Sent as the first
- * line of the narration it is translated like the rest, and split off again at the first blank line.
- * If that does not come back as a title and a body, the two are translated separately, and a title
- * that still looks wrong keeps the original words.
- */
+/** The scene's narration in another language. The title is never translated: it stays as the story named it. */
 async function translateScene(shown, lang) {
-  const title = shown.title || ''
-  const narration = shown.narrative_text || ''
-  if (title) {
-    const joined = await translateText(`${title}\n\n${narration}`, lang)
-    const cut = (joined?.text || '').indexOf('\n\n')
-    if (cut > 0) {
-      const [head, body] = [joined.text.slice(0, cut).trim(), joined.text.slice(cut).trim()]
-      if (body && isTitleSane(head, title)) return { narrative_text: body, title: head }
-    }
-  }
-  const [body, translatedTitle] = await Promise.all([translateText(narration, lang), title ? translateText(title, lang) : { text: '' }])
+  const body = await translateText(shown.narrative_text || '', lang)
   if (!body?.text) throw new Error('empty')
-  return { narrative_text: body.text, title: isTitleSane(translatedTitle?.text, title) ? translatedTitle.text : title }
+  return { narrative_text: body.text }
 }
 
 /**

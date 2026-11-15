@@ -15,6 +15,7 @@ import Subtitles from './Subtitles.jsx'
 import Ungrounded from './Ungrounded.jsx'
 import LanguagePopover from './LanguagePopover.jsx'
 import useSubtitleText from './useSubtitleText.js'
+import useSubtitleTitle from './useSubtitleTitle.js'
 import useToast from './useToast.js'
 import { messageFor } from '../api/errors.js'
 import { DURATION, EASING } from './theme.js'
@@ -100,6 +101,8 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
     subtitleLanguage: language.subtitleLanguage,
     source: shown?.is_grounded ? { text: shown.narrative_text || '', lang: language.sessionLanguage } : null,
   })
+  // The title follows the subtitle language, not the narration language.
+  const shownTitle = useSubtitleTitle(shown, { sessionLanguage: language.sessionLanguage, subtitleLanguage: language.subtitleLanguage })
   const toast = useToast()
   // Toasts sit just above the subtitles, however tall the lower block is right now.
   const lowerRef = useRef(null)
@@ -304,8 +307,8 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
         <div className="ui-hud-center">
           <AskPill perspectives={P.perspectives} onSubmit={P.doAsk} isLoading={isLoading} />
           {shown.title && (
-            <h2 key={shown.segment_id} className="ui-hud-title" lang={voice.lang}>
-              {voice.segment?.title || shown.title}
+            <h2 key={shown.segment_id} className="ui-hud-title" lang={shownTitle === shown.title ? language.sessionLanguage : language.subtitleLanguage}>
+              {shownTitle}
             </h2>
           )}
           {aiKind && <AiBadge kind={aiKind} className="ui-hud-badge-narrow" />}
@@ -396,7 +399,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
 
       <Sheet tone="dark" isOpen={isTranscriptOpen} onClose={closeTranscript} title="transcript">
         <div className="ui-transcript">
-          <h3>{shown.title}</h3>
+          <h3>{shownTitle}</h3>
           {subtitle.status !== 'off' && <p lang={subtitle.lang} className="ui-transcript-main">{subtitle.text}</p>}
           {isTranslated && (
             <>
