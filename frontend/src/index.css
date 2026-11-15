@@ -15,7 +15,7 @@
 
   /* One family for everything; mono only for source excerpts and metadata. */
   --font-sans: 'Geist Variable', 'Noto Sans Devanagari', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
   --text-xs: 13px;
   --text-xs--line-height: 18px;
@@ -82,12 +82,6 @@ html[data-motion='off'] *::after {
 
 :root {
   color-scheme: dark;
-}
-
-/* The new UI's stage color, set before its chunk loads so there is no flash of the old background. */
-html[data-ui='v2'],
-html[data-ui='v2'] body {
-  background: #0a0c0f;
 }
 
 html,

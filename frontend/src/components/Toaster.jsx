@@ -36,13 +36,13 @@ export default function Toaster({ children }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="v2-toasts" role="status" aria-live="polite">
+      <div className="ui-toasts" role="status" aria-live="polite">
         <AnimatePresence initial={false}>
           {toasts.map((t) => (
             <motion.p
               key={t.key}
               layout={!isCalm}
-              className="v2-toast"
+              className="ui-toast"
               initial={{ opacity: 0, y: isCalm ? 0 : 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}

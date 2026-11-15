@@ -199,10 +199,3 @@ export function sceneSvg({ seed, kind, width = 1600, height = 900 }) {
   const build = BUILDERS[kind] || BUILDERS[sceneKindFor(seed)]
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid slice">${build(r, width, height)}</svg>`
 }
-
-const cache = new Map()
-export function sceneDataUrl(opts) {
-  const key = JSON.stringify(opts)
-  if (!cache.has(key)) cache.set(key, 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(sceneSvg(opts)))
-  return cache.get(key)
-}

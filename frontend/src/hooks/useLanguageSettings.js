@@ -1,5 +1,5 @@
 // Narration language (fixed per session) and subtitle language (changes any time).
-// subtitleLanguage: 'off' | 'same' | a language code. Persisted in localStorage, never required.
+// subtitleLanguage: 'off' | 'same' | a language code. Saved in localStorage; the app works without it.
 import { useCallback, useEffect, useState } from 'react'
 import { FALLBACK_LANGUAGES, getLanguages } from '../api/client.js'
 
@@ -8,14 +8,16 @@ const KEY = 'vantage.languages.v1'
 function load() {
   try {
     const v = JSON.parse(localStorage.getItem(KEY) || '{}')
-    return { narrationLanguage: typeof v.narrationLanguage === 'string' ? v.narrationLanguage : 'en', subtitleLanguage: typeof v.subtitleLanguage === 'string' ? v.subtitleLanguage : 'same' }
+    return {
+      narrationLanguage: typeof v.narrationLanguage === 'string' ? v.narrationLanguage : 'en',
+      subtitleLanguage: typeof v.subtitleLanguage === 'string' ? v.subtitleLanguage : 'same',
+    }
   } catch {
     return { narrationLanguage: 'en', subtitleLanguage: 'same' }
   }
 }
 
-/** @param {boolean} isReady true once the data source (live, mock, demo, offline) is known */
-export default function useLanguageSettings(isReady) {
+export default function useLanguageSettings() {
   const [settings, setSettings] = useState(load)
   const [languages, setLanguages] = useState(FALLBACK_LANGUAGES)
 
@@ -28,7 +30,6 @@ export default function useLanguageSettings(isReady) {
   }, [settings])
 
   useEffect(() => {
-    if (!isReady) return
     let isLive = true
     getLanguages()
       .then((d) => isLive && setLanguages(d.languages))
@@ -36,7 +37,7 @@ export default function useLanguageSettings(isReady) {
     return () => {
       isLive = false
     }
-  }, [isReady])
+  }, [])
 
   const setNarrationLanguage = useCallback((narrationLanguage) => setSettings((s) => ({ ...s, narrationLanguage })), [])
   const setSubtitleLanguage = useCallback((subtitleLanguage) => setSettings((s) => ({ ...s, subtitleLanguage })), [])

@@ -1,5 +1,5 @@
 // OWNER: Person B
-// Design tokens (see frontend/DESIGN.md). Mirrored in src/index.css @theme.
+// Design tokens. Mirrored in src/index.css @theme.
 
 export const COLORS = Object.freeze({
   prussian: '#0A1E30',
@@ -15,18 +15,7 @@ export const COLORS = Object.freeze({
   safelightInk: '#B8321F',
 })
 
-export const FADE_MS = 700
-export const STAGGER_MS = 200
 export const TYPE_SPEED_MS = 30
-/** Perspective pull: iris close, grade swap under the closed iris, iris open. */
-export const PULL_MS = 700
-export const PULL_CLOSE_MS = 260
-export const PULL_HOLD_MS = 180
-export const PULL_OPEN_MS = 260
-/** Image arrival: the print develops out of the dark. */
-export const DEVELOP_MS = 1200
-export const EASE_FOCUS = [0.2, 0.7, 0.1, 1]
-
 /* ---------- motion tokens (new UI). Mirrored in src/index.css @theme; scaled by ?motion= in src/lib/motionMode.js ---------- */
 
 /** One duration scale for everything. micro: press and hover. quick: small reveals. panel: sheets and rows.
@@ -122,15 +111,3 @@ export function gradeFor(color) {
 
   return { base: rgbToHex(rgb), shadow, highlight, text, mark }
 }
-
-/** Grades for the landing hero when no topic is available. Unnamed on purpose. */
-export const NEUTRAL_GRADE_COLORS = ['#7F97AE', '#A8ACA4', '#B29A80']
-
-/** Build a perspective_id -> grade lookup from a Topic. */
-export function gradesForTopic(topic) {
-  const map = {}
-  for (const p of topic?.perspectives || []) map[p.perspective_id] = { ...gradeFor(p.color), label: p.label }
-  return map
-}
-
-export const FALLBACK_GRADE = { ...gradeFor(COLORS.fog), label: '' }

@@ -8,20 +8,3 @@ export const rise = (delay = 0, y = 14) => ({
   animate: { opacity: 1, y: 0 },
   transition: { duration: 0.55, delay, ease: EASE },
 })
-
-export const staggerParent = (stagger = 0.06, delayChildren = 0) => ({
-  hidden: {},
-  show: { transition: { staggerChildren: stagger, delayChildren } },
-})
-
-export const staggerChild = (y = 12) => ({
-  hidden: { opacity: 0, y },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } },
-})
-
-export const pop = {
-  hidden: { opacity: 0, scale: 0.6, y: 6 },
-  show: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 420, damping: 24 } },
-}
-
-export const tap = { whileTap: { scale: 0.97 } }

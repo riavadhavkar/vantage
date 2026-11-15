@@ -22,9 +22,9 @@ export default class ErrorBoundary extends Component {
       <main className="flex min-h-dvh items-center px-6">
         <div className="mx-auto max-w-md">
           <div aria-hidden="true" className="mb-6 h-px w-16 bg-safelight" />
-          <h1 className="text-[28px] font-semibold leading-[34px] tracking-[-0.02em] text-print">this page stopped working.</h1>
+          <h1 className="text-[28px] font-semibold leading-[34px] tracking-[-0.02em] text-print">something went wrong.</h1>
           <p className="mt-4 text-[17px] leading-[27px] text-fog">
-            nothing was lost on our side. start again and the story will reload.
+            start again to reload the story.
           </p>
           <button
             type="button"
