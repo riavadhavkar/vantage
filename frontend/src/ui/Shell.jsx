@@ -11,6 +11,10 @@ import { useCalmMotion } from './motionMode.js'
 export default function Shell({ isPlayer, session, topic, onStart, onExit, isSoundOn, onToggleSound, language }) {
   const isCalm = useCalmMotion()
   const [view, setView] = useState(isPlayer ? 'player' : 'landing')
+  const [hasPlayed, setHasPlayed] = useState(false) // after a story, the landing skips its intro
+  useEffect(() => {
+    if (view === 'player') setHasPlayed(true)
+  }, [view])
 
   // Landing to player: the frame grows into the stage. Uses the View Transitions API where the
   // browser has it (Chrome 111, Safari 18, Firefox 144); otherwise the player reveals itself (see Player).
@@ -30,7 +34,7 @@ export default function Shell({ isPlayer, session, topic, onStart, onExit, isSou
         {view === 'player' && session.currentSegment ? (
           <Player session={session} topic={topic} isSoundOn={isSoundOn} onToggleSound={onToggleSound} onExit={onExit} language={language} shouldReveal={!document.startViewTransition} />
         ) : (
-          <Landing onStart={onStart} isStarting={session.isLoading} error={session.error} language={language} />
+          <Landing onStart={onStart} isStarting={session.isLoading} error={session.error} language={language} isReturning={hasPlayed} />
         )}
       </Toaster>
     </div>

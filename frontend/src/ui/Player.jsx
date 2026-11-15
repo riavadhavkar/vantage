@@ -2,7 +2,7 @@
 // decides who is telling it. Data and actions come from usePlayer.
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useTransform } from 'motion/react'
-import { FileText, Map as MapIcon, Maximize2, Minimize2, Pause, Play, Share2, Volume2, VolumeX, Waypoints } from 'lucide-react'
+import { ArrowLeft, FileText, Map as MapIcon, Maximize2, Minimize2, Pause, Play, Share2, Volume2, VolumeX, Waypoints } from 'lucide-react'
 import usePlayer from './usePlayer.js'
 import Frame from './Frame.jsx'
 import Shutter from './Shutter.jsx'
@@ -246,10 +246,13 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
       {/* top: wordmark and date | ask pill and title | five icons and the ai badge */}
       <header className="ui-hud">
         <div className="ui-hud-left">
-          <button type="button" className="ui-brand ui-wordmark-btn" onClick={onExit} aria-label="vantage. start a new topic">
-            <Logo size={24} />
-            <span className="ui-wordmark-text">vantage</span>
-          </button>
+          <div className="ui-hud-brand">
+            <IconBtn label="back to stories" icon={ArrowLeft} onClick={onExit} />
+            <button type="button" className="ui-brand ui-wordmark-btn" onClick={onExit} aria-label="vantage. start a new topic">
+              <Logo size={24} />
+              <span className="ui-wordmark-text">vantage</span>
+            </button>
+          </div>
           <div className="ui-date-roll">
             <AnimatePresence mode="popLayout" initial={false}>
               {shown.date_label && (

@@ -1,7 +1,7 @@
-// Landing: one screen. A giant lowercase "vantage" sharpens into view over three panels (one per
-// point of view, the dividers cutting across the letters), shrinks, and then a three-step bar
-// arrives: narration language, subtitles language, story. Choosing a story starts the session.
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
+// Landing: a white page. The lowercase "vantage" wordmark sharpens into view with a line on what the
+// app does, then a three-step bar arrives (narration language, subtitles language, story, with a
+// search box for any event) and three cards explain how it works. Choosing a story starts the session.
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { sceneKindFor } from './scene.js'
 import { unlockAudio } from './audio.js'
@@ -14,8 +14,8 @@ import Logo from './Logo.jsx'
 import Shutter from './Shutter.jsx'
 import './landing.css'
 
-/** Load sequence (ms): sharpen 0 to 1300, shrink 1300 to 2000, the step bar from 2000. */
-const T = { sharp: 1300, shrink: 700, bar: 2000 }
+/** Load sequence (ms): the wordmark sharpens for 1300, then the rest arrives. */
+const T = { sharp: 1300 }
 const NUMBERS = ['1', '2', '3']
 const STEP_NAMES = ['narration language', 'subtitles language', 'story']
 
@@ -26,11 +26,18 @@ const STORIES = (import.meta.env.VITE_VANTAGE_EXAMPLE_TOPICS || 'Titanic,Battle 
   .filter(Boolean)
   .map((title) => ({ id: title, title }))
 
-/** Three drawn panels in the hero, one per point of view. */
+/** What the app does, one card each. The art is a drawn scene in that card's colour. */
+const HOW = [
+  { title: 'three points of view', line: 'every story is told from the sides that lived it, so you see where they agree and where they do not.' },
+  { title: 'grounded in sources', line: 'each scene cites the primary sources and news it came from. open the evidence and read it yourself.' },
+  { title: 'in your language', line: 'listen in one language and read subtitles in another. ask a question and the story answers.' },
+]
+
+/** Three drawn scenes, one per card. */
 const HERO_COLORS = ['#6F9BC4', '#C49A6C', '#9DB29A']
 function heroPanels() {
   const kind = sceneKindFor('')
-  return HERO_COLORS.map((color, i) => ({ id: `hero-${i}`, url: gradedSceneUrl({ seed: `hero-${i}`, kind, width: 1800, height: 1100 }, lookFor(color)) }))
+  return HERO_COLORS.map((color, i) => ({ id: `hero-${i}`, url: gradedSceneUrl({ seed: `hero-${i}`, kind, width: 900, height: 560 }, lookFor(color)) }))
 }
 
 /** A group of large options with a roving focus: arrows move, Enter or a click accepts, Escape collapses. */
@@ -84,46 +91,26 @@ function Options({ label, options, value, onPick, onEscape, autoFocus, columns }
 
 /**
  * @param {{ onStart: (title: string, narrationLanguage: string) => void, isStarting: boolean, error: object|null,
- *   language: object }} props
+ *   language: object, isReturning?: boolean }} props
+ * isReturning: the viewer came back from a story, so skip the intro and open the story step.
  */
-export default function Landing({ onStart, isStarting, error, language }) {
+export default function Landing({ onStart, isStarting, error, language, isReturning = false }) {
   const isCalm = useCalmMotion()
   const panels = useMemo(() => heroPanels(), [])
   const { languages, narrationLanguage, subtitleLanguage, setNarrationLanguage, setSubtitleLanguage, nameOf } = language
 
   // ---------- load sequence ----------
-  const [phase, setPhase] = useState(isCalm ? 'ready' : 'sharpen') // sharpen | shrink | ready
+  const [phase, setPhase] = useState(isCalm || isReturning ? 'ready' : 'sharpen') // sharpen | ready
   useEffect(() => {
-    if (isCalm) return setPhase('ready')
-    const a = setTimeout(() => setPhase('shrink'), ms(T.sharp))
-    const b = setTimeout(() => setPhase('ready'), ms(T.bar))
-    return () => (clearTimeout(a), clearTimeout(b))
-  }, [isCalm])
-
-  // Where the wordmark ends up (a transform only, so nothing reflows), and where the bar starts.
-  const markRef = useRef(null)
-  const [fit, setFit] = useState({ scale: 0.4, y: -200, barTop: 300 })
-  useLayoutEffect(() => {
-    const measure = () => {
-      const el = markRef.current
-      if (!el) return
-      const fontPx = parseFloat(getComputedStyle(el).fontSize) || 200
-      const h = el.offsetHeight
-      const vh = window.innerHeight
-      const scale = Math.min(1, Math.max(48, fontPx * 0.34) / fontPx)
-      const centre = vh * (vh < 700 ? 0.15 : 0.22)
-      setFit({ scale, y: centre - vh / 2, barTop: Math.round(centre + (h * scale) / 2 + 20) })
-    }
-    measure()
-    window.addEventListener('resize', measure)
-    return () => window.removeEventListener('resize', measure)
-  }, [])
-  const isShrunk = phase !== 'sharpen'
+    if (isCalm || isReturning) return setPhase('ready')
+    const a = setTimeout(() => setPhase('ready'), ms(T.sharp))
+    return () => clearTimeout(a)
+  }, [isCalm, isReturning])
 
   // ---------- the three steps ----------
-  const [active, setActive] = useState(0) // 0 | 1 | 2 | -1 (all collapsed)
-  const [done, setDone] = useState([false, false, false])
-  const [hasMoved, setHasMoved] = useState(false) // focus moves into a step only after the viewer acts
+  const [active, setActive] = useState(isReturning ? 2 : 0) // 0 | 1 | 2 | -1 (all collapsed)
+  const [done, setDone] = useState(isReturning ? [true, true, false] : [false, false, false])
+  const [hasMoved, setHasMoved] = useState(isReturning) // focus moves into a step only after the viewer acts
 
   const begin = useCallback(
     (title) => {
@@ -162,10 +149,7 @@ export default function Landing({ onStart, isStarting, error, language }) {
     {
       columns: 'lang',
       value: subtitleLanguage,
-      options: [
-        { value: 'off', title: 'off' },
-        ...languages.map((l) => ({ value: l.code, title: l.name.toLowerCase(), lang: l.code })),
-      ],
+      options: [{ value: 'off', title: 'off' }, ...languages.map((l) => ({ value: l.code, title: l.name.toLowerCase(), lang: l.code }))],
     },
     { columns: 'story', value: null, options: STORIES.map((s) => ({ value: s.id, title: s.title, line: s.line, disabled: isStarting })) },
   ]
@@ -174,133 +158,135 @@ export default function Landing({ onStart, isStarting, error, language }) {
   const [anyEvent, setAnyEvent] = useState('')
   const suggestions = error?.code === 'topic_not_supported' ? error.suggestions : []
   const fade = { duration: sec(isCalm ? DURATION.quick : DURATION.panel), ease: EASING.enter }
+  const isReady = phase === 'ready'
+  const rise = (i) => ({ initial: { opacity: 0, y: isCalm ? 0 : 10 }, animate: isReady ? { opacity: 1, y: 0 } : {}, transition: { ...fade, delay: isCalm ? 0 : sec(i * 90) } })
 
   return (
-    <main className={`ui-landing is-${phase}`} style={{ '--bar-top': `${fit.barTop}px` }}>
-      {/* three panels, one per point of view; the dividers sit above the wordmark */}
-      <div className="ui-lhero" aria-hidden="true">
-        {panels.map((p, i) => (
-          <div key={p.id} className="ui-lpanel" style={{ '--i': i, '--n': panels.length }}>
-            <img src={p.url} alt="" />
-          </div>
-        ))}
-        <i className="ui-lshade" />
-      </div>
-
-      <motion.h1
-        className="ui-lmark-wrap"
-        initial={false}
-        animate={{ scale: isShrunk ? fit.scale : 1, y: isShrunk ? fit.y : 0 }}
-        transition={{ duration: sec(isCalm ? 0 : T.shrink), ease: EASING.move }}
-      >
-        <span ref={markRef} className="ui-lmark" aria-label="vantage" role="img">
-          {!isCalm && (
-            <motion.span className="ui-lmark-soft" aria-hidden="true" initial={{ opacity: 1 }} animate={{ opacity: 0 }} transition={{ duration: sec(T.sharp), ease: EASING.enter }}>
-              <Logo className="ui-lmark-logo" />
-              vantage
-            </motion.span>
-          )}
-          <motion.span
-            className="ui-lmark-sharp"
-            aria-hidden="true"
-            initial={isCalm ? { opacity: 0 } : { opacity: 0, scale: 1.06 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: sec(isCalm ? DURATION.quick : T.sharp), ease: EASING.enter }}
-          >
-            <Logo className="ui-lmark-logo" />
-            vantage
-          </motion.span>
-        </span>
-      </motion.h1>
-      <div className="ui-ldividers" aria-hidden="true">
-        <i style={{ left: '33.333%' }} />
-        <i style={{ left: '66.666%' }} />
-      </div>
-
-      {phase === 'ready' && (
-        <section className="ui-lbar" aria-label="start a story">
-          <p className="ui-sr" aria-live="polite">
-            {active >= 0 ? `step ${active + 1} of 3: ${STEP_NAMES[active]}` : ''}
-          </p>
-          <ol className="ui-lsteps">
-            {pills.map(([long, short], i) => (
-              <motion.li key={i} initial={{ opacity: 0, y: isCalm ? 0 : 10 }} animate={{ opacity: 1, y: 0 }} transition={{ ...fade, delay: isCalm ? 0 : sec(i * 90) }}>
-                <button
-                  type="button"
-                  className={`ui-lpill ${active === i ? 'is-active' : ''} ${done[i] ? 'is-done' : ''}`}
-                  aria-label={`step ${i + 1}, ${long}`}
-                  aria-current={active === i ? 'step' : undefined}
-                  aria-expanded={active === i}
-                  aria-controls={active === i ? panelId : undefined}
-                  onClick={() => open(i)}
-                >
-                  <span className="ui-lpill-n" aria-hidden="true">{NUMBERS[i]}</span>
-                  <span className="ui-lpill-text">
-                    <span className="is-long">{long}</span>
-                    <span className="is-short" aria-hidden="true">{short}</span>
-                  </span>
-                </button>
-              </motion.li>
-            ))}
-          </ol>
-
-          <AnimatePresence mode="wait" initial={false}>
-            {active >= 0 && (
-              <motion.div
-                key={active}
-                id={panelId}
-                className="ui-lpanel-open"
-                initial={{ opacity: 0, y: isCalm ? 0 : 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ ...fade, delay: isCalm || hasMoved ? 0 : sec(3 * 90) }}
+    <main className={`ui-landing is-${phase}`}>
+      <div className="ui-lwrap">
+        <header className="ui-lhead">
+          <h1 className="ui-lmark-wrap">
+            <span className="ui-lmark" aria-label="vantage" role="img">
+              {!isCalm && (
+                <motion.span className="ui-lmark-soft" aria-hidden="true" initial={{ opacity: 1 }} animate={{ opacity: 0 }} transition={{ duration: sec(T.sharp), ease: EASING.enter }}>
+                  <Logo className="ui-lmark-logo" />
+                  vantage
+                </motion.span>
+              )}
+              <motion.span
+                className="ui-lmark-sharp"
+                aria-hidden="true"
+                initial={isCalm ? { opacity: 0 } : { opacity: 0, scale: 1.06 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: sec(isCalm ? DURATION.quick : T.sharp), ease: EASING.enter }}
               >
-                <h2 className="ui-lpanel-title">{STEP_NAMES[active]}</h2>
-                <Options
-                  label={STEP_NAMES[active]}
-                  options={groups[active].options}
-                  value={groups[active].value}
-                  columns={groups[active].columns}
-                  autoFocus={hasMoved}
-                  onPick={(v) => pick(active, v)}
-                  onEscape={() => setActive(-1)}
-                />
-                {active === 2 && (
-                  <form className="ui-lany" onSubmit={(e) => { e.preventDefault(); begin(anyEvent.trim()) }}>
-                    <label htmlFor={anyId} className="ui-lpanel-title">or type any event, past or present</label>
-                    <div className="ui-lany-row">
-                      <input
-                        id={anyId}
-                        className="ui-lany-input"
-                        value={anyEvent}
-                        onChange={(e) => setAnyEvent(e.target.value)}
-                        placeholder="the eruption of Pompeii"
-                        autoComplete="off"
-                        disabled={isStarting}
-                      />
-                      <button type="submit" className="ui-lany-go" disabled={!anyEvent.trim() || isStarting}>
-                        {isStarting && anyEvent.trim() ? 'finding sources…' : 'research it'}
-                      </button>
-                    </div>
-                    {isStarting && anyEvent.trim() && (
-                      <p className="ui-lnote" aria-live="polite">reading real sources and finding every side of the story. this takes about 30 seconds.</p>
-                    )}
-                  </form>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <Logo className="ui-lmark-logo" />
+                vantage
+              </motion.span>
+            </span>
+          </h1>
+          <motion.p className="ui-ltag" {...rise(0)}>every event has more than one side.</motion.p>
+          <motion.p className="ui-lsub" {...rise(1)}>
+            search any moment in history. vantage reads real sources, then tells it from three points of view, with the evidence one tap away.
+          </motion.p>
+        </header>
 
-          {error && !isStarting && (
-            <div role="alert" className="ui-note ui-lerror">
-              <p>{messageFor(error)}</p>
-              {suggestions.map((s) => (
-                <button key={s} type="button" className="ui-link" onClick={() => begin(s)}>{s}</button>
+        {isReady && (
+          <section className="ui-lbar" aria-label="start a story">
+            <p className="ui-sr" aria-live="polite">
+              {active >= 0 ? `step ${active + 1} of 3: ${STEP_NAMES[active]}` : ''}
+            </p>
+            <ol className="ui-lsteps">
+              {pills.map(([long, short], i) => (
+                <motion.li key={i} {...rise(i + 2)}>
+                  <button
+                    type="button"
+                    className={`ui-lpill ${active === i ? 'is-active' : ''} ${done[i] ? 'is-done' : ''}`}
+                    aria-label={`step ${i + 1}, ${long}`}
+                    aria-current={active === i ? 'step' : undefined}
+                    aria-expanded={active === i}
+                    aria-controls={active === i ? panelId : undefined}
+                    onClick={() => open(i)}
+                  >
+                    <span className="ui-lpill-n" aria-hidden="true">{NUMBERS[i]}</span>
+                    <span className="ui-lpill-text">
+                      <span className="is-long">{long}</span>
+                      <span className="is-short" aria-hidden="true">{short}</span>
+                    </span>
+                  </button>
+                </motion.li>
               ))}
-            </div>
-          )}
-        </section>
-      )}
+            </ol>
+
+            <AnimatePresence mode="wait" initial={false}>
+              {active >= 0 && (
+                <motion.div
+                  key={active}
+                  id={panelId}
+                  className="ui-lpanel-open"
+                  initial={{ opacity: 0, y: isCalm ? 0 : 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ ...fade, delay: isCalm || hasMoved ? 0 : sec(3 * 90) }}
+                >
+                  <h2 className="ui-lpanel-title">{STEP_NAMES[active]}</h2>
+                  <Options
+                    label={STEP_NAMES[active]}
+                    options={groups[active].options}
+                    value={groups[active].value}
+                    columns={groups[active].columns}
+                    autoFocus={hasMoved}
+                    onPick={(v) => pick(active, v)}
+                    onEscape={() => setActive(-1)}
+                  />
+                  {active === 2 && (
+                    <form className="ui-lany" onSubmit={(e) => { e.preventDefault(); begin(anyEvent.trim()) }}>
+                      <label htmlFor={anyId} className="ui-lpanel-title">or search any event, past or present</label>
+                      <div className="ui-lany-row">
+                        <input
+                          id={anyId}
+                          className="ui-lany-input"
+                          type="search"
+                          value={anyEvent}
+                          onChange={(e) => setAnyEvent(e.target.value)}
+                          placeholder="the eruption of Pompeii"
+                          autoComplete="off"
+                          disabled={isStarting}
+                        />
+                        <button type="submit" className="ui-lany-go" disabled={!anyEvent.trim() || isStarting}>
+                          {isStarting && anyEvent.trim() ? 'finding sources…' : 'research it'}
+                        </button>
+                      </div>
+                      {isStarting && anyEvent.trim() && (
+                        <p className="ui-lnote" aria-live="polite">reading real sources and finding every side of the story. this takes about 30 seconds.</p>
+                      )}
+                    </form>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {error && !isStarting && (
+              <div role="alert" className="ui-note ui-lerror">
+                <p>{messageFor(error)}</p>
+                {suggestions.map((s) => (
+                  <button key={s} type="button" className="ui-link" onClick={() => begin(s)}>{s}</button>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        <motion.ul className="ui-lhow" aria-label="how vantage works" {...rise(5)}>
+          {HOW.map((h, i) => (
+            <li key={h.title} className="ui-lcard">
+              <img src={panels[i].url} alt="" />
+              <h3>{h.title}</h3>
+              <p>{h.line}</p>
+            </li>
+          ))}
+        </motion.ul>
+      </div>
 
       <AnimatePresence>{isStarting && <Shutter key="shutter" message="opening the archive..." />}</AnimatePresence>
     </main>

@@ -8,6 +8,7 @@
 .ui-hud { position: absolute; z-index: 3; top: 0; left: 0; right: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 36rem) minmax(0, 1fr); align-items: start; gap: 12px 16px; padding: 12px max(var(--gutter), env(safe-area-inset-right)) 0 max(var(--gutter), env(safe-area-inset-left)); }
 .ui-hud::before { content: ''; position: absolute; inset: 0 0 -90px; z-index: -1; pointer-events: none; background: linear-gradient(180deg, rgb(10 12 15 / 0.92) 0%, rgb(10 12 15 / 0.78) 55%, rgb(10 12 15 / 0) 100%); }
 .ui-hud-left { min-width: 0; }
+.ui-hud-brand { display: flex; align-items: center; gap: 4px; }
 .ui-wordmark-btn { display: inline-flex; align-items: center; gap: 8px; text-transform: lowercase; font-size: 22px; line-height: 1; margin-left: -4px; padding: 0 4px; }
 .ui-date-roll { position: relative; min-height: 24px; }
 .ui-date-text { font-size: 15px; line-height: 24px; font-weight: 700; color: var(--text); }
