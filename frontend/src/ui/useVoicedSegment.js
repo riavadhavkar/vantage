@@ -16,6 +16,33 @@ const cache = new Map() // `${segment_id}|${lang}` -> { narrative_text, title }
 
 const keyOf = (segment, lang) => `${segment.segment_id}|${lang}`
 
+// A title that is a question ("Who was Cleopatra?") can come back from the translator as an answer,
+// a whole paragraph. A translated title is at most about three times as long as the original.
+const isTitleSane = (translated, original) => !!translated && translated.length <= Math.max(original.length * 3, 60)
+
+/**
+ * The scene's title and narration in another language. A short title on its own is a bad thing to
+ * send to the translator: a question ("Who was Cleopatra?") comes back answered. Sent as the first
+ * line of the narration it is translated like the rest, and split off again at the first blank line.
+ * If that does not come back as a title and a body, the two are translated separately, and a title
+ * that still looks wrong keeps the original words.
+ */
+async function translateScene(shown, lang) {
+  const title = shown.title || ''
+  const narration = shown.narrative_text || ''
+  if (title) {
+    const joined = await translateText(`${title}\n\n${narration}`, lang)
+    const cut = (joined?.text || '').indexOf('\n\n')
+    if (cut > 0) {
+      const [head, body] = [joined.text.slice(0, cut).trim(), joined.text.slice(cut).trim()]
+      if (body && isTitleSane(head, title)) return { narrative_text: body, title: head }
+    }
+  }
+  const [body, translatedTitle] = await Promise.all([translateText(narration, lang), title ? translateText(title, lang) : { text: '' }])
+  if (!body?.text) throw new Error('empty')
+  return { narrative_text: body.text, title: isTitleSane(translatedTitle?.text, title) ? translatedTitle.text : title }
+}
+
 /**
  * @returns {{ segment: object|null, lang: string, isHeld: boolean, status: 'native'|'ready'|'switching'|'pending'|'failed' }}
  */
@@ -29,10 +56,9 @@ export default function useVoicedSegment(shown, { sessionLanguage, narrationLang
   useEffect(() => {
     if (!key || cache.has(key)) return
     let isLive = true
-    Promise.all([translateText(shown.narrative_text || '', narrationLanguage), shown.title ? translateText(shown.title, narrationLanguage) : { text: '' }])
-      .then(([body, title]) => {
-        if (!body?.text) throw new Error('empty')
-        cache.set(key, { narrative_text: body.text, title: title?.text || shown.title })
+    translateScene(shown, narrationLanguage)
+      .then((voiced) => {
+        cache.set(key, voiced)
         if (isLive) setTick((n) => n + 1)
       })
       .catch(() => isLive && setFailed(key))

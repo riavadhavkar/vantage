@@ -3,17 +3,28 @@
 .ui-smap-center { max-width: 36rem; padding: 12px 24px; border: 1px solid var(--text); border-radius: 999px; font-size: 20px; line-height: 26px; font-weight: 640; text-align: center; color: var(--text); }
 /* the trunk from the centre down to the branches */
 .ui-smap-center::after { content: ''; display: block; position: absolute; left: 50%; width: 1px; height: 24px; margin-top: 12px; background: var(--line); }
-.ui-smap-branches { width: 100%; max-width: 72rem; margin-top: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; list-style: none; padding: 0; }
-.ui-smap-branch { padding: 14px 16px 16px; border-radius: 14px; border: 1px solid var(--line); border-top: 3px solid var(--accent); background: rgb(255 255 255 / 0.03); }
-.ui-smap-branch h4 { margin: 0 0 10px; font-size: 15px; line-height: 20px; font-weight: 640; color: var(--accent); text-transform: lowercase; }
+/* cards are centred, including a short last row */
+.ui-smap-branches { width: 100%; max-width: 72rem; margin-top: 24px; display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; list-style: none; padding: 0; }
+.ui-smap-branch { flex: 0 1 320px; min-width: 0; padding: 14px 16px 16px; border-radius: 14px; border: 1.5px solid var(--accent); background: rgb(255 255 255 / 0.03); }
+.ui-smap-branch h4 { margin: 0 0 12px; font-size: 15px; line-height: 20px; font-weight: 640; color: var(--accent); text-transform: lowercase; text-align: center; }
 .ui-smap-branch ul { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; list-style: none; }
 .ui-smap-branch p { margin: 0; font-size: 15px; line-height: 22px; color: var(--text); }
 .ui-smap-branch .ui-smap-empty { color: var(--dim); font-size: 13px; line-height: 19px; }
 .ui-smap-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.ui-smap-chip { max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; display: inline-block; line-height: 28px; }
+.ui-smap-chip { min-width: 28px; justify-content: center; font-variant-numeric: tabular-nums; }
+.ui-smap-key { width: 100%; max-width: 72rem; margin: 24px 0 0; padding: 16px 0 0; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 20px; list-style: none; }
+.ui-smap-key button { display: inline-flex; align-items: baseline; gap: 8px; min-height: 32px; font-size: 13px; line-height: 18px; color: var(--dim); text-align: left; }
+.ui-smap-key button:hover { color: var(--text); }
+.ui-smap-key .mono { color: var(--text); }
 @media (max-width: 899px) {
   .ui-smap { padding: 16px 16px 24px; align-items: stretch; }
   .ui-smap-center { border-radius: 14px; }
   .ui-smap-center::after { display: none; }
-  .ui-smap-branches { margin-top: 16px; grid-template-columns: 1fr; }
+  .ui-smap-branches { margin-top: 16px; }
+  .ui-smap-branch { flex-basis: 100%; }
+  .ui-smap-key { justify-content: flex-start; flex-direction: column; }
 }
+
+/* loading and error: centred in the panel, on one line */
+.ui-smap-wait { height: 100%; min-height: 160px; display: grid; place-items: center; padding: 24px; }
+.ui-smap-wait .ui-waiting { white-space: nowrap; }

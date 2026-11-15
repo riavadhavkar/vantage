@@ -1,5 +1,6 @@
-// Share this moment. A 1080 x 1350 (4:5) PNG drawn in the browser: the logo and "vantage", and one
-// line with the story and the date. Made on this device; nothing is uploaded.
+// Share this moment. A 1080 x 1350 (4:5) PNG drawn in the browser: one of the story's generated
+// images (picked at random) full bleed, the logo and "vantage", and one line with the story and
+// the date. Made on this device; nothing is uploaded.
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'motion/react'
 import QRCode from 'qrcode'
@@ -35,12 +36,40 @@ function wrap(ctx, text, maxWidth, maxLines) {
   return lines
 }
 
-async function drawShare({ segment, topicTitle }) {
+/** Loads an image for the canvas. Resolves null if it cannot be read (the card is then drawn without it). */
+function loadImage(url) {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => resolve(img)
+    img.onerror = () => resolve(null)
+    img.src = url
+  })
+}
+
+async function drawShare({ segment, topicTitle, imageUrl }) {
   await document.fonts?.ready
   const canvas = Object.assign(document.createElement('canvas'), { width: SHARE_W, height: SHARE_H })
   const ctx = canvas.getContext('2d')
   ctx.fillStyle = '#0A0C0F'
   ctx.fillRect(0, 0, SHARE_W, SHARE_H)
+  const img = imageUrl ? await loadImage(imageUrl) : null
+  if (img) {
+    // cover the card, then darken the top and bottom so the logo and the line stay readable
+    const scale = Math.max(SHARE_W / img.naturalWidth, SHARE_H / img.naturalHeight)
+    const [w, h] = [img.naturalWidth * scale, img.naturalHeight * scale]
+    ctx.drawImage(img, (SHARE_W - w) / 2, (SHARE_H - h) / 2, w, h)
+    const top = ctx.createLinearGradient(0, 0, 0, 260)
+    top.addColorStop(0, 'rgba(10,12,15,0.7)')
+    top.addColorStop(1, 'rgba(10,12,15,0)')
+    ctx.fillStyle = top
+    ctx.fillRect(0, 0, SHARE_W, 260)
+    const bottom = ctx.createLinearGradient(0, SHARE_H - 460, 0, SHARE_H)
+    bottom.addColorStop(0, 'rgba(10,12,15,0)')
+    bottom.addColorStop(1, 'rgba(10,12,15,0.88)')
+    ctx.fillStyle = bottom
+    ctx.fillRect(0, SHARE_H - 460, SHARE_W, 460)
+  }
 
   const M = 72
   drawLogo(ctx, M, 56, 56, '#ffffff')
@@ -59,10 +88,12 @@ async function drawShare({ segment, topicTitle }) {
 }
 
 /**
- * @param {{ segment: object, topicTitle: string, linkCode: string|null, onClose: () => void }} props
+ * @param {{ segment: object, topicTitle: string, images: string[], linkCode: string|null, onClose: () => void }} props
+ * images: the generated illustrations this story has shown so far; one is picked at random.
  */
-export default function ShareCard({ segment, topicTitle, linkCode, onClose }) {
+export default function ShareCard({ segment, topicTitle, images = [], linkCode, onClose }) {
   const isCalm = useCalmMotion()
+  const [imageUrl] = useState(() => images[Math.floor(Math.random() * images.length)] || null)
   const toast = useToast()
   const [card, setCard] = useState(null) // { url, blob, filename }
   const [state, setState] = useState('drawing') // drawing | ready | failed
@@ -74,7 +105,7 @@ export default function ShareCard({ segment, topicTitle, linkCode, onClose }) {
   useEffect(() => {
     let isLive = true
     let objectUrl = null
-    drawShare({ segment, topicTitle })
+    drawShare({ segment, topicTitle, imageUrl })
       .then(async ({ canvas, line }) => {
         const raw = await new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob'))), 'image/png'))
         const blob = await withPngText(raw, { Title: `vantage: ${line}`, Software: 'vantage' })
@@ -171,31 +202,25 @@ export default function ShareCard({ segment, topicTitle, linkCode, onClose }) {
             <Btn variant="primary" icon={Download} onClick={save} disabled={state !== 'ready'} isLoading={state === 'drawing'}>
               {state === 'drawing' ? 'developing' : 'save image'}
             </Btn>
-            <div className="ui-share-row">
-              {canShareFile && (
-                <Btn variant="quiet" icon={Share2} onClick={shareFile}>
-                  share...
-                </Btn>
-              )}
-              <Btn variant="quiet" icon={Copy} onClick={copyLink}>
-                copy link
+            <Btn variant="quiet" icon={Copy} onClick={copyLink}>
+              copy link
+            </Btn>
+            {canShareFile && (
+              <Btn variant="quiet" icon={Share2} onClick={shareFile}>
+                share
               </Btn>
-            </div>
+            )}
           </div>
 
           {photonText && PHOTON_NUMBER && (
-            <section className="ui-share-photon" aria-labelledby="photon-h">
-              <h3 id="photon-h">text with photon</h3>
-              <p className="ui-share-photon-copy">continue on your phone.</p>
-              <div className="ui-share-photon-row">
-                {qr && <img src={qr} alt="qr code to text photon" className="ui-share-qr" />}
-                <p>
-                  text <span className="mono ui-share-code">{photonText}</span> to{' '}
-                  <a href={sms} className="ui-link">
-                    {PHOTON_NUMBER}
-                  </a>
-                </p>
-              </div>
+            <section className="ui-share-photon" aria-label="text vantage on your phone">
+              <p>
+                text <span className="mono ui-share-code">{photonText}</span> to{' '}
+                <a href={sms} className="ui-link">
+                  {PHOTON_NUMBER}
+                </a>
+              </p>
+              {qr && <img src={qr} alt="qr code to text photon" className="ui-share-qr" />}
             </section>
           )}
 
