@@ -104,6 +104,22 @@ def analysis(body: AnalysisRequest):
             if text and ids:
                 points.append({"text": text, "source_ids": ids})
         branches.append({"id": bid, "label": label, "points": points})
+    # Add the hand-documented disagreements from data/edges.csv (opposing_view edges) for this topic.
+    try:
+        from knowledge import graph
+        from knowledge.catalog import load_documents
+        topic_docs = [d for d, row in load_documents().items() if row.get("topic") == key]
+        dis = next(b for b in branches if b["id"] == "disagreements")
+        seen_pairs = {tuple(sorted(p["source_ids"])) for p in dis["points"]}
+        for e in graph.contradictions_between(topic_docs):
+            pair = tuple(sorted([e["from_doc"], e["to_doc"]]))
+            note = (e.get("note") or "").strip()
+            if pair in seen_pairs or not note or len(dis["points"]) >= 3:
+                continue
+            dis["points"].append({"text": note[:140], "source_ids": list(pair)})
+            seen_pairs.add(pair)
+    except Exception as e:
+        print(f"[analysis] adding documented disagreements failed: {str(e)[:150]}")
     result = {"center": (raw.get("center") or title).strip(), "branches": branches}
     _CACHE[key] = result
     return result
