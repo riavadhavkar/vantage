@@ -456,7 +456,6 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
         isOpen={panel === 'map'}
         onClose={closePanel}
         title="map"
-        subtitle={shown.location?.label || undefined}
         className={isFull ? 'is-full' : ''}
         headerExtra={<Btn variant="ghost" icon={isFull ? Minimize2 : Maximize2} aria-pressed={isFull} onClick={() => setIsFull((v) => !v)}>{isFull ? 'exit full view' : 'full view'}</Btn>}
       >

@@ -126,7 +126,7 @@ export default function ShareCard({ segment, topicTitle, images = [], linkCode, 
   useEffect(() => {
     if (!sms) return
     let isLive = true
-    QRCode.toDataURL(sms, { margin: 1, width: 360, color: { dark: '#0a0c0f', light: '#f3f5f6' } })
+    QRCode.toDataURL(sms, { margin: 1, width: 720, color: { dark: '#0a0c0f', light: '#f3f5f6' } })
       .then((url) => isLive && setQr(url))
       .catch(() => isLive && setQr(null))
     return () => {
