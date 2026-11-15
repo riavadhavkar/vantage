@@ -10,7 +10,9 @@ app = FastAPI(title="Vantage API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[VANTAGE_FRONTEND_ORIGIN],
+    allow_origins=[VANTAGE_FRONTEND_ORIGIN, "http://localhost:5173", "http://localhost:5174",
+                   "https://vantageo.us", "https://www.vantageo.us"],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_methods=["*"],
     allow_headers=["*"],
 )
