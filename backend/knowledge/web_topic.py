@@ -121,8 +121,6 @@ QUESTION_START = re.compile(r"^(who|what|when|where|why|how|is|was|were|did|does
 
 def _to_search_phrase(query: str) -> str:
     """Turn a question or a misspelled topic into the title of the best Wikipedia article (about a second)."""
-    if len(query.split()) <= 3 and not QUESTION_START.match(query):
-        return query
     try:
         from config import XAI_API_KEY
         r = httpx.post("https://api.x.ai/v1/chat/completions",
