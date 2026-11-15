@@ -16,6 +16,9 @@ const ACCENT = {
   consequences: '#B49AAE',
 }
 
+/** The model sometimes writes its source ids into the sentence, e.g. "[WHO2, WHOW5]". The chips already say that. */
+const stripIds = (text) => text.replace(/\s*\[[A-Za-z]{1,6}\d+(?:\s*,\s*[A-Za-z]{1,6}\d+)*\]/g, '').trim()
+
 export default function StudyMap({ analysis, sourcesById, onOpenSource, onRetry }) {
   const isCalm = useCalmMotion()
 
@@ -36,6 +39,11 @@ export default function StudyMap({ analysis, sourcesById, onOpenSource, onRetry 
     )
 
   const { center, branches } = analysis.data
+  // Sources are numbered in the order they first appear. A chip shows its number; the key at the
+  // bottom says which source each number is, once, instead of repeating the title on every chip.
+  const order = []
+  for (const b of branches) for (const pt of b.points) for (const id of pt.source_ids) if (sourcesById[id] && !order.includes(id)) order.push(id)
+  const numberOf = (id) => order.indexOf(id) + 1
   return (
     <div className="ui-smap">
       <motion.h3
@@ -65,12 +73,12 @@ export default function StudyMap({ analysis, sourcesById, onOpenSource, onRetry 
                   const cited = p.source_ids.filter((id) => sourcesById[id])
                   return (
                     <li key={k}>
-                      <p>{p.text}</p>
+                      <p>{stripIds(p.text)}</p>
                       {cited.length > 0 && (
                         <span className="ui-smap-chips">
                           {cited.map((id) => (
-                            <button key={id} type="button" className="ui-chip ui-smap-chip" title={sourcesById[id].title} onClick={() => onOpenSource(id)}>
-                              {sourcesById[id].title}
+                            <button key={id} type="button" className="ui-chip ui-smap-chip" title={sourcesById[id].title} aria-label={`source ${numberOf(id)}: ${sourcesById[id].title}`} onClick={() => onOpenSource(id)}>
+                              {numberOf(id)}
                             </button>
                           ))}
                         </span>
@@ -83,6 +91,18 @@ export default function StudyMap({ analysis, sourcesById, onOpenSource, onRetry 
           </motion.li>
         ))}
       </ul>
+      {order.length > 0 && (
+        <ol className="ui-smap-key" aria-label="sources">
+          {order.map((id) => (
+            <li key={id}>
+              <button type="button" onClick={() => onOpenSource(id)}>
+                <span className="mono" aria-hidden="true">{numberOf(id)}</span>
+                {sourcesById[id].title}
+              </button>
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   )
 }

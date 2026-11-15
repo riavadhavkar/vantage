@@ -23,7 +23,9 @@
 .ui-scard-title { grid-column: 1; font-size: 13px; line-height: 18px; color: var(--ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ui-scard-chev { grid-column: 2; grid-row: 1 / span 2; align-self: center; color: var(--ink); transition: transform var(--duration-panel) var(--ease-enter); }
 .ui-scard-toggle[aria-expanded='true'] .ui-scard-chev { transform: rotate(180deg); }
-.ui-scard-body { padding: 0 14px 14px; }
+.ui-scard-body { padding: 8px 14px 14px; }
+/* the focus ring sits inside the card, so it never runs into the role pill below */
+.ui-scard-toggle:focus-visible { outline-offset: -3px; }
 .ui-scard-body:not([hidden]) { animation: ui-ev-open var(--duration-panel) var(--ease-enter) both; }
 @keyframes ui-ev-open { from { opacity: 0; transform: translateY(-4px); } }
 .ui-scard-role { display: inline-flex; align-items: center; min-height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12px; line-height: 16px; font-weight: 640; letter-spacing: 0.02em; }

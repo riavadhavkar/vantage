@@ -16,6 +16,10 @@ const cache = new Map() // `${segment_id}|${lang}` -> { narrative_text, title }
 
 const keyOf = (segment, lang) => `${segment.segment_id}|${lang}`
 
+// A title that is a question ("Who was Cleopatra?") can come back from the translator as an answer,
+// a whole paragraph. A translated title is at most about three times as long as the original.
+const isTitleSane = (translated, original) => !!translated && translated.length <= Math.max(original.length * 3, 60)
+
 /**
  * @returns {{ segment: object|null, lang: string, isHeld: boolean, status: 'native'|'ready'|'switching'|'pending'|'failed' }}
  */
@@ -32,7 +36,7 @@ export default function useVoicedSegment(shown, { sessionLanguage, narrationLang
     Promise.all([translateText(shown.narrative_text || '', narrationLanguage), shown.title ? translateText(shown.title, narrationLanguage) : { text: '' }])
       .then(([body, title]) => {
         if (!body?.text) throw new Error('empty')
-        cache.set(key, { narrative_text: body.text, title: title?.text || shown.title })
+        cache.set(key, { narrative_text: body.text, title: isTitleSane(title?.text, shown.title || '') ? title.text : shown.title })
         if (isLive) setTick((n) => n + 1)
       })
       .catch(() => isLive && setFailed(key))

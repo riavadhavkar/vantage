@@ -202,31 +202,25 @@ export default function ShareCard({ segment, topicTitle, images = [], linkCode, 
             <Btn variant="primary" icon={Download} onClick={save} disabled={state !== 'ready'} isLoading={state === 'drawing'}>
               {state === 'drawing' ? 'developing' : 'save image'}
             </Btn>
-            <div className="ui-share-row">
-              {canShareFile && (
-                <Btn variant="quiet" icon={Share2} onClick={shareFile}>
-                  share...
-                </Btn>
-              )}
-              <Btn variant="quiet" icon={Copy} onClick={copyLink}>
-                copy link
+            <Btn variant="quiet" icon={Copy} onClick={copyLink}>
+              copy link
+            </Btn>
+            {canShareFile && (
+              <Btn variant="quiet" icon={Share2} onClick={shareFile}>
+                share
               </Btn>
-            </div>
+            )}
           </div>
 
           {photonText && PHOTON_NUMBER && (
-            <section className="ui-share-photon" aria-labelledby="photon-h">
-              <h3 id="photon-h">text with photon</h3>
-              <p className="ui-share-photon-copy">continue on your phone.</p>
-              <div className="ui-share-photon-row">
-                {qr && <img src={qr} alt="qr code to text photon" className="ui-share-qr" />}
-                <p>
-                  text <span className="mono ui-share-code">{photonText}</span> to{' '}
-                  <a href={sms} className="ui-link">
-                    {PHOTON_NUMBER}
-                  </a>
-                </p>
-              </div>
+            <section className="ui-share-photon" aria-label="text vantage on your phone">
+              <p>
+                text <span className="mono ui-share-code">{photonText}</span> to{' '}
+                <a href={sms} className="ui-link">
+                  {PHOTON_NUMBER}
+                </a>
+              </p>
+              {qr && <img src={qr} alt="qr code to text photon" className="ui-share-qr" />}
             </section>
           )}
 
