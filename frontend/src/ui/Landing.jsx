@@ -299,8 +299,8 @@ export default function Landing({ onStart, isStarting, error, language, isReturn
                   <AnimatePresence mode="wait" initial={false}>
                     <motion.div
                       key={active}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
+                      initial={{ opacity: 0, y: isCalm ? 0 : 16 }}
+                      animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: sec(isCalm ? 0 : DURATION.quick), ease: EASING.enter }}
                     >
