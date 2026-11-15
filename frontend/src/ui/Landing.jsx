@@ -328,7 +328,6 @@ export default function Landing({ onStart, isStarting, error, language, isReturn
                               type="search"
                               value={anyEvent}
                               onChange={(e) => setAnyEvent(e.target.value)}
-                              placeholder="the eruption of Pompeii"
                               autoComplete="off"
                               autoFocus={hasMoved}
                               disabled={isStarting}
