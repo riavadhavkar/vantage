@@ -1,6 +1,6 @@
 // The player: a full-bleed stage with the story on glass over it, and a lens ring that
 // decides who is telling it. Data and actions come from usePlayer.
-import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, useTransform } from 'motion/react'
 import { ArrowLeft, FileText, Map as MapIcon, Maximize2, Minimize2, Pause, Play, Share2, Volume2, VolumeX, Waypoints } from 'lucide-react'
 import usePlayer from './usePlayer.js'
@@ -101,6 +101,30 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
     source: shown?.is_grounded ? { text: shown.narrative_text || '', lang: language.sessionLanguage } : null,
   })
   const toast = useToast()
+  // Toasts sit just above the subtitles, however tall the lower block is right now.
+  const lowerRef = useRef(null)
+  useEffect(() => {
+    const el = lowerRef.current
+    if (!el) return
+    const root = document.documentElement
+    const set = () => root.style.setProperty('--lower-h', `${el.offsetHeight}px`)
+    set()
+    const observer = new ResizeObserver(set)
+    observer.observe(el)
+    return () => {
+      observer.disconnect()
+      root.style.removeProperty('--lower-h')
+    }
+  }, [])
+  // A question to the ask bar takes a while: say so with a toast that stays until the answer is in.
+  // The generated illustrations shown so far: the share card picks one of them.
+  const shareImages = useMemo(() => [...new Set([...Object.values(P.thumbs), ...(P.narration.imageUrls || [])].filter(Boolean))], [P.thumbs, P.narration.imageUrls])
+  const isAsking = pending?.kind === 'ask' && !pending.perspective
+  useEffect(() => {
+    if (isAsking) toast.push('looking through the sources...', { id: 'ask', isSticky: true })
+    else toast.dismiss('ask')
+    return () => toast.dismiss('ask')
+  }, [isAsking, toast])
   // Narration language: applied in place, with a toast (the swap itself is in useVoicedSegment).
   const switching = useRef(null) // { code, audioUrl } while a narration change is being prepared
   const changeNarration = useCallback(
@@ -301,7 +325,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
       </header>
 
       {/* bottom: notes, disagreement, subtitles; then the ring */}
-      <motion.div className="ui-lower" style={{ opacity: textOpacity }}>
+      <motion.div ref={lowerRef} className="ui-lower" style={{ opacity: textOpacity }}>
         {P.isLookingBack && !isPulling && (
           <div className="ui-glass ui-back" role="status">
             <p>viewing an earlier scene.</p>
@@ -314,11 +338,9 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
             {P.error.code === 'session_not_found' ? <Btn variant="quiet" onClick={onExit}>start again</Btn> : <Btn variant="quiet" onClick={P.retry}>try again</Btn>}
           </div>
         )}
-        {pending && !pending.perspective && (
+        {pending && !pending.perspective && pending.kind !== 'ask' && (
           <div className="ui-glass ui-asking">
-            <Waiting
-              message={pending.kind === 'ask' ? 'looking through the sources' : pending.kind === 'start' ? 'opening the archive' : 'tracing connections'}
-            />
+            <Waiting message={pending.kind === 'start' ? 'opening the archive' : 'tracing connections'} />
           </div>
         )}
         {dis && <Disagreement key={dis.contradiction_id || shown.segment_id} contradiction={dis} sourcesById={P.sourcesById} lookOf={lookOf} onOpenEvidence={(id) => openEvidence(id, shown.claims.find((c) => c.source_id === id))} isCalm={isCalm} />}
@@ -406,7 +428,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
         }
       >
         {graphTab === 'map' ? (
-          <Suspense fallback={<div className="ui-sheet-wait"><Waiting message="building the study map" /></div>}>
+          <Suspense fallback={<div className="ui-smap-wait"><Waiting message="building the study map" /></div>}>
             <StudyMap
               analysis={analysis}
               sourcesById={P.sourcesById}
@@ -488,7 +510,7 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
               segment={shown}
               look={look}
               topicTitle={P.topic?.title || ''}
-              imageUrl={n.imageStatus === 'ready' ? n.imageUrl : null}
+              images={shareImages}
               linkCode={session.linkCode}
               onClose={closeShare}
             />

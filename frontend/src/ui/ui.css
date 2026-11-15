@@ -183,7 +183,7 @@ html[data-motion='off'] .ui-dots i, html[data-motion='off'] .ui-skeleton i::afte
 .ui-shutter-text { font-size: clamp(22px, 2.6vw, 30px); line-height: 1.25; font-weight: 700; font-variation-settings: 'wdth' 108; letter-spacing: -0.01em; color: #fff; text-transform: lowercase; text-wrap: balance; }
 .ui-shutter .ui-link { pointer-events: auto; font-size: 15px; color: #fff; text-transform: lowercase; }
 
-.ui-toasts { position: fixed; z-index: 70; left: 50%; bottom: calc(var(--ring-h, 0px) + 96px + env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; width: max-content; max-width: calc(100vw - 32px); pointer-events: none; }
+.ui-toasts { position: fixed; z-index: 70; left: 50%; bottom: calc(var(--ring-h, 0px) + var(--lower-h, 136px) - 40px + env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; width: max-content; max-width: calc(100vw - 32px); pointer-events: none; }
 .ui-toast { padding: 10px 18px; border-radius: 999px; background: #f3f5f6; color: #0a0c0f; font-size: 15px; line-height: 20px; font-weight: 600; text-transform: lowercase; box-shadow: 0 8px 24px rgb(0 0 0 / 0.4); text-align: center; }
 
 @media (prefers-reduced-motion: reduce) { .ui-logo.is-turning .ui-logo-blades { animation: none; } }

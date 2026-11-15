@@ -4,7 +4,7 @@
 import { motion } from 'motion/react'
 import { DURATION, EASING, STAGGER_STEP_MS } from './theme.js'
 import { sec, useCalmMotion } from './motionMode.js'
-import { Btn, Skeleton, Waiting } from './controls.jsx'
+import { Btn, Waiting } from './controls.jsx'
 import './studymap.css'
 
 /** Branch accents. Never the only cue: each branch also has its name. */
@@ -21,14 +21,13 @@ export default function StudyMap({ analysis, sourcesById, onOpenSource, onRetry 
 
   if (analysis.state === 'idle' || analysis.state === 'loading')
     return (
-      <div className="ui-sheet-wait">
-        <Waiting message="building the study map" slowMessage="reading every source. the first time takes about 20 seconds" />
-        <Skeleton lines={4} />
+      <div className="ui-smap-wait">
+        <Waiting message="building the study map" slowMessage="reading the sources. about 20 seconds" />
       </div>
     )
   if (analysis.state === 'error')
     return (
-      <div className="ui-sheet-wait">
+      <div className="ui-smap-wait">
         <div role="alert" className="ui-note">
           <p>the study map could not be built right now.</p>
           <Btn variant="quiet" onClick={onRetry}>try again</Btn>

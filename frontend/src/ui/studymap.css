@@ -17,3 +17,7 @@
   .ui-smap-center::after { display: none; }
   .ui-smap-branches { margin-top: 16px; grid-template-columns: 1fr; }
 }
+
+/* loading and error: centred in the panel, on one line */
+.ui-smap-wait { height: 100%; min-height: 160px; display: grid; place-items: center; padding: 24px; }
+.ui-smap-wait .ui-waiting { white-space: nowrap; }

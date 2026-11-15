@@ -1,6 +1,7 @@
 // One toast stack for the whole app: role="status" (a polite live region), about 4 seconds each,
 // at most two on screen. A toast pushed with an id replaces the one with the same id, so
-// "switching narration..." can turn into "narration is now in ..." in place.
+// "switching narration..." can turn into "narration is now in ..." in place. A sticky toast
+// (for work that takes a while) stays until dismiss(id).
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { ToastContext } from './useToast.js'
@@ -23,15 +24,16 @@ export default function Toaster({ children }) {
   }, [])
 
   const push = useCallback(
-    (text, { id } = {}) => {
+    (text, { id, isSticky = false } = {}) => {
       const key = id || `t${++counter.current}`
       clearTimeout(timers.current[key])
-      timers.current[key] = setTimeout(() => remove(key), LIFE_MS)
+      if (isSticky) delete timers.current[key]
+      else timers.current[key] = setTimeout(() => remove(key), LIFE_MS)
       setToasts((list) => [...list.filter((t) => t.key !== key), { key, text }].slice(-MAX))
     },
     [remove],
   )
-  const value = useMemo(() => ({ push }), [push])
+  const value = useMemo(() => ({ push, dismiss: remove }), [push, remove])
 
   return (
     <ToastContext.Provider value={value}>
