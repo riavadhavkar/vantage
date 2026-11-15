@@ -3,6 +3,7 @@
 // Choosing a story starts the session.
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
+import { ArrowRight } from 'lucide-react'
 import { unlockAudio } from './audio.js'
 import { messageFor } from '../api/errors.js'
 import { DURATION, EASING } from './theme.js'
@@ -52,10 +53,11 @@ const QUESTIONS = [
   'how did apollo 13 get home?',
   'what started the american civil war?',
 ]
-const Q_COLORS = ['#3b82c4', '#d08a2e', '#4e9a6b', '#8b5cb8', '#d2402f', '#2a9da6']
-const Q_ROWS = Q_COLORS.map((color, i) => ({
-  color,
-  questions: QUESTIONS.filter((_, k) => k % Q_COLORS.length === i),
+const Q_COLORS = ['#3b82c4', '#d08a2e', '#4e9a6b', '#8b5cb8', '#d2402f', '#2a9da6', '#c2548a', '#7a8a2e']
+const ROW_COUNT = 6
+const Q_ROWS = Array.from({ length: ROW_COUNT }, (_, i) => ({
+  // every question has its own colour; the offset keeps neighbours different
+  questions: QUESTIONS.filter((_, k) => k % ROW_COUNT === i).map((text, n) => ({ text, color: Q_COLORS[(i * 3 + n * 5) % Q_COLORS.length] })),
   seconds: 90 + ((i * 17) % 50), // each row drifts at its own pace
   size: 19 + ((i * 5) % 9), // px
   reverse: i % 2 === 1,
@@ -67,12 +69,12 @@ function QuestionDrift({ isShown }) {
   return (
     <div className={`ui-qdrift ${isShown ? 'is-shown' : ''}`} aria-hidden="true">
       {Q_ROWS.map((row, i) => (
-        <div key={i} className="ui-qrow" style={{ color: row.color, fontSize: row.size }}>
+        <div key={i} className="ui-qrow" style={{ fontSize: row.size }}>
           <div className={`ui-qtrack ${row.reverse ? 'is-reverse' : ''}`} style={{ animationDuration: `${row.seconds}s`, animationDelay: `-${i * 13}s` }}>
             {[0, 1].map((copy) => (
               <div key={copy} className="ui-qline">
                 {row.questions.map((q) => (
-                  <span key={q}>{q}</span>
+                  <span key={q.text} style={{ color: q.color }}>{q.text}</span>
                 ))}
               </div>
             ))}
@@ -312,8 +314,8 @@ export default function Landing({ onStart, isStarting, error, language, isReturn
                           autoFocus={hasMoved}
                           disabled={isStarting}
                         />
-                        <button type="submit" className="ui-lany-go" disabled={!anyEvent.trim() || isStarting}>
-                          {isStarting && anyEvent.trim() ? 'finding sources…' : 'research it'}
+                        <button type="submit" className="ui-lany-go" aria-label="research this event" disabled={!anyEvent.trim() || isStarting}>
+                          <ArrowRight size={22} aria-hidden="true" />
                         </button>
                       </div>
                       {isStarting && anyEvent.trim() && (
