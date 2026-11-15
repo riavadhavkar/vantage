@@ -25,10 +25,12 @@ TOPIC_NAMES = {
     "titanic": "the sinking of the Titanic (April 1912)",
 }
 INTRO = (
-    "Hi, I'm Vantage, an interactive documentary engine. I tell history from several "
-    "perspectives using real primary sources, and I point out where those sources disagree. "
-    "Text TITANIC or PRINCETON to pick a story, then ask me anything about it. "
-    "Watching on the web? Text the VANTAGE code on your screen to continue your documentary here."
+    "Hi, I'm Vantage, an interactive documentary engine. Text any event, place or question, "
+    "like Pompeii, Apollo 11 or How did the Titanic sink, and I'll tell it from different "
+    "perspectives using real sources, and point out where they disagree. Reply with a number to "
+    "choose a path, or ask anything (I compute numbers with Wolfram|Alpha). Text STUDY for a study "
+    "map and SOURCES for links. Say HINDI, SPANISH or FRENCH to switch languages. Watching on the "
+    "web? Text the VANTAGE code on your screen to continue here."
 )
 INTRO_TRIGGERS = ("what is this", "what does this", "what can you", "who are you",
                   "what is vantage", "how does this work")
@@ -104,6 +106,66 @@ def _lang_request(low: str):
     return None
 
 
+NEW_STORY_RE = re.compile(r"^\s*(?:tell me about|new story|topic|story|research)\s*[:\-]?\s+(.+)$", re.I)
+STORY_TAIL = ("\n\nAsk me anything, reply with a number, or text STUDY for a study map and SOURCES for links.")
+START_HINT = "Start a story first: text any event, like Pompeii, Apollo 11 or the Titanic."
+
+
+def _start_story(chat: dict, topic_text: str) -> PhotonChatResponse:
+    """Any event, question or curated story becomes a full documentary session on the phone."""
+    from routers.segments import start
+    from schemas import StartRequest
+    try:
+        resp = start(StartRequest(topic=topic_text, language=chat.get("language") or "en"))
+    except Exception as e:
+        print(f"[photon] start failed for {topic_text!r}: {str(e)[:150]}")
+        resp = None
+    if resp is None or not hasattr(resp, "session_id") or not getattr(resp, "segment", None):
+        return PhotonChatResponse(reply="I could not find enough sources for that yet. "
+                                        "Try another event, or text TITANIC or PRINCETON.")
+    state = session_store.get_viewer_state(resp.session_id) or {}
+    chat.update(session_id=resp.session_id, topic=state.get("topic_key"), history=[])
+    return PhotonChatResponse(reply=_format_segment(resp.segment) + STORY_TAIL,
+                              topic=chat["topic"], session_id=resp.session_id)
+
+
+def _study_text(chat: dict) -> str:
+    if not chat.get("session_id"):
+        return START_HINT
+    from routers.analysis import analysis, AnalysisRequest
+    try:
+        r = analysis(AnalysisRequest(session_id=chat["session_id"]))
+    except Exception as e:
+        print(f"[photon] study map failed: {str(e)[:150]}")
+        r = None
+    if not isinstance(r, dict):
+        return "I could not build the study map right now. Try again in a moment."
+    lines = [f"Study map: {r.get('center', '')}"]
+    for b in r.get("branches", []):
+        if b.get("points"):
+            lines += ["", b["label"].upper()] + [f"- {_clean(p['text'])}" for p in b["points"]]
+    lines += ["", "Text SOURCES for the links."]
+    return "\n".join(lines)
+
+
+def _sources_text(chat: dict) -> str:
+    state = session_store.get_viewer_state(chat["session_id"]) if chat.get("session_id") else None
+    if not state:
+        return START_HINT
+    ids = state.get("seen_source_ids", [])[-6:]
+    if not ids:
+        return "No sources cited yet. Text NEXT to keep going."
+    from routers.sources import _source
+    lines = ["Sources so far:"]
+    for sid in ids:
+        try:
+            src = _source(sid)
+            lines.append(f"- {_short(src.title)}" + (f": {src.url}" if src.url else ""))
+        except Exception:
+            continue
+    return "\n".join(lines)
+
+
 @router.post("/photon/chat", response_model=PhotonChatResponse)
 def photon_chat(body: PhotonChatRequest):
     chat = _CHATS.setdefault(body.sender_id, {"topic": None, "history": [], "session_id": None})
@@ -121,7 +183,7 @@ def photon_chat(body: PhotonChatRequest):
         history = state.get("history", [])
         last = history[-1].split(":")[0] if history else "the opening"
         n = len(history)
-        reply = (f"Linked to your documentary on {TOPIC_NAMES.get(chat['topic'], 'your topic')}. "
+        reply = (f"Linked to your documentary on {TOPIC_NAMES.get(chat['topic'], str(chat['topic'] or 'your topic').removeprefix('web_').replace('_', ' '))}. "
                  f"You've watched {n} segment{'s' if n != 1 else ''}, most recently: {last}. "
                  "Ask me anything, or text NEXT to keep going.")
         offered = list(state.get("offered_choices", {}).values())
@@ -135,7 +197,22 @@ def photon_chat(body: PhotonChatRequest):
 
     if low in ("unlink", "stop", "reset"):
         chat.update(topic=None, history=[], session_id=None)
-        return PhotonChatResponse(reply="Unlinked. Text TITANIC or PRINCETON to start a new story.")
+        return PhotonChatResponse(reply="Unlinked. Text any event to start a new story.")
+
+    # Study map, sources, a new story, and a language choice before a story starts
+    if low in ("study", "study map", "map", "mind map"):
+        return PhotonChatResponse(reply=_study_text(chat), topic=chat["topic"], session_id=chat["session_id"])
+    if low in ("sources", "source", "links"):
+        return PhotonChatResponse(reply=_sources_text(chat), topic=chat["topic"], session_id=chat["session_id"])
+    m_story = NEW_STORY_RE.match(text)
+    if m_story:
+        return _start_story(chat, m_story.group(1).strip())
+    if not chat["session_id"]:
+        lang = _lang_request(low)
+        if lang and len(low.split()) <= 5:
+            chat["language"] = lang
+            return PhotonChatResponse(reply=f"Got it, I'll tell stories in {LANG_NAMES_EN[lang]}. "
+                                            "Text any event or question to begin.")
 
     # 2. Linked to a web session: continue that exact documentary
     if chat["session_id"]:
@@ -143,22 +220,24 @@ def photon_chat(body: PhotonChatRequest):
         linked_state = session_store.get_viewer_state(chat["session_id"])
         if code and linked_state is not None:
             linked_state["language"] = code
+            chat["language"] = code
             return PhotonChatResponse(reply=f"Switched to {LANG_NAMES_EN[code]}. Ask me anything, or text NEXT to keep going.",
                                       topic=chat["topic"], session_id=chat["session_id"])
+        switch_to = resolve_topic(text)
+        if switch_to and switch_to != chat["topic"]:
+            # They named a different story (for example the Titanic while in Apollo 11): start it
+            return _start_story(chat, text)
         linked = _linked_reply(chat, text)
         if linked:
             return linked
 
     # 3. Unlinked Q&A
     new_topic = resolve_topic(text)
-    if new_topic and new_topic != chat["topic"]:
-        chat["topic"], chat["history"] = new_topic, []
-        if len(text.split()) <= 3:
-            text = f"Give me a short overview of {TOPIC_NAMES[new_topic]}."
+    if (new_topic and new_topic != chat["topic"]) or not chat["topic"]:
+        # Any event, question or curated story starts a full documentary on the phone
+        return _start_story(chat, text)
 
     topic = chat["topic"]
-    if not topic:
-        return PhotonChatResponse(reply=INTRO)
 
     try:
         chunks = retriever.search(topic, text, k=4)
@@ -172,7 +251,7 @@ def photon_chat(body: PhotonChatRequest):
     history = "\n".join(f"Q: {q}\nA: {a}" for q, a in chat["history"][-3:]) or "(none)"
 
     prompt = (
-        f"You are Vantage, texting someone about {TOPIC_NAMES[topic]}.\n\n"
+        f"You are Vantage, texting someone about {TOPIC_NAMES.get(topic, str(topic).removeprefix('web_').replace('_', ' '))}.\n\n"
         f"SOURCES:\n{sources}\n\nEARLIER IN THIS CHAT:\n{history}\n\n"
         f"THEY JUST TEXTED: {text}\n\n"
         "Reply over iMessage in a warm, clear voice with standard spelling and punctuation (no slang):\n"
