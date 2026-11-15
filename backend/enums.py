@@ -15,6 +15,10 @@ class Perspective(str, Enum):
     CREW = "crew"
     FIRST_CLASS = "first_class"
     STEERAGE = "steerage"
+    # any-event mode: three generic sides, labeled per event by /api/topic
+    SIDE_A = "side_a"
+    SIDE_B = "side_b"
+    SIDE_C = "side_c"
 
 
 class Mood(str, Enum):
