@@ -285,10 +285,10 @@ export default function Landing({ onStart, isStarting, error, language, isReturn
               ))}
             </ol>
 
-            <AnimatePresence mode="wait" initial={false}>
+            {/* the beige box stays put; only what is inside it changes between steps */}
+            <AnimatePresence initial={false}>
               {active >= 0 && (
                 <motion.div
-                  key={active}
                   id={panelId}
                   className="ui-lpanel-open"
                   initial={{ opacity: 0, y: isCalm ? 0 : 8 }}
@@ -296,44 +296,54 @@ export default function Landing({ onStart, isStarting, error, language, isReturn
                   exit={{ opacity: 0 }}
                   transition={{ ...fade, delay: isCalm || hasMoved ? 0 : sec(3 * 90) }}
                 >
-                  {active < 2 && (
-                    <>
-                      <h2 className="ui-lpanel-title">{STEP_NAMES[active]}</h2>
-                      <Options
-                        label={STEP_NAMES[active]}
-                        options={groups[active].options}
-                        value={groups[active].value}
-                        columns={groups[active].columns}
-                        autoFocus={hasMoved}
-                        onPick={(v) => pick(active, v)}
-                        onEscape={() => setActive(-1)}
-                      />
-                    </>
-                  )}
-                  {active === 2 && (
-                    <form onSubmit={(e) => { e.preventDefault(); begin(anyEvent.trim()) }}>
-                      <label htmlFor={anyId} className="ui-sr">search any event</label>
-                      <div className="ui-lany-row">
-                        <input
-                          id={anyId}
-                          className="ui-lany-input"
-                          type="search"
-                          value={anyEvent}
-                          onChange={(e) => setAnyEvent(e.target.value)}
-                          placeholder="the eruption of Pompeii"
-                          autoComplete="off"
-                          autoFocus={hasMoved}
-                          disabled={isStarting}
-                        />
-                        <button type="submit" className="ui-lany-go" aria-label="research this event" disabled={!anyEvent.trim() || isStarting}>
-                          <ArrowRight size={22} aria-hidden="true" />
-                        </button>
-                      </div>
-                      {isStarting && anyEvent.trim() && (
-                        <p className="ui-lnote" aria-live="polite">reading real sources and finding every side of the story. this takes about 30 seconds.</p>
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.div
+                      key={active}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: sec(isCalm ? 0 : DURATION.quick), ease: EASING.enter }}
+                    >
+                      {active < 2 && (
+                        <>
+                          <h2 className="ui-lpanel-title">{STEP_NAMES[active]}</h2>
+                          <Options
+                            label={STEP_NAMES[active]}
+                            options={groups[active].options}
+                            value={groups[active].value}
+                            columns={groups[active].columns}
+                            autoFocus={hasMoved}
+                            onPick={(v) => pick(active, v)}
+                            onEscape={() => setActive(-1)}
+                          />
+                        </>
                       )}
-                    </form>
-                  )}
+                      {active === 2 && (
+                        <form onSubmit={(e) => { e.preventDefault(); begin(anyEvent.trim()) }}>
+                          <label htmlFor={anyId} className="ui-sr">search any event</label>
+                          <div className="ui-lany-row">
+                            <input
+                              id={anyId}
+                              className="ui-lany-input"
+                              type="search"
+                              value={anyEvent}
+                              onChange={(e) => setAnyEvent(e.target.value)}
+                              placeholder="the eruption of Pompeii"
+                              autoComplete="off"
+                              autoFocus={hasMoved}
+                              disabled={isStarting}
+                            />
+                            <button type="submit" className="ui-lany-go" aria-label="research this event" disabled={!anyEvent.trim() || isStarting}>
+                              <ArrowRight size={22} aria-hidden="true" />
+                            </button>
+                          </div>
+                          {isStarting && anyEvent.trim() && (
+                            <p className="ui-lnote" aria-live="polite">reading real sources and finding every side of the story. this takes about 30 seconds.</p>
+                          )}
+                        </form>
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
                 </motion.div>
               )}
             </AnimatePresence>
