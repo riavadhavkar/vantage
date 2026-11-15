@@ -1,18 +1,20 @@
 # Vantage
 
-**Every story, seen from every side.**
+**Hear every side of the story before you decide.**
 
-Vantage is an interactive documentary engine for any event, past or present. You pick a moment, choose whose eyes to see it through, and the story is written for you as you go, one narrated, illustrated scene at a time. Every scene is grounded in real sources, and when those sources disagree, Vantage shows you the disagreement instead of hiding it.
+Vantage is an interactive documentary engine for any event, past or present. Type an event or pick one of our deep dives, choose whose eyes to see it through, and the story is written for you as you go, one narrated, illustrated scene at a time. Every scene is grounded in real sources, and when those sources disagree, Vantage shows you the disagreement instead of hiding it.
 
 Demo video: _coming soon_ · Devpost: _coming soon_
 
 ## What you can do
 
-- **Pick a story and a perspective.** The Battle of Princeton (3 January 1777) through American soldiers, British soldiers, or the townspeople caught in between. The sinking of the Titanic (14–15 April 1912) through the crew, first-class passengers, or steerage. A narrator and a historian are there for both.
+- **Type any event.** Ask for "the eruption of Pompeii" and Vantage searches the web for real sources (Gemini with Google Search, with Wikipedia as a fallback), reads them, sorts the people into three sides that saw it differently, finds where the sources disagree, and starts the documentary. Disagreements found this way are labeled as found by AI.
+- **Or pick a deep dive and a perspective.** The Battle of Princeton (3 January 1777) through American soldiers, British soldiers, or the townspeople caught in between. The sinking of the Titanic (14–15 April 1912) through the crew, first-class passengers, or steerage. A narrator and a historian are there for both.
 - **Choose where the story goes.** Each scene ends with choices, or you can ask your own question by typing or speaking, and the next scene answers it.
 - **Switch perspectives mid-story.** The same moment, retold from another side, in another voice.
 - **See the evidence.** Every claim is tagged to the source it came from: Washington's letters to Congress, the London Gazette, the 1912 Senate and British inquiries, survivor memoirs, and more. Open the source panel to read them.
 - **See where sources disagree.** Was General Mercer dead or alive? How many British soldiers fell? Did the Titanic break in two before it sank? When a scene touches a documented contradiction, Vantage lays the two accounts side by side, each with its source.
+- **Watch it in your language.** Narration and subtitles in English, Spanish, Hindi, and French.
 - **Follow the map and the knowledge graph.** Scenes are pinned to where they happened, and a graph shows how the sources and events connect.
 - **Continue on your phone.** Every session has a link code. Text `VANTAGE <code>` to the Vantage iMessage line and pick up exactly where you left off, then watch what you did on the phone show up back on the web.
 
@@ -71,6 +73,10 @@ Some sites block scripts. `fetch_sources.py` lists any source it could not downl
 ## Built with
 
 FastAPI · ChromaDB · Google Gemini · xAI Grok · ElevenLabs · LangChain deepagents · Photon · React · Vite
+
+## Credits
+
+The story graph is drawn with [React Flow](https://reactflow.dev) (xyflow, MIT). Its corner attribution is hidden in the app, so it is credited here and in the share sheet's "about vantage". The map uses [Leaflet](https://leafletjs.com) with tiles © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors. Source texts belong to their publishers and are not committed to this repo; `data/documents.csv` lists each one with its link.
 
 ## Team
 
