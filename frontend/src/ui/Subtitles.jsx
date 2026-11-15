@@ -7,6 +7,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { TYPE_SPEED_MS } from './theme.js'
 import { fitChunks } from './chunkText.js'
+import { getNarrationAudio } from './audio.js'
 
 const MORE = ' ...'
 
@@ -75,11 +76,17 @@ export default function Subtitles({ text, lang, durationMs, resetKey, isPlaying,
     let last = performance.now()
     const t = setInterval(() => {
       const now = performance.now()
-      setElapsed((e) => e + (now - last))
+      const audio = getNarrationAudio()
+      if (audio && !audio.paused && Number.isFinite(audio.duration) && audio.duration > 0) {
+        // follow the voice itself: the caption is wherever the narrator actually is
+        setElapsed((audio.currentTime / audio.duration) * totalMs)
+      } else {
+        setElapsed((e) => e + (now - last))
+      }
       last = now
     }, 100)
     return () => clearInterval(t)
-  }, [isPaused, resetKey])
+  }, [isPaused, resetKey, totalMs])
 
   const done = hasFinished || elapsed >= totalMs
   useEffect(() => onDoneChange(done && isActive), [done, isActive, onDoneChange])
