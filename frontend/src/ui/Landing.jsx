@@ -55,9 +55,20 @@ const QUESTIONS = [
 ]
 const Q_COLORS = ['#3b82c4', '#d08a2e', '#4e9a6b', '#8b5cb8', '#d2402f', '#2a9da6', '#c2548a', '#7a8a2e']
 const ROW_COUNT = 6
+
+/** A random colour for each question. Neighbours differ, including where the line wraps around. */
+function colourRow(texts) {
+  const picked = []
+  texts.forEach((text, n) => {
+    const taboo = [picked[n - 1], n === texts.length - 1 ? picked[0] : null]
+    const options = Q_COLORS.filter((c) => !taboo.includes(c))
+    picked.push(options[Math.floor(Math.random() * options.length)])
+  })
+  return texts.map((text, n) => ({ text, color: picked[n] }))
+}
+
 const Q_ROWS = Array.from({ length: ROW_COUNT }, (_, i) => ({
-  // every question has its own colour; the offset keeps neighbours different
-  questions: QUESTIONS.filter((_, k) => k % ROW_COUNT === i).map((text, n) => ({ text, color: Q_COLORS[(i * 3 + n * 5) % Q_COLORS.length] })),
+  questions: colourRow(QUESTIONS.filter((_, k) => k % ROW_COUNT === i)),
   seconds: 90 + ((i * 17) % 50), // each row drifts at its own pace
   size: 19 + ((i * 5) % 9), // px
   reverse: i % 2 === 1,
