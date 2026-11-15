@@ -1,15 +1,12 @@
-// Landing: a white page. The lowercase "vantage" wordmark sharpens into view with a line on what the
-// app does, then a three-step bar arrives (narration language, subtitles language, story, with a
-// search box for any event) and three cards explain how it works. Choosing a story starts the session.
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+// Landing: a white page. The lowercase "vantage" wordmark sharpens into view, then a three-step bar
+// arrives (narration language, subtitles language, story, with a search box for any event).
+// Choosing a story starts the session.
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { sceneKindFor } from './scene.js'
 import { unlockAudio } from './audio.js'
 import { messageFor } from '../api/errors.js'
 import { DURATION, EASING } from './theme.js'
 import { ms, sec, useCalmMotion } from './motionMode.js'
-import { lookFor } from './looks.js'
-import { gradedSceneUrl } from './gradedScene.js'
 import Logo from './Logo.jsx'
 import Shutter from './Shutter.jsx'
 import './landing.css'
@@ -25,20 +22,6 @@ const STORIES = (import.meta.env.VITE_VANTAGE_EXAMPLE_TOPICS || 'Titanic,Battle 
   .map((t) => t.trim())
   .filter(Boolean)
   .map((title) => ({ id: title, title }))
-
-/** What the app does, one card each. The art is a drawn scene in that card's colour. */
-const HOW = [
-  { title: 'three points of view', line: 'every story is told from the sides that lived it, so you see where they agree and where they do not.' },
-  { title: 'grounded in sources', line: 'each scene cites the primary sources and news it came from. open the evidence and read it yourself.' },
-  { title: 'in your language', line: 'listen in one language and read subtitles in another. ask a question and the story answers.' },
-]
-
-/** Three drawn scenes, one per card. */
-const HERO_COLORS = ['#6F9BC4', '#C49A6C', '#9DB29A']
-function heroPanels() {
-  const kind = sceneKindFor('')
-  return HERO_COLORS.map((color, i) => ({ id: `hero-${i}`, url: gradedSceneUrl({ seed: `hero-${i}`, kind, width: 900, height: 560 }, lookFor(color)) }))
-}
 
 /** A group of large options with a roving focus: arrows move, Enter or a click accepts, Escape collapses. */
 function Options({ label, options, value, onPick, onEscape, autoFocus, columns }) {
@@ -96,7 +79,6 @@ function Options({ label, options, value, onPick, onEscape, autoFocus, columns }
  */
 export default function Landing({ onStart, isStarting, error, language, isReturning = false }) {
   const isCalm = useCalmMotion()
-  const panels = useMemo(() => heroPanels(), [])
   const { languages, narrationLanguage, subtitleLanguage, setNarrationLanguage, setSubtitleLanguage, nameOf } = language
 
   // ---------- load sequence ----------
@@ -185,10 +167,6 @@ export default function Landing({ onStart, isStarting, error, language, isReturn
               </motion.span>
             </span>
           </h1>
-          <motion.p className="ui-ltag" {...rise(0)}>every event has more than one side.</motion.p>
-          <motion.p className="ui-lsub" {...rise(1)}>
-            search any moment in history. vantage reads real sources, then tells it from three points of view, with the evidence one tap away.
-          </motion.p>
         </header>
 
         {isReady && (
@@ -198,7 +176,7 @@ export default function Landing({ onStart, isStarting, error, language, isReturn
             </p>
             <ol className="ui-lsteps">
               {pills.map(([long, short], i) => (
-                <motion.li key={i} {...rise(i + 2)}>
+                <motion.li key={i} {...rise(i)}>
                   <button
                     type="button"
                     className={`ui-lpill ${active === i ? 'is-active' : ''} ${done[i] ? 'is-done' : ''}`}
@@ -277,15 +255,6 @@ export default function Landing({ onStart, isStarting, error, language, isReturn
           </section>
         )}
 
-        <motion.ul className="ui-lhow" aria-label="how vantage works" {...rise(5)}>
-          {HOW.map((h, i) => (
-            <li key={h.title} className="ui-lcard">
-              <img src={panels[i].url} alt="" />
-              <h3>{h.title}</h3>
-              <p>{h.line}</p>
-            </li>
-          ))}
-        </motion.ul>
       </div>
 
       <AnimatePresence>{isStarting && <Shutter key="shutter" message="opening the archive..." />}</AnimatePresence>
