@@ -29,6 +29,7 @@ const Graph = lazy(() => import('./Graph.jsx'))
 const TravelMap = lazy(() => import('./TravelMap.jsx'))
 const ShareCard = lazy(() => import('./ShareCard.jsx'))
 const Palette = lazy(() => import('./Palette.jsx'))
+const StudyMap = lazy(() => import('./StudyMap.jsx'))
 
 /** After this long behind the shutter, offer to go on with the drawn scene. */
 const IMAGE_WAIT_MS = 20000
@@ -152,6 +153,11 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
   // Graph and map sheets
   const [panel, setPanel] = useState(null) // 'graph' | 'map' | null
   const [isFull, setIsFull] = useState(false)
+  const [graphTab, setGraphTab] = useState('path') // 'path' | 'map' (the study map)
+  const { analysis, loadAnalysis } = P
+  useEffect(() => {
+    if (panel === 'graph' && graphTab === 'map' && analysis.state === 'idle') loadAnalysis()
+  }, [panel, graphTab, analysis.state, loadAnalysis])
   const { setIsGraphOpen } = P
   useEffect(() => setIsGraphOpen(panel === 'graph'), [panel, setIsGraphOpen])
   const closePanel = useCallback(() => (setPanel(null), setIsFull(false)), [])
@@ -386,9 +392,32 @@ export default function Player({ session, topic, isSoundOn, onToggleSound, langu
         onClose={closePanel}
         title="story connections"
         className={isFull ? 'is-full' : ''}
-        headerExtra={<Btn variant="ghost" icon={isFull ? Minimize2 : Maximize2} aria-pressed={isFull} onClick={() => setIsFull((v) => !v)}>{isFull ? 'exit full view' : 'full view'}</Btn>}
+        headerExtra={
+          <>
+            <div className="ui-tabs" role="tablist" aria-label="story connections view">
+              {[['path', 'your path'], ['map', 'study map']].map(([id, label]) => (
+                <button key={id} type="button" role="tab" aria-selected={graphTab === id} className={`ui-tab ${graphTab === id ? 'is-active' : ''}`} onClick={() => setGraphTab(id)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <Btn variant="ghost" icon={isFull ? Minimize2 : Maximize2} aria-pressed={isFull} onClick={() => setIsFull((v) => !v)}>{isFull ? 'exit full view' : 'full view'}</Btn>
+          </>
+        }
       >
-        {P.graphState === 'loading' && !P.hasGraphData ? (
+        {graphTab === 'map' ? (
+          <Suspense fallback={<div className="ui-sheet-wait"><Waiting message="building the study map" /></div>}>
+            <StudyMap
+              analysis={analysis}
+              sourcesById={P.sourcesById}
+              onRetry={loadAnalysis}
+              onOpenSource={(id) => {
+                closePanel()
+                openEvidence(id)
+              }}
+            />
+          </Suspense>
+        ) : P.graphState === 'loading' && !P.hasGraphData ? (
           <div className="ui-sheet-wait">
             <Waiting message="tracing connections" />
             <Skeleton lines={3} />

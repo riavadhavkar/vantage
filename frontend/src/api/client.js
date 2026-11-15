@@ -95,6 +95,38 @@ export async function getSources(sessionId) {
 /** @returns {Promise<{nodes: object[], edges: object[]}>} */
 export const getGraph = (sessionId) => request('/graph', { query: { session_id: sessionId } })
 
+/**
+ * The study map: a centre title and five branches of points, each citing sources. The first call
+ * for a story takes about 20 seconds (the backend caches it after that).
+ * @returns {Promise<{center: string, branches: {id: string, label: string, points: {text: string, source_ids: string[]}[]}[]}>}
+ */
+export async function getAnalysis(sessionId) {
+  const d = await request('/analysis', { method: 'POST', body: { session_id: sessionId }, timeoutMs: 60000 })
+  return {
+    center: d.center || '',
+    branches: (d.branches || []).map((b) => ({
+      id: b.id,
+      label: b.label,
+      points: (b.points || []).filter((p) => p?.text).map((p) => ({ text: p.text, source_ids: Array.isArray(p.source_ids) ? p.source_ids : [] })),
+    })),
+  }
+}
+
+// Computed facts for a scene (Wolfram|Alpha). Asked once per text; a failed call can be retried.
+const facts = new Map()
+/** @returns {Promise<{label: string, query: string, answer: string}[]>} */
+export function getFacts(text) {
+  if (facts.has(text)) return facts.get(text)
+  const promise = request('/facts', { method: 'POST', body: { text }, timeoutMs: 30000 })
+    .then((d) => (Array.isArray(d.facts) ? d.facts.filter((f) => f?.label && f?.answer) : []))
+    .catch((err) => {
+      facts.delete(text)
+      throw err
+    })
+  facts.set(text, promise)
+  return promise
+}
+
 // Image and voice calls are paid. A repeat of a request that is in flight, or already done (a
 // re-render, React running an effect twice in development, going back to a scene), reuses the one
 // call instead of making another. A failed call, or one that came back without a file, is dropped

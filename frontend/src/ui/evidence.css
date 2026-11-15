@@ -53,3 +53,12 @@
 @media (prefers-reduced-motion: reduce) {
   .ui-scard-body:not([hidden]), .ui-quote mark { animation: none; transition: none; }
 }
+
+/* computed facts */
+.ui-facts { margin-top: 16px; padding: 12px 14px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--ink-line); }
+.ui-facts h3 { margin: 0 0 6px; font-size: 13px; line-height: 18px; font-weight: 640; text-transform: lowercase; color: var(--ink-dim); }
+.ui-facts ul { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.ui-facts li { display: flex; flex-direction: column; }
+.ui-fact-label { font-size: 14px; line-height: 20px; color: var(--ink-dim); }
+.ui-fact-answer { font-size: 17px; line-height: 26px; font-weight: 600; color: var(--ink); }
+.ui-facts .ui-src-link { min-height: 36px; font-size: 14px; }

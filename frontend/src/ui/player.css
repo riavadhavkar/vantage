@@ -164,3 +164,15 @@ html[data-motion='off'] .ui-dis-icon { animation: none; }
 
 /* looking back at an earlier scene */
 .ui-back { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 12px 16px; font-size: 15px; line-height: 22px; animation: ui-rise var(--duration-panel) var(--ease-enter) both; }
+
+/* two views inside the story connections panel */
+.ui-tabs { display: flex; gap: 4px; padding: 3px; border-radius: 999px; border: 1px solid var(--line); }
+.ui-tab { white-space: nowrap; min-height: 36px; padding: 0 14px; border-radius: 999px; font-size: 14px; line-height: 20px; font-weight: 560; text-transform: lowercase; color: var(--dim); transition: background-color var(--duration-micro) linear, color var(--duration-micro) linear; }
+.ui-tab:hover { color: var(--text); }
+.ui-tab.is-active { background: #f3f5f6; color: #0a0c0f; }
+@media (max-width: 899px) {
+  .ui-tab { padding: 0 12px; font-size: 14px; }
+  /* the tabs drop to a row of their own under the title */
+  .ui-sheet-dark .ui-sheet-head { flex-wrap: wrap; gap: 6px 8px; padding-left: 16px; }
+  .ui-sheet-dark .ui-sheet-head > .ui-tabs { order: 3; flex: 0 0 auto; margin-bottom: 4px; }
+}
