@@ -4,7 +4,7 @@
 
 Vantage is an interactive documentary engine for any event, past or present. Type an event or pick one of our deep dives, choose whose eyes to see it through, and the story is written for you as you go, one narrated, illustrated scene at a time. Every scene is grounded in real sources, and when those sources disagree, Vantage shows you the disagreement instead of hiding it.
 
-Live site: [vantageo.us](https://vantageo.us) · Demo video and Devpost: _coming soon_
+Live site: [vantageo.us](https://vantageo.us) · Demo video and Devpost: https://devpost.com/software/vantage-w0poi6
 
 ## What you can do
 
