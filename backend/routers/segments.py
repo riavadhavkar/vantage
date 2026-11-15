@@ -54,7 +54,11 @@ def start(body: StartRequest):
     if live_key:
         state["topic_key"] = live_key
     state["language"] = (body.language or "en").lower()
-    segment = run_pipeline(state["session_id"])
+    typed = body.topic.strip()
+    is_question = typed.endswith("?") or typed.lower().split(" ")[0] in (
+        "who", "what", "when", "where", "why", "how", "is", "was", "were", "did", "does", "do", "can")
+    # A typed question gets answered in the first scene (and corrected if its premise is wrong).
+    segment = run_pipeline(state["session_id"], question=typed if (is_question and live_key) else None)
     return StartResponse(session_id=state["session_id"], segment=segment, link_code=state["link_code"])
 
 
