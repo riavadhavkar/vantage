@@ -8,6 +8,7 @@ from fastapi import APIRouter
 
 from config import VOICE_BY_PERSPECTIVE
 from knowledge.catalog import resolve_topic
+from knowledge import live_research
 from state import session_store
 
 router = APIRouter()
@@ -60,7 +61,13 @@ def _topic_key(session_id: Optional[str]) -> str:
 
 @router.get("/topic")
 def get_topic(session_id: Optional[str] = None):
-    t = TOPICS[_topic_key(session_id)]
+    key = _topic_key(session_id)
+    if live_research.is_live(key):
+        lt = live_research.LIVE[key]
+        t = {"topic_id": key, "title": lt["title"], "one_line": lt["one_line"],
+             "aliases": [lt["event"]], "perspectives": lt["perspectives"]}
+    else:
+        t = TOPICS.get(key) or TOPICS["titanic"]
     return {
         **{k: v for k, v in t.items() if k != "perspectives"},
         "perspectives": [

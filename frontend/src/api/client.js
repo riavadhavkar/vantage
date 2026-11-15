@@ -112,7 +112,7 @@ export async function getTopic(sessionId) {
 export async function startSession(topic, language) {
   const data = isLocal()
     ? await (await server()).startSession(topic, language)
-    : await request('/start', { method: 'POST', body: language ? { topic, language } : { topic } })
+    : await request('/start', { method: 'POST', body: language ? { topic, language } : { topic }, timeoutMs: 120000 })
   return { ...data, segment: normalizeSegment(data.segment) }
 }
 

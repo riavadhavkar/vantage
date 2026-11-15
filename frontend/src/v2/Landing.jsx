@@ -179,6 +179,8 @@ export default function Landing({ onStart, isStarting, error, dataSource, langua
     { columns: 'story', value: null, options: STORIES.map((s) => ({ value: s.id, title: s.title, line: s.line, disabled: isStarting })) },
   ]
   const panelId = useId()
+  const anyId = useId()
+  const [anyEvent, setAnyEvent] = useState('')
   const suggestions = error?.code === 'topic_not_supported' ? error.suggestions : []
   const fade = { duration: sec(isCalm ? DURATION.quick : DURATION.panel), ease: EASING.enter }
 
@@ -273,6 +275,28 @@ export default function Landing({ onStart, isStarting, error, dataSource, langua
                   onEscape={() => setActive(-1)}
                 />
                 {active === 2 && isOffline && <p className="v2-lnote">offline demo: the cached story is in english.</p>}
+                {active === 2 && !isOffline && (
+                  <form className="v2-lany" onSubmit={(e) => { e.preventDefault(); begin(anyEvent.trim()) }}>
+                    <label htmlFor={anyId} className="v2-lpanel-title">or type any event, past or present</label>
+                    <div className="v2-lany-row">
+                      <input
+                        id={anyId}
+                        className="v2-lany-input"
+                        value={anyEvent}
+                        onChange={(e) => setAnyEvent(e.target.value)}
+                        placeholder="the eruption of Pompeii"
+                        autoComplete="off"
+                        disabled={isStarting}
+                      />
+                      <button type="submit" className="v2-lany-go" disabled={!anyEvent.trim() || isStarting}>
+                        {isStarting && anyEvent.trim() ? 'finding sources…' : 'research it'}
+                      </button>
+                    </div>
+                    {isStarting && anyEvent.trim() && (
+                      <p className="v2-lnote" aria-live="polite">reading real sources and finding every side of the story. this takes about 30 seconds.</p>
+                    )}
+                  </form>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

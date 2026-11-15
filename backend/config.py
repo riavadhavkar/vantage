@@ -25,6 +25,10 @@ VOICE_BY_PERSPECTIVE = {
     "crew": "pqHfZKP75CvOlQylNhV4",          # Bill: wise, mature, balanced
     "first_class": "pFZP5JQG7iQjIQuC4Bku",   # Lily: velvety, confident
     "steerage": "SAz9YHcvj6GT2YYXdXww",      # River: relaxed, neutral
+    # any-event mode sides reuse three distinct voices
+    "side_a": "nPczCjzI2devNBz1zQrb",        # Brian
+    "side_b": "EXAVITQu4vr4xnSDxMaL",        # Sarah
+    "side_c": "onwK4e9ZLuTAKqWW03F9",        # Daniel
 }
 
 # Gemini models (override in .env if one fails)
@@ -48,3 +52,6 @@ XAI_TEXT_MODEL = os.getenv("XAI_TEXT_MODEL", "")
 # "fast" = single grounded narrator call, "deep" = deepagents Director + sub-agents
 AGENT_MODE = os.getenv("VANTAGE_AGENT_MODE", "fast").lower()
 PHOTON_PROJECT_ID = os.getenv("PHOTON_PROJECT_ID", "")
+
+# Any-event mode: research events the team did not curate (Gemini + Google Search). "0" turns it off.
+LIVE_RESEARCH = os.getenv("VANTAGE_LIVE_RESEARCH", "1") != "0"
